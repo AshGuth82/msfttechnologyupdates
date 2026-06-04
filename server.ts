@@ -26,132 +26,148 @@ let isCacheLive = false; // true if cache populated from actual Gemini Search Gr
 // High-quality fallback/seed articles matching the exact criteria if API key is missing or calls fail.
 const FALLBACK_ARTICLES: Article[] = [
   {
-    id: "fb-fin-1",
-    title: "Microsoft Reports Strong Q3 2026 Earnings Driven by Cloud Expansion",
-    summary: "Microsoft announced its financial results for the quarter ended March 31, 2026. Intelligent Cloud revenue grew 21% to $31.8 billion, led by strong Azure momentum and growing enterprise AI adoption.",
-    category: "financial",
-    url: "https://www.microsoft.com/en-us/investor",
-    source: "Bloomberg Technology",
-    publishedDate: "2026-04-28",
+    id: "anz-cloud-1",
+    title: "Azure Australia East Local Region Solidifies Sovereign AI for ANZ Governments",
+    summary: "Microsoft announced high-density clean-energy AI cluster modules in Sydney and Melbourne, enabling local sovereign model processing. The expansion satisfies APRA compliance and New Zealand NZISM security guidelines.",
+    category: "cloud_transformation",
+    url: "https://news.microsoft.com/en-au/",
+    source: "ANZ Cloud Transformation Briefing",
+    publishedDate: "2026-05-18",
     sentiment: "positive",
     impactScore: 9,
     keyTakeaways: [
-      "Intelligent Cloud division leads growth with a 21% increase year-over-year",
-      "AI services integration adds 6 full percentage points to Azure cloud growth",
-      "Overall operating income rises to $28.3 billion, up 19% dynamically"
-    ]
+      "No-latency local physical residency for data in NSW and Victoria",
+      "Satisfies strict APRA banking and NZISM government clearance structures",
+      "Empowers automated hybrid cloud compute using localized sovereign pipelines"
+    ],
+    anzActionableAdvice: "Enterprise financial institutions and government agencies should immediately review their tenant residency. For migrations to these sovereign nodes, leverage Microsoft ECIF funding which can subsidise implementation costs up to 100%.",
+    ecifFundingEligible: true
   },
   {
-    id: "fb-fin-2",
-    title: "Microsoft Details $10 Billion Strategic AI Infrastructure Expansion in Northern Europe",
-    summary: "Microsoft is expanding its global cloud infrastructure footprint with a massive $10 billion investment in data centers across Sweden, Norway, and Denmark. The initiative deploys clean-energy AI accelerators.",
-    category: "financial",
-    url: "https://news.microsoft.com/",
-    source: "Reuters Financial",
-    publishedDate: "2026-05-15",
-    sentiment: "positive",
-    impactScore: 8,
-    keyTakeaways: [
-      "Massive carbon-neutral infrastructure play in high-density European regions",
-      "Targeting public sector security, compliance, and strict data sovereignty frameworks",
-      "Projected online readiness expected incrementally from late 2026"
-    ]
-  },
-  {
-    id: "fb-prod-1",
-    title: "Microsoft Debuts Copilot 3.0 with Multimodal Autonomous Workflows at Build 2026",
-    summary: "At its annual Build developer conference, Microsoft unveiled Copilot 3.0, introducing autonomous agency features that coordinate multi-step tasks across Excel, PowerPoint, and web environments.",
-    category: "product_tech",
-    url: "https://news.microsoft.com/",
-    source: "TechCrunch",
-    publishedDate: "2026-05-20",
-    sentiment: "positive",
-    impactScore: 10,
-    keyTakeaways: [
-      "Autonomous engines allow Copilot to coordinate background workflows independently",
-      "Deeper co-processing limits integrated with local Copilot+ PC architectures",
-      "General availability of advanced agents slated for late June 2026"
-    ]
-  },
-  {
-    id: "fb-prod-2",
-    title: "Azure Quantum Elements Integrates Logical Qubits Directly into chemistry Pipelines",
-    summary: "Microsoft and scientific partners have successfully demonstrated high-fidelity logical qubits with error-correction rates suitable for industrial chemistry, modeling battery and materials compounds.",
-    category: "product_tech",
-    url: "https://azure.microsoft.com/",
-    source: "Scientific American",
-    publishedDate: "2026-05-18",
-    sentiment: "positive",
-    impactScore: 8,
-    keyTakeaways: [
-      "Logical qubit translation is showing 100,200x error rate improvements",
-      "Immediate commercially-viable pharmaceutical modeling pipeline launch",
-      "Offered as a software utility for Azure High-Performance Computing clusters"
-    ]
-  },
-  {
-    id: "fb-lice-1",
-    title: "Microsoft Standardizes Copilot Pro and Commercial Enterprise Pricing Tiers",
-    summary: "Microsoft has announced pricing restructuring for commercial AI subscriptions starting July 1, 2026. Microsoft 365 Copilot will offer tiered rates starting at $22 per user/month on multi-year plans.",
-    category: "licensing_pricing",
-    url: "https://www.microsoft.com/licensing",
-    source: "ZDNet",
-    publishedDate: "2026-05-12",
-    sentiment: "neutral",
-    impactScore: 7,
-    keyTakeaways: [
-      "Core enterprise M365 Copilot drops from $30 to $22 on committed 3-year tiers",
-      "New premium agent building licensing introduced at $45 per user/month",
-      "Aims to accelerate competitive SMB deployments in Europe and Asia"
-    ]
-  },
-  {
-    id: "fb-lice-2",
-    title: "Windows Server 2026 Licensing Shifts to Hybrid-Core and NPU Density Metrics",
-    summary: "Microsoft outlined core licensing changes for Windows Server 2026. The structure introduces hardware metrics accounting for neural processing units, tying costs to local machine hardware capability.",
-    category: "licensing_pricing",
-    url: "https://www.microsoft.com/licensing",
-    source: "Redmond Channel Partner",
-    publishedDate: "2026-05-08",
-    sentiment: "negative",
-    impactScore: 7,
-    keyTakeaways: [
-      "New GPU and NPU hardware parameters added to core client licensing calculations",
-      "Increases localized licensing metrics for heavy on-prem AI server deployments",
-      "Provides clear incentives for migrating legacy instances directly into Azure"
-    ]
-  },
-  {
-    id: "fb-lead-1",
-    title: "Microsoft Appoints Chief Artificial Intelligence Officer to Senior Leadership Team",
-    summary: "CEO Satya Nadella announced the appointment of Dr. Aris Vance as Executive VP and Chief AI Officer. Vance will oversee the unified research, compliance, Azure, and consumer divisions.",
-    category: "leadership",
-    url: "https://news.microsoft.com/exec",
-    source: "Wall Street Journal",
+    id: "anz-cloud-2",
+    title: "Microsoft 365 Copilot Agentic Workflows Deployed for ANZ Enterprise Portfolios",
+    summary: "A joint pilot program reveals that ASX 100 companies are deploying agentic Copilots, resulting in an average saving of 8.2 hours per employee week in finance, auditing, and multi-tier supplier compliance checks.",
+    category: "cloud_transformation",
+    url: "https://news.microsoft.com/en-au/",
+    source: "AFR Tech Index",
     publishedDate: "2026-05-24",
     sentiment: "positive",
     impactScore: 8,
     keyTakeaways: [
-      "Vance centralizes engineering management for all OpenAI-joint and consumer apps",
-      "Direct line-report establishes accountability structure under Satya Nadella",
-      "Focus is directed on policy alignments of frontier models with EU safety laws"
-    ]
+      "Saves over a business day per week across high-volume procurement and audit roles",
+      "Integrates fully with local ERP instances such as SAP and Dynamics 365",
+      "Provides pre-built agent models tailored for local business regulations"
+    ],
+    anzActionableAdvice: "Develop a designated AI Center of Excellence (CoE) to build custom team-level agents. Talk to your Local Account Director to run a structured discovery workshop funded via the Azure End-customer Investment Fund (ECIF).",
+    ecifFundingEligible: true
   },
   {
-    id: "fb-lead-2",
-    title: "Longtime Microsoft Corporate Vice President of Azure Storage Announces Retirement",
-    summary: "Cloud Infrastructure VP Sarah Jenkins has announced her retirement after 22 years of leading Storage systems from inception to millions of globally synchronized servers.",
-    category: "leadership",
-    url: "https://news.microsoft.com/exec",
-    source: "GeekWire",
-    publishedDate: "2026-06-01",
+    id: "anz-ea-1",
+    title: "Microsoft Enterprise Agreement (EA) 2026 Restructuring: Navigating SCE and EAS Options",
+    summary: "Microsoft is adjusting the base eligibility seat-counts and commitments for Server and Cloud Enrollment (SCE) Agreements. IT procurement teams in ANZ must prepare for a minimum baseline count rise to 500 profiles.",
+    category: "licensing_ea",
+    url: "https://www.microsoft.com/licensing",
+    source: "Strategic Licensing Review",
+    publishedDate: "2026-05-11",
     sentiment: "neutral",
+    impactScore: 8,
+    keyTakeaways: [
+      "EA base profile seats thresholds adjusted upwards, forcing smaller enterprises toward CSP models",
+      "SCE enrollments receive strict standardization concerning developer Visual Studio dependencies",
+      "EAS subscription discounts adjusted to reward multi-product suite portfolios"
+    ],
+    anzActionableAdvice: "Finance and procurement teams must perform a complete audit of current active license counts 180 days prior to EA renewal. If your active users are between 400 and 600, model the cost benefits of moving to a Cloud Solution Provider (CSP) agreement.",
+    ecifFundingEligible: false
+  },
+  {
+    id: "anz-ea-2",
+    title: "Windows Server 2026 Core Licensing Shifts to Account for local GPU & NPU Hardware Density",
+    summary: "Microsoft is standardizing virtual core execution mappings for on-premises enterprise data centers. The new core structures tie Windows Server licensing directly to the presence of physical AI processing cores.",
+    category: "licensing_ea",
+    url: "https://www.microsoft.com/licensing",
+    source: "Redmond Licensing Portal",
+    publishedDate: "2026-05-02",
+    sentiment: "negative",
+    impactScore: 7,
+    keyTakeaways: [
+      "Physical GPU and NPU density metrics are integrated into core multi-user licensing scales",
+      "On-premises offline servers running heavy continuous AI workloads experience a cost rise",
+      "Microsoft introduces direct licensing credits for migrating affected clusters into Azure"
+    ],
+    anzActionableAdvice: "Model your core-to-processor ratio before ordering local AI server setups. Transitioning these server workloads to Azure Virtual Machines is typically subsidized under Azure Hybrid Benefit and ECIF datacenter exit programs.",
+    ecifFundingEligible: true
+  },
+  {
+    id: "anz-price-1",
+    title: "Microsoft Adjusts ANZ Price Lists Following Foreign Exchange Stabilization",
+    summary: "Effective July 1, 2026, Microsoft is enacting a 6% price list adjustment for products transacted in AUD and NZD. The adjustment aligns Australia & New Zealand pricing tables with standard global USD baselines.",
+    category: "pricing_news",
+    url: "https://news.microsoft.com/en-au/",
+    source: "Microsoft Business Desk",
+    publishedDate: "2026-06-01",
+    sentiment: "negative",
+    impactScore: 10,
+    keyTakeaways: [
+      "6% wholesale price adjustment applied to cloud software subscription streams",
+      "Directly impacts ongoing monthly commitments for M365 and standalone Azure consumption",
+      "Locked Enterprise Agreements remain unaffected until their specific renewal dates"
+    ],
+    anzActionableAdvice: "If your organization is currently on a CSP model with rolling monthly commitments, consider switching to an annual commitment tier immediately to lock in existing lower price tables for the next 12 months.",
+    ecifFundingEligible: false
+  },
+  {
+    id: "anz-price-2",
+    title: "M365 Copilot Dynamic Tiered Licensing Prices Announced for Mid-Market Segments",
+    summary: "To encourage widespread digital enablement across medium-sized offices, Microsoft is launching discounted tiering levels for Copilot. Organizations adding 100+ seats gain a 15% system fee reduction.",
+    category: "pricing_news",
+    url: "https://www.microsoft.com/en-au/licensing",
+    source: "ZDNet Tech Analyst",
+    publishedDate: "2026-05-15",
+    sentiment: "positive",
+    impactScore: 7,
+    keyTakeaways: [
+      "Mid-sized businesses receive a dedicated discount path for cloud services",
+      "StepUp options introduced to easily transition regular users into active Copilot seats",
+      "Aims to counter SaaS competitors in local Australian and New Zealand mid-markets"
+    ],
+    anzActionableAdvice: "Procurement managers can bundle this tiered pricing discount with Microsoft Partner incentive programs. Ensure your implementation partner is registering the deal to claim maximum regional credits.",
+    ecifFundingEligible: true
+  },
+  {
+    id: "anz-strat-1",
+    title: "Unlocking Microsoft ECIF Funding: Strategic Roadmap for ANZ CIOs",
+    summary: "Microsoft has expanded the criteria for the End-customer Investment Fund (ECIF) in the ANZ territory. Funding priorities now emphasize AI readiness, migration of legacy SQL instances, and secure Azure tenant design.",
+    category: "anz_strategy",
+    url: "https://news.microsoft.com/en-au/",
+    source: "Enterprise Strategy Journal",
+    publishedDate: "2026-05-30",
+    sentiment: "positive",
+    impactScore: 9,
+    keyTakeaways: [
+      "ECIF budgets for ANZ are boosted to accelerate local data residency adoption",
+      "Covers up to 100% of proof-of-concept costs when utilizing Gold Partners",
+      "Strict funding allocation rules require pre-approval through Microsoft account units"
+    ],
+    anzActionableAdvice: "Ensure your partner of choice submits an ECIF proposal during your initial architectural design phase. Never start work before the ECIF Purchase Order is formally issued, as retroactive funding is strictly prohibited.",
+    ecifFundingEligible: true
+  },
+  {
+    id: "anz-strat-2",
+    title: "Narrabeen Business Group Meetup: Bridging IT and Finance in Sydney's Northern Beaches",
+    summary: "The Narrabeen Business Group has announced its monthly Microsoft Local Strategy Meetup for mid-market leaders. The session will focus on navigating EA renewals, cloud budgets, and unlocking local funding resources.",
+    category: "anz_strategy",
+    url: "https://www.meetup.com",
+    source: "Narrabeen Business Group",
+    publishedDate: "2026-06-03",
+    sentiment: "positive",
     impactScore: 6,
     keyTakeaways: [
-      "Jenkins is highly respected for scaling blob files systems through early Azure years",
-      "Existing Azure Networking leaders will act as transitional interim management",
-      "No disruption in day-to-day enterprise cloud file systems availability is expected"
-    ]
+      "Monthly focused meetups in Sydney's Northern Beaches connecting directors",
+      "Interactive Q&A focusing on real-world cost mitigation in Microsoft cloud portfolios",
+      "Features live case studies of local businesses obtaining ECIF funding grants"
+    ],
+    anzActionableAdvice: "If you are based in the ANZ region, register for the next Narrabeen Business Group Meetup. Bring your current Microsoft contract challenges for an over-the-shoulder diagnostic with local strategy experts.",
+    ecifFundingEligible: false
   }
 ];
 
@@ -181,34 +197,38 @@ async function fetchNewsViaGemini(): Promise<{ articles: Article[]; isRealTime: 
 
   try {
     console.log("Querying Gemini 3.5-flash with Google Search grounding for Microsoft news...");
-    const prompt = `You are a professional corporate intelligence tool. Search the web for recent high-quality news and articles from early 2026 regarding the Microsoft Corporation.
-You must fetch several news updates, especially covering these four categories:
-1. 'financial' (e.g., Q3/Q4 earnings, stock values, Azure revenue, major acquisitions/investments)
-2. 'product_tech' (e.g., Azure updates, Copilot agents, Windows 11 updates, Office AI, Quantum)
-3. 'licensing_pricing' (e.g., Microsoft 365 pricing shifts, Azure core licensing terms, Copilot licensing models)
-4. 'leadership' (e.g., board announcements, executive departures, key hire quotes, VP appointments)
+    const prompt = `You are a professional corporate intelligence tool specialized in Microsoft cloud strategy and licensing for the Australia/New Zealand (ANZ) enterprise market.
+Search the web for recent high-quality news and articles from 2026 regarding the Microsoft Corporation, tailored to the regional ANZ procurement, finance, and IT leadership context.
+
+You must fetch several news updates, especially covering these four specific categories:
+1. 'cloud_transformation' (e.g., Azure cloud developments, sovereign clusters, Copilot workspace deployments, major digital transformations in ANZ)
+2. 'licensing_ea' (e.g., Enterprise Agreement terms restructuring, SCE or EAS models, subscription changes, product terms)
+3. 'pricing_news' (e.g., regional price audits, foreign exchange currency adjustments for AUD/NZD, regional cloud list prices, licensing tier prices)
+4. 'anz_strategy' (e.g., local Microsoft operations strategy, funding opportunities such as ECIF, local partner ecosystems, Sydney/Auckland tech events)
 
 Return the news as a valid raw string of a JSON array, representing a list of articles. Each article in the JSON array MUST follow this exact schema:
 [
   {
     "id": "highly-unique-string-identifier-1",
     "title": "Specific news title",
-    "summary": "2-3 sentence overview of why this news is critical for Microsoft",
-    "category": "one of: 'financial' | 'product_tech' | 'licensing_pricing' | 'leadership'",
+    "summary": "2-3 sentence overview of why this news is critical for enterprise managers",
+    "category": "one of: 'cloud_transformation' | 'licensing_ea' | 'pricing_news' | 'anz_strategy'",
     "url": "Actual URL webpage/resource found in your Web Search results (if unavailable, output a valid Microsoft domain URL)",
-    "source": "Name of the publishing newspaper/blog/outlet (e.g., WSJ, Reuters, ZDNet, Microsoft News)",
+    "source": "Name of the publishing newspaper/blog/outlet (e.g., AFR, ZDNet AU, CRN Australia, IT Brief NZ, WSJ)",
     "publishedDate": "Date in format YYYY-MM-DD",
     "sentiment": "one of: 'positive' | 'neutral' | 'negative'",
-    "impactScore": 8, // Integer from 1 to 10 based on how major this is for Microsoft's business model
+    "impactScore": 8, // Integer from 1 to 10 based on how major this is for an ANZ business model
     "keyTakeaways": [
-      "Key summary bullet point 1",
-      "Key summary bullet point 2",
-      "Key summary bullet point 3"
-    ]
+      "Key summary bullet point 1 for ANZ leaders",
+      "Key summary bullet point 2 for ANZ leaders",
+      "Key summary bullet point 3 for ANZ leaders"
+    ],
+    "anzActionableAdvice": "Specifically formulated advise for IT procurement, CFOs or CIOs in Australia and New Zealand regarding this change - especially around mitigating cost hikes, scaling migration safely, or leverage partner channels.",
+    "ecifFundingEligible": true // true if this represents an industry cloud shift, strategic workshop, or workload migration that typically qualifies under Microsoft End-customer Investment Funds (ECIF)
   }
 ]
 
-CRITICAL: Return ONLY the JSON. Do not include markdown headers like \`\`\`json or anything else. Just the pure valid stringified array. Maximize authenticity. Ensure you provide at least 2 distinct articles for each of the four categories.`;
+CRITICAL: Return ONLY the JSON. Do not include markdown headers like \`\`\`json or anything else. Just the pure valid stringified array. Maximize authenticity. Ensure you provide at least 2 distinct articles for each of the four categories. Ensure they explicitly reference the ANZ business context where possible.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
@@ -236,8 +256,8 @@ CRITICAL: Return ONLY the JSON. Do not include markdown headers like \`\`\`json 
         const fallbackUrls = chunks ? chunks.map(chunk => chunk.web?.uri).filter(Boolean) as string[] : [];
         
         const validatedArticles: Article[] = parsedArticles.map((art: any, index: number) => {
-          let category: any = "product_tech";
-          if (["financial", "product_tech", "licensing_pricing", "leadership"].includes(art.category)) {
+          let category: any = "cloud_transformation";
+          if (["cloud_transformation", "licensing_ea", "pricing_news", "anz_strategy"].includes(art.category)) {
             category = art.category;
           }
           
@@ -262,6 +282,8 @@ CRITICAL: Return ONLY the JSON. Do not include markdown headers like \`\`\`json 
             sentiment: sentiment,
             impactScore: Number(art.impactScore) || 5,
             keyTakeaways: Array.isArray(art.keyTakeaways) ? art.keyTakeaways.slice(0, 4) : ["Significant enterprise implications", "Demonstrates continuing AI product strategy"],
+            anzActionableAdvice: art.anzActionableAdvice || "No local ANZ action has been registered for this event yet.",
+            ecifFundingEligible: art.ecifFundingEligible !== undefined ? !!art.ecifFundingEligible : false
           };
         });
 
@@ -319,33 +341,58 @@ app.post("/api/query", async (req, res) => {
 
   const ai = getGeminiClient();
   if (!ai) {
-    // Elegant local fallback QA model
-    console.log(`Local static QA executing for user query: "${query}"`);
-    let answer = "Answering query with pre-seeded Corporate intelligence:\n\n";
-    if (query.toLowerCase().includes("finance") || query.toLowerCase().includes("earning") || query.toLowerCase().includes("stock")) {
-      answer += "Microsoft continues to exhibit high growth, particularly in its Cloud division. In standard 2026 performance matrices, Intelligent Cloud accounts for over 42% of total corporate revenues, and Azure AI expansions have increased baseline operating margin yields. Stock sentiments remain predominantly resilient and positive due to early strategic positioning with advanced multimodal engines.";
-    } else if (query.toLowerCase().includes("licens") || query.toLowerCase().includes("pricing")) {
-      answer += "Microsoft has introduced flexible tiered licensing structures for Copilot. Multi-year commitments reduce baseline M365 Copilot licensing down to $22/user/month, while premium collaborative workspace autonomous agents start at $45/user/month. Windows Server 2026 core-based licenses now incorporate localized GPU physical acceleration limits.";
-    } else if (query.toLowerCase().includes("executive") || query.toLowerCase().includes("leadership") || query.toLowerCase().includes("nadella")) {
-      answer += "Satya Nadella continues as CEO, pushing heavily into autonomous and modular agency. The recently formed unified AI divisions fall under newly created VP and executive safety roles designed to coordinate internal systems and maintain policy-level alignment with evolving international AI standards.";
+    // Elegant local fallback QA model with authoritative ANZ country leader tone
+    console.log(`Local static ANZ Expert QA executing for query: "${query}"`);
+    let answer = "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\n";
+    answer += "As a senior specialist with 12+ years of experience bridging the gap between IT, Finance, and Procurement (including role active as ANZ Country Manager), here is a direct strategic assessment tailored specifically to local business structures:\n\n";
+    
+    if (query.toLowerCase().includes("finance") || query.toLowerCase().includes("earning") || query.toLowerCase().includes("cloud")) {
+      answer += "#### **1. Azure & Cloud Transformation Momentum in ANZ**\n";
+      answer += "*   **APRA & NZISM Compliance:** With local expansion of clean-energy AI high-density computing clusters in Sydney and Melbourne, regional cloud tenancy is transitioning to fully sovereign frameworks. This eliminates historical legal boundaries for banking and public sector agencies.\n";
+      answer += "*   **ECIF Funding Strategic Angle:** Up to 100% of proof-of-concept costs can be offset on Microsoft Azure migrations by registering eligible workloads. As an experienced strategist, my advice is to negotiate direct ECIF allocations with your Account Director prior to committing any engineering hours.";
+    } else if (query.toLowerCase().includes("licens") || query.toLowerCase().includes("agreement") || query.toLowerCase().includes("ea")) {
+      answer += "#### **2. Enterprise Agreement (EA) & Licensing Optimization**\n";
+      answer += "*   **Threshold Dynamics:** SCE and EAS models are experiencing baseline changes, notably raising profile minimum seat thresholds to 500. For mid-market business in Australia/NZ between 200 and 500 active records, transitioning to a Cloud Solution Provider (CSP) agreement structures a more agile, monthly variable budget matrix.\n";
+      answer += "*   **NPU / Core Formulas:** Licensing for on-prem Windows Server instances now counts localized coprocessing hardware values. Review legacy clusters immediately to prevent massive pricing audits.";
+    } else if (query.toLowerCase().includes("meetup") || query.toLowerCase().includes("narrabeen") || query.toLowerCase().includes("engagement")) {
+      answer += "#### **3. local Meetup Engagement: Narrabeen Business Group (NBG)**\n";
+      answer += "To drive local Sydney Northern Beaches IT-Finance synergy, I lead the monthly **Narrabeen Business Group Microsoft Strategy Meetup**:\n";
+      answer += "*   **Target Audience:** CFOs, procurement leads, and technology directors.\n";
+      answer += "*   **Operational Concept:** We host collaborative table discussions comparing actual, de-identified Microsoft EAs, diagnosing licensing waste, and providing step-by-step guidance on claiming partner and ECIF credits.\n";
+      answer += "*   **Strategy:** Bring your active renewal challenges to NSW roundtable sessions to co-model mitigation paths.";
+    } else if (query.toLowerCase().includes("copilot") || query.toLowerCase().includes("pricing") || query.toLowerCase().includes("agent")) {
+      answer += "#### **4. Copilot Tiered Pricing & Licensing Playbook**\n";
+      answer += "*   **Mid-Market Tiers:** Microsoft's premium agents are undergoing flexible restructuring. Committing to multi-year contracts can decrease baseline M365 Copilot licensing down to $22 per user/month, while advanced agent-building suites scale at $45 per user/month.\n";
+      answer += "*   **Mitigation Principle:** Prevent default seat assignment. Build structural teams of excellence to roll out licenses incrementally based on proven productivity metrics.";
     } else {
-      answer += "Based on stored Microsoft corporate briefings, Microsoft's core engineering focus centers heavily around agentic productivity workspaces (Copilot 3.0), decentralized hardware integrations via Copilot+ PCs, and solidifying cloud margins across regional data centers (such as the recent $10B clean-energy Scandinavian expansions).";
+      answer += "#### **5. General ANZ Strategic Briefing**\n";
+      answer += "Microsoft's current push focuses on agentic workspace workflows, decentralized NPU local execution systems, and sovereign region compliance. Local businesses should prioritize:\n\n";
+      answer += "1.  **Contract Readiness:** Auditing agreement seats 18 days prior to renewal.\n";
+      answer += "2.  **ECIF Registration:** Ensuring your system integrator aligns with approved Azure End-customer Investment Funds.\n";
+      answer += "3.  **Community Connection:** Attending our monthly Narrabeen Business Group roundtable to exchange best-practice frameworks.";
     }
 
     return res.json({
-      answer: answer + "\n\n*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web searches regarding latest updates.)*",
+      answer: answer + "\n\n*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*",
       sources: [
-        { title: "Microsoft Investor Relations", url: "https://www.microsoft.com/en-us/investor" },
-        { title: "Microsoft Security and Trust Center", url: "https://news.microsoft.com/" }
+        { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
+        { title: "Narrabeen Business Group Meetup Hub", url: "https://www.meetup.com" }
       ]
     });
   }
 
   try {
     console.log(`Running grounded web search query for user: "${query}"`);
-    const systemPrompt = `You are a professional Microsoft Corporate Intelligence Advisor. Answer the user's research question comprehensively based on current, real-time web information.
-Construct a highly professional response using Markdown. Organize it with clear headings, bullets, and bold terms where necessary. Mention specific figures, dates, or product details if available.
-Always maintain an objective corporate analyst tone. Highlight sources and verify facts.`;
+    const systemPrompt = `You are a Senior Expert Advisor in Microsoft Cloud Transformation, Licensing Strategy, and IT sales for the Australia & New Zealand (ANZ) market.
+You speak with the authoritative, strategic, and professional tone of a Country Manager with 12+ years of experience bridging the gap between IT, Finance, and Procurement.
+Your expertise spans Enterprise Agreements (EA), Server and Cloud Enrollment (SCE), EAS models, Microsoft Azure architectures, and specialized Microsoft funding programs like ECIF (End-customer Investment Fund).
+
+Guidelines for your response:
+1. Provide highly professional, action-oriented advice tailored for ANZ businesses, procurement professionals, CFOs, and CIOs.
+2. Incorporate structural recommendations (e.g., pre-renewal audit schedules, CSP vs. EA comparisons, and licensing compliance advice).
+3. Where suitable, explain how businesses can utilize Microsoft ECIF (End-customer Investment Fund) to subsidise engineering of their cloud or AI transformations.
+4. Keep the tone authoritative but accessible and helpful, avoiding self-praising marketing jargon. Refer to the Narrabeen Business Group monthly meetup in Sydney's Northern Beaches as a great venue for local mid-market leaders to gain over-the-shoulder diagnostic help.
+5. Format your response beautifully in clean Markdown with logical headings, bullet lists, and key items in bold.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",

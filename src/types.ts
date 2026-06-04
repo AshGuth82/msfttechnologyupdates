@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type NewsCategory = 'financial' | 'product_tech' | 'licensing_pricing' | 'leadership';
+export type NewsCategory = 'cloud_transformation' | 'licensing_ea' | 'pricing_news' | 'anz_strategy';
 
 export interface Article {
   id: string;
@@ -16,6 +16,8 @@ export interface Article {
   sentiment: 'positive' | 'neutral' | 'negative';
   impactScore: number; // 1-10
   keyTakeaways: string[];
+  anzActionableAdvice?: string; // Actionable advice specifically tailored for Australia & New Zealand (ANZ) enterprise leaders
+  ecifFundingEligible?: boolean; // Indicates if this activity/migration has potential ECIF funding options
 }
 
 export interface CachedNews {

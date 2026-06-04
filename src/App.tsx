@@ -89,24 +89,24 @@ export default function App() {
   // Preset queries for AI Copilot Analyst
   const presetQueries = [
     {
-      label: "Financial Report",
-      query: "Summarize the recent financial earnings segment performance and Azure cloud growth trend.",
-      icon: <DollarSign className="w-3.5 h-3.5 mr-1" />
+      label: "Azure sovereign AI (A/NZ)",
+      query: "Analyze the implications of Microsoft's local sovereign AI clusters in Sydney and Melbourne for compliance-restricted organizations in Australia and New Zealand.",
+      icon: <Globe className="w-3.5 h-3.5 mr-1" />
     },
     {
-      label: "Copilot 3.0 Details",
-      query: "Explain what is new about Copilot 3.0 autonomous agents, pricing structure and active deployment schedules.",
-      icon: <Sparkles className="w-3.5 h-3.5 mr-1" />
-    },
-    {
-      label: "Licensing Changes",
-      query: "List the core licensing updates affecting Windows Server 2026, GPU / NPU hardware quotas, and Microsoft 365 Copilot pricing tiers.",
+      label: "EA Restructuring Strategy",
+      query: "For ANZ organizations with 300-600 seats, list clear strategies to tackle Microsoft's rising minimum seat requirements for SCE and EAS agreements.",
       icon: <Layers className="w-3.5 h-3.5 mr-1" />
     },
     {
-      label: "Leadership Shuffles",
-      query: "Analyze the strategic impact of the newly appointed Executive VP and Chief AI Officer Aris Vance under Satya Nadella's team.",
-      icon: <Users className="w-3.5 h-3.5 mr-1 text-sky-400" />
+      label: "Exchange Rate Adjustments",
+      query: "What is the strategic impact of the 6% AUD/NZD list price foreign exchange adjustment on rolling monthly cloud subscriptions, and how can we mitigate it?",
+      icon: <DollarSign className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+    },
+    {
+      label: "How to claim ECIF Funding",
+      query: "Outline the step-by-step roadmap to qualify for and unlock up to 100% subsidized Azure End-customer Investment Funds (ECIF) for ANZ enterprises.",
+      icon: <Sparkles className="w-3.5 h-3.5 mr-1" />
     }
   ];
 
@@ -148,6 +148,7 @@ export default function App() {
         art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         art.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
         art.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (art.anzActionableAdvice && art.anzActionableAdvice.toLowerCase().includes(searchQuery.toLowerCase())) ||
         art.keyTakeaways.some(take => take.toLowerCase().includes(searchQuery.toLowerCase()));
       return categoryMatch && searchMatch;
     })
@@ -173,30 +174,30 @@ export default function App() {
     : 0;
 
   const categoryMap: Record<NewsCategory, { label: string; bg: string; text: string; icon: any }> = {
-    financial: { 
-      label: "Financial Updates", 
-      bg: "bg-emerald-500/10 border-emerald-500/30", 
-      text: "text-emerald-400", 
-      icon: <DollarSign className="w-4 h-4" /> 
-    },
-    product_tech: { 
-      label: "Products & Releases", 
+    cloud_transformation: { 
+      label: "Cloud Transformation Insights", 
       bg: "bg-sky-500/10 border-sky-500/30", 
-      text: "text-sky-400", 
-      icon: <Cpu className="w-4 h-4" /> 
+      text: "text-sky-450", 
+      icon: <Cpu className="w-4 h-4 text-sky-400" /> 
     },
-    licensing_pricing: { 
-      label: "Licensing & Pricing", 
+    licensing_ea: { 
+      label: "Licensing & EA Updates", 
       bg: "bg-amber-500/10 border-amber-500/30", 
-      text: "text-amber-400", 
-      icon: <Layers className="w-4 h-4" /> 
+      text: "text-amber-450", 
+      icon: <Layers className="w-4 h-4 text-amber-400" /> 
     },
-    leadership: { 
-      label: "Executive Leadership", 
+    pricing_news: { 
+      label: "Pricing News", 
+      bg: "bg-emerald-500/10 border-emerald-500/30", 
+      text: "text-emerald-450", 
+      icon: <DollarSign className="w-4 h-4 text-emerald-400" /> 
+    },
+    anz_strategy: { 
+      label: "ANZ Strategy & ECIF", 
       bg: "bg-purple-500/10 border-purple-500/30", 
       text: "text-purple-400", 
-      icon: <Users className="w-4 h-4" /> 
-    },
+      icon: <Globe className="w-4 h-4 text-purple-400" /> 
+    }
   };
 
   const getSentimentColor = (sentiment: string) => {
@@ -534,6 +535,30 @@ export default function App() {
                               ))}
                             </ul>
 
+                            {/* Technical Briefing Advisory Template Section */}
+                            {article.anzActionableAdvice && (
+                              <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
+                                  <h6 className="text-xs font-bold uppercase tracking-wider text-white">
+                                    ANZ Commercial & Advisory Briefing
+                                  </h6>
+                                </div>
+                                <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
+                                  {article.anzActionableAdvice}
+                                </p>
+                                
+                                {article.ecifFundingEligible && (
+                                  <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>
+                                      <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
                               <span className="text-xs text-slate-400">
                                 Segment Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
@@ -543,7 +568,7 @@ export default function App() {
                                 href={article.url} 
                                 target="_blank" 
                                 rel="noreferrer" 
-                                className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 hover:underline font-mono"
+                                className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
                               >
                                 <span>Access Source File</span>
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -728,21 +753,102 @@ export default function App() {
               <ul className="mt-3 space-y-2 text-xs text-slate-300">
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold select-none">•</span>
-                  <span><strong className="text-white">Financial Matrix:</strong> Quarterly earnings reports (Q3/Q4 2026), institutional cloud margin performance, and capital allocation frameworks.</span>
+                  <span><strong className="text-white">Cloud Transformation Insights:</strong> Local Azure infrastructure updates, sovereign node capabilities, and APRA compliance frameworks in Sydney/Auckland.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-sky-400 font-bold select-none">•</span>
-                  <span><strong className="text-white">Product & Technology:</strong> Cloud capabilities, logical qubit demonstrates, Copilot 3.0 agent deployments of neural cores.</span>
+                  <span><strong className="text-white">Licensing & EA Agreement Updates:</strong> Restructuring SCE profiles, seat minimum increments, and Windows Server AI cores rules.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold select-none">•</span>
-                  <span><strong className="text-white">Licensing Terms:</strong> Hybrid-Core servers, NPU machines, enterprise subscription reductions to $22/month.</span>
+                  <span><strong className="text-white">Pricing News:</strong> Currency fluctuations, AUD/NZD list adjustments, CSP annual commitment vs rolling monthly ratios.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-400 font-bold select-none">•</span>
-                  <span><strong className="text-white">Executive Management:</strong> Board announcements, key AI directorates reporting straight to CEO Satya Nadella.</span>
+                  <span><strong className="text-white">ANZ Strategy & ECIF:</strong> Direct allocations from Microsoft End-customer Investment Funds to subsidize POC execution.</span>
                 </li>
               </ul>
+            </div>
+
+            {/* Authoritative "About" Section - Lead Consultant Profile */}
+            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
+              
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 flex items-center justify-center font-bold text-slate-950 font-sans text-sm tracking-wider shadow">
+                  CM
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white tracking-wide">ANZ Lead Advisor Profile</h4>
+                  <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Country Manager & EA Strategist</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-350 leading-relaxed font-sans mb-3 select-text">
+                Leveraging **12+ years of senior industry expertise**, I act as a strategic bridge coordinating investment decisions between **Procurement, Corporate Finance, and IT Leadership** across the ANZ territory. 
+              </p>
+              
+              <div className="space-y-2 pt-2 border-t border-slate-850">
+                <div className="flex items-center gap-2 text-xs text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-sky-450"></span>
+                  <span className="font-medium">Complex EA & SCE Structuring Advisor</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-455"></span>
+                  <span className="font-medium">ECIF Funding Grant Application Specialist</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-450"></span>
+                  <span className="font-medium">Azure Cloud Economics & TCO Architect</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Local Engagement Hub - Narrabeen Business Group Meetup */}
+            <div className="bg-gradient-to-b from-[#111827] to-[#121622] border border-slate-800/90 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-purple-500/10 rounded border border-purple-500/25">
+                    <Users className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+                    Local Meetup Integration
+                  </h4>
+                </div>
+                <span className="text-[10px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase">
+                  Sydney Session
+                </span>
+              </div>
+
+              <h5 className="text-sm font-bold text-white mb-2 tracking-wide font-sans">
+                Narrabeen Business Group: MS Strategy Table
+              </h5>
+              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                Join our Sydney NSW roundtable to swap real contract renewal structures, compare de-identified licensing metrics, and review step-by-step maps on claiming ECIF credits directly.
+              </p>
+
+              {/* Meetup Interactive Registration CTA Panel */}
+              <div className="bg-slate-950/50 rounded-lg p-3.5 border border-slate-850 mb-4 flex items-center justify-between text-xs font-mono">
+                <div>
+                  <span className="text-slate-500 block text-[10px] uppercase">Next Scheduled Event</span>
+                  <strong className="text-slate-200 block text-xs mt-0.5">Thursday, 6:30 PM (AEST)</strong>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-500 block text-[10px] uppercase">RSVP Capacity</span>
+                  <strong className="text-slate-200 block text-xs mt-0.5">18 / 25 Booked</strong>
+                </div>
+              </div>
+
+              <a
+                id="meetup-registration-link"
+                href="https://www.meetup.com"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700/80 text-xs text-slate-200 font-bold py-2.5 px-4 rounded-lg transition duration-150 cursor-pointer text-center"
+              >
+                <span>Register for Next Free Roundtable</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
             </div>
 
           </section>
