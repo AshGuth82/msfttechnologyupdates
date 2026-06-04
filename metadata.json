@@ -1,0 +1,6 @@
+{
+  "name": "Microsoft Corporate Intelligence Hub",
+  "description": "A real-time AI-powered dashboard tracking financial updates, product and technology releases, licensing and pricing adjustments, and executive announcements for Microsoft Corporation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
