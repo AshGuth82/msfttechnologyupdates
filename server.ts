@@ -153,21 +153,21 @@ const FALLBACK_ARTICLES: Article[] = [
   },
   {
     id: "anz-strat-2",
-    title: "Narrabeen Business Group Meetup: Bridging IT and Finance in Sydney's Northern Beaches",
-    summary: "The Narrabeen Business Group has announced its monthly Microsoft Local Strategy Meetup for mid-market leaders. The session will focus on navigating EA renewals, cloud budgets, and unlocking local funding resources.",
+    title: "Microsoft ANZ Partner Enablement: Co-Investment Programs for AI Transformation",
+    summary: "Microsoft Australia has unveiled a targeted co-investment framework for certified partners across Sydney, Melbourne, and Auckland. The program provides structured technical scoping and direct Azure sandbox credits to qualifying customers.",
     category: "anz_strategy",
-    url: "https://www.meetup.com",
-    source: "Narrabeen Business Group",
-    publishedDate: "2026-06-03",
+    url: "https://news.microsoft.com/en-au/",
+    source: "Channel Intelligence Weekly",
+    publishedDate: "2026-06-02",
     sentiment: "positive",
-    impactScore: 6,
+    impactScore: 8,
     keyTakeaways: [
-      "Monthly focused meetups in Sydney's Northern Beaches connecting directors",
-      "Interactive Q&A focusing on real-world cost mitigation in Microsoft cloud portfolios",
-      "Features live case studies of local businesses obtaining ECIF funding grants"
+      "Provides structured funding offsets to reduce customer licensing migration friction",
+      "Expands local technical architecture support from Microsoft field engineering specialists",
+      "Aims to accelerate enterprise deployment of sovereign AI workloads in high-compliance sectors"
     ],
-    anzActionableAdvice: "If you are based in the ANZ region, register for the next Narrabeen Business Group Meetup. Bring your current Microsoft contract challenges for an over-the-shoulder diagnostic with local strategy experts.",
-    ecifFundingEligible: false
+    anzActionableAdvice: "Validate with your Microsoft Account Executive if your certified implementation partner has applied for dynamic co-investment alignment. Ensure all scopes of work are registered in the Microsoft Partner Center.",
+    ecifFundingEligible: true
   }
 ];
 
@@ -346,12 +346,12 @@ function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { 
     answer += "#### **2. Enterprise Agreement (EA) & Licensing Optimization**\n";
     answer += "*   **Threshold Dynamics:** SCE and EAS models are experiencing baseline changes, notably raising profile minimum seat thresholds to 500. For mid-market business in Australia/NZ between 200 and 500 active records, transitioning to a Cloud Solution Provider (CSP) agreement structures a more agile, monthly variable budget matrix.\n";
     answer += "*   **NPU / Core Formulas:** Licensing for on-prem Windows Server instances now counts localized coprocessing hardware values. Review legacy clusters immediately to prevent massive pricing audits.";
-  } else if (lowerQuery.includes("meetup") || lowerQuery.includes("narrabeen") || lowerQuery.includes("engagement") || lowerQuery.includes("roundtable")) {
-    answer += "#### **3. local Meetup Engagement: Narrabeen Business Group (NBG)**\n";
-    answer += "To drive local Sydney Northern Beaches IT-Finance synergy, I lead the monthly **Narrabeen Business Group Microsoft Strategy Meetup**:\n";
-    answer += "*   **Target Audience:** CFOs, procurement leads, and technology directors.\n";
-    answer += "*   **Operational Concept:** We host collaborative table discussions comparing actual, de-identified Microsoft EAs, diagnosing licensing waste, and providing step-by-step guidance on claiming partner and ECIF credits.\n";
-    answer += "*   **Strategy:** Bring your active renewal challenges to NSW roundtable sessions to co-model mitigation paths.";
+  } else if (lowerQuery.includes("meetup") || lowerQuery.includes("roundtable") || lowerQuery.includes("engagement")) {
+    answer += "#### **3. ANZ Microsoft Executive CIO Roundtables**\n";
+    answer += "To address complex licensing structures in major metropolitan hubs, we facilitate invitation-only **Microsoft Executive CIO Strategy Roundtables**:\n";
+    answer += "*   **Target Audience:** CFOs, Chief Procurement Officers, and Technology Directors.\n";
+    answer += "*   **Operational Concept:** We explore actual, de-identified Microsoft EAs, diagnosing underutilized seat allocations, and providing structural maps for partner co-investment credits.\n";
+    answer += "*   **Strategy:** Engage with your regional Account Team to initiate custom licensing diagnostics ahead of your contract anniversary date.";
   } else if (lowerQuery.includes("copilot") || lowerQuery.includes("pricing") || lowerQuery.includes("agent") || lowerQuery.includes("rate") || lowerQuery.includes("exchange") || lowerQuery.includes("6%")) {
     answer += "#### **4. Copilot Tiered Pricing & Licensing Playbook**\n";
     answer += "*   **Mid-Market Tiers:** Microsoft's premium agents are undergoing flexible restructuring. Committing to multi-year contracts can decrease baseline M365 Copilot licensing down to $22 per user/month, while advanced agent-building suites scale at $45 per user/month.\n";
@@ -361,7 +361,7 @@ function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { 
     answer += "Microsoft's current push focuses on agentic workspace workflows, decentralized NPU local execution systems, and sovereign region compliance. Local businesses should prioritize:\n\n";
     answer += "1.  **Contract Readiness:** Auditing agreement seats 18 days prior to renewal.\n";
     answer += "2.  **ECIF Registration:** Ensuring your system integrator aligns with approved Azure End-customer Investment Funds.\n";
-    answer += "3.  **Community Connection:** Attending our monthly Narrabeen Business Group roundtable to exchange best-practice frameworks.";
+    answer += "3.  **Executive Alignment:** Participating in regular enterprise roundtable forums to exchange cost-mitigation blueprints.";
   }
 
   if (noteSuffix) {
@@ -372,7 +372,7 @@ function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { 
     answer: answer,
     sources: [
       { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
-      { title: "Narrabeen Business Group Meetup Hub", url: "https://www.meetup.com" }
+      { title: "Microsoft Australia Newsroom Briefings", url: "https://news.microsoft.com/en-au/" }
     ]
   };
 }
@@ -402,7 +402,7 @@ Guidelines for your response:
 1. Provide highly professional, action-oriented advice tailored for ANZ businesses, procurement professionals, CFOs, and CIOs.
 2. Incorporate structural recommendations (e.g., pre-renewal audit schedules, CSP vs. EA comparisons, and licensing compliance advice).
 3. Where suitable, explain how businesses can utilize Microsoft ECIF (End-customer Investment Fund) to subsidise engineering of their cloud or AI transformations.
-4. Keep the tone authoritative but accessible and helpful, avoiding self-praising marketing jargon. Refer to the Narrabeen Business Group monthly meetup in Sydney's Northern Beaches as a great venue for local mid-market leaders to gain over-the-shoulder diagnostic help.
+4. Keep the tone authoritative but accessible and helpful, avoiding self-praising marketing jargon. Highlight Microsoft regional co-investment programs and certified licensing diagnostic advisors as excellent resources for enterprise leadership.
 5. Format your response beautifully in clean Markdown with logical headings, bullet lists, and key items in bold.`;
 
     const response = await ai.models.generateContent({

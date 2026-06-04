@@ -32,7 +32,9 @@ import {
   X,
   Mail,
   Send,
-  Check
+  Check,
+  Download,
+  Share2
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse } from "./types";
 import { motion, AnimatePresence } from "motion/react";
@@ -260,6 +262,84 @@ export default function App() {
       current.includes(category)
         ? current.filter(c => c !== category)
         : [...current, category]
+    );
+  };
+
+  const exportToCSV = () => {
+    if (filteredArticles.length === 0) return;
+    
+    const headers = [
+      "ID", "Title", "Category", "Source", "Published Date", "Sentiment", 
+      "Impact Score", "URL", "Summary", "Key Takeaways", "ANZ Actionable Advice", "ECIF Eligible"
+    ];
+    
+    const escapeCSVCell = (val: any) => {
+      if (val === undefined || val === null) return '""';
+      let stringVal = "";
+      if (Array.isArray(val)) {
+        stringVal = val.join("; ");
+      } else {
+        stringVal = String(val);
+      }
+      const escaped = stringVal.replace(/"/g, '""');
+      return `"${escaped}"`;
+    };
+
+    const csvContent = [
+      headers.join(","),
+      ...filteredArticles.map(art => [
+        escapeCSVCell(art.id),
+        escapeCSVCell(art.title),
+        escapeCSVCell(art.category),
+        escapeCSVCell(art.source),
+        escapeCSVCell(art.publishedDate),
+        escapeCSVCell(art.sentiment),
+        escapeCSVCell(art.impactScore),
+        escapeCSVCell(art.url),
+        escapeCSVCell(art.summary),
+        escapeCSVCell(art.keyTakeaways),
+        escapeCSVCell(art.anzActionableAdvice),
+        escapeCSVCell(art.ecifFundingEligible ? "YES" : "NO")
+      ].join(","))
+    ].join("\r\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `microsoft_intel_briefs_${dateStr}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    addToast(
+      "pricing_news",
+      "Export CSV Successful",
+      `Successfully generated CSV file containing ${filteredArticles.length} filtered bulletins.`
+    );
+  };
+
+  const exportToJSON = () => {
+    if (filteredArticles.length === 0) return;
+    
+    const jsonString = JSON.stringify(filteredArticles, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `microsoft_intel_briefs_${dateStr}.json`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    addToast(
+      "pricing_news",
+      "Export JSON Successful",
+      `Successfully generated JSON file containing ${filteredArticles.length} filtered bulletins.`
     );
   };
 
@@ -639,18 +719,41 @@ export default function App() {
 
             {/* News Database Cards Output */}
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold tracking-wide text-slate-300 uppercase font-mono">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111827] p-3.5 border border-slate-800 rounded-xl">
+                <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
                   Scanned Intelligence Briefs ({filteredArticles.length})
                 </h3>
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery("")} 
-                    className="text-xs text-sky-400 hover:underline hover:text-sky-300 transition"
-                  >
-                    Clear Search
-                  </button>
-                )}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery("")} 
+                      className="text-xs text-sky-400 hover:underline hover:text-sky-300 transition"
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                  {filteredArticles.length > 0 && (
+                    <div className="flex items-center gap-2 border-l border-slate-800 sm:pl-3.5 pl-0">
+                      <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">Export:</span>
+                      <button
+                        onClick={exportToCSV}
+                        className="inline-flex items-center gap-1 bg-[#0c101a] hover:bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                        title="Export current filtered list to CSV spreadsheet"
+                      >
+                        <Download className="w-3 h-3 text-sky-400" />
+                        <span>CSV</span>
+                      </button>
+                      <button
+                        onClick={exportToJSON}
+                        className="inline-flex items-center gap-1 bg-[#0c101a] hover:bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                        title="Export current filtered list to JSON dataset"
+                      >
+                        <Download className="w-3 h-3 text-emerald-400" />
+                        <span>JSON</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {loading ? (
@@ -735,8 +838,26 @@ export default function App() {
                           </p>
 
                           <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
-                            <span>Source: <strong className="text-slate-400">{article.source}</strong></span>
-                            <span>Date: <strong className="text-slate-400">{article.publishedDate}</strong></span>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                              <span>Source: <strong className="text-slate-400">{article.source}</strong></span>
+                              <span>Date: <strong className="text-slate-400">{article.publishedDate}</strong></span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(article.url || window.location.href);
+                                addToast(
+                                  article.category,
+                                  "Link Copied",
+                                  `Successfully copied sharing link/URL for: ${article.title}`
+                                );
+                              }}
+                              className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-400 rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                              title="Copy sharing link to clipboard"
+                            >
+                              <Share2 className="w-3 h-3" />
+                              <span>Copy Link</span>
+                            </button>
                           </div>
                         </div>
 
@@ -1348,51 +1469,14 @@ export default function App() {
               </div>
             </div>
 
-            {/* Local Engagement Hub - Narrabeen Business Group Meetup */}
-            <div className="bg-gradient-to-b from-[#111827] to-[#121622] border border-slate-800/90 rounded-xl p-5">
-              <div className="flex items-center justify-between mb-3.5">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-purple-500/10 rounded border border-purple-500/25">
-                    <Users className="w-4 h-4 text-purple-400" />
-                  </div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-                    Local Meetup Integration
-                  </h4>
-                </div>
-                <span className="text-[10px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded font-mono font-bold uppercase">
-                  Sydney Session
-                </span>
-              </div>
-
-              <h5 className="text-sm font-bold text-white mb-2 tracking-wide font-sans">
-                Narrabeen Business Group: MS Strategy Table
-              </h5>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Join our Sydney NSW roundtable to swap real contract renewal structures, compare de-identified licensing metrics, and review step-by-step maps on claiming ECIF credits directly.
+            {/* Microsoft Corporate Intelligence Systems Division Information */}
+            <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-305 font-mono mb-2">
+                Executive Support Dispatch
+              </h4>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Contact our sovereign intelligence support desk to request a de-identified, formal audit blueprint or custom licensing optimization telemetry overview for your enterprise organization.
               </p>
-
-              {/* Meetup Interactive Registration CTA Panel */}
-              <div className="bg-slate-950/50 rounded-lg p-3.5 border border-slate-850 mb-4 flex items-center justify-between text-xs font-mono">
-                <div>
-                  <span className="text-slate-500 block text-[10px] uppercase">Next Scheduled Event</span>
-                  <strong className="text-slate-200 block text-xs mt-0.5">Thursday, 6:30 PM (AEST)</strong>
-                </div>
-                <div className="text-right">
-                  <span className="text-slate-500 block text-[10px] uppercase">RSVP Capacity</span>
-                  <strong className="text-slate-200 block text-xs mt-0.5">18 / 25 Booked</strong>
-                </div>
-              </div>
-
-              <a
-                id="meetup-registration-link"
-                href="https://www.meetup.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700/80 text-xs text-slate-200 font-bold py-2.5 px-4 rounded-lg transition duration-150 cursor-pointer text-center"
-              >
-                <span>Register for Next Free Roundtable</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </a>
             </div>
 
           </section>
