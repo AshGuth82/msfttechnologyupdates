@@ -447,6 +447,62 @@ Guidelines for your response:
   }
 });
 
+// 3. Structured Intelligence Article Summary Dispatch Endpoint (Simulated)
+app.post("/api/send-summary", (req, res) => {
+  const { articleId, email, title, category, keyTakeaways, anzActionableAdvice } = req.body;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: "A valid subscriber email is required for dispatch." });
+  }
+
+  if (!articleId || !title) {
+    return res.status(400).json({ error: "Missing article context for generating a structured summary." });
+  }
+
+  // Generate highly formatted dispatch log representing a professional MSFT brand-aligned email transmission
+  const borderLine = "=".repeat(80);
+  const dispatchId = `MSG-INTEL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const timestamp = new Date().toISOString();
+
+  console.log(`\n${borderLine}`);
+  console.log(`[SOVEREIGN EMAIL DISPATCH CARRIER ENGINE]`);
+  console.log(`Dispatch ID : ${dispatchId}`);
+  console.log(`Timestamp   : ${timestamp}`);
+  console.log(`Recipient   : ${email}`);
+  console.log(`Subject     : [MICROSOFT CORPORATE INTELLIGENCE ADVISORY] ${title.toUpperCase()}`);
+  console.log(`${borderLine}`);
+  console.log(`Dear Subscriber,\n`);
+  console.log(`Below is your requested Micro-Digest of key intelligence elements tracking operational changes in Australia/New Zealand.`);
+  console.log(`\nARTICLE HIGHLIGHT:`);
+  console.log(`- Title: ${title}`);
+  console.log(`- Category Domain: ${category || "General Strategy"}`);
+  console.log(`- Article ID Ref: ${articleId}`);
+  
+  if (keyTakeaways && Array.isArray(keyTakeaways)) {
+    console.log(`\nKEY INTELLIGENCE POINTS:`);
+    keyTakeaways.forEach((point, i) => {
+      console.log(`  [${i + 1}] ${point}`);
+    });
+  }
+
+  if (anzActionableAdvice) {
+    console.log(`\nANZ COMMERCIAL & ADVISORY BRIEFING:`);
+    console.log(`  ${anzActionableAdvice}`);
+  }
+
+  console.log(`\nTo revoke subscriptions or update your intelligence profile, consult your client dashboard.`);
+  console.log(`\n© 2026 Microsoft Corporate Intelligence Systems Division. All rights reserved.`);
+  console.log(`${borderLine}\n`);
+
+  res.json({
+    success: true,
+    dispatchId,
+    recipient: email,
+    timestamp,
+    message: `Structured summary dispatch request processed successfully. Verified secure delivery carrier assigned.`
+  });
+});
+
 // Configure Vite integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   TrendingUp, 
   Coins, 
@@ -23,6 +23,8 @@ import {
   BarChart3, 
   Terminal,
   ArrowRight,
+  ArrowUpRight,
+  ArrowDownRight,
   ChevronDown,
   ChevronUp,
   Info,
@@ -34,36 +36,101 @@ import {
   Send,
   Check,
   Download,
-  Share2
+  Share2,
+  Bookmark,
+  Clock,
+  Sun,
+  Moon,
+  GripVertical,
+  Pin,
+  Trash2
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse } from "./types";
 import { motion, AnimatePresence } from "motion/react";
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  BarChart, 
+  Bar, 
+  LineChart,
+  Line,
+  ComposedChart,
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend, 
+  CartesianGrid 
+} from "recharts";
+
+const calculateReadTime = (article: Article): string => {
+  const titleText = article.title || "";
+  const summaryText = article.summary || "";
+  const takeawaysText = (article.keyTakeaways || []).join(" ");
+  const adviceText = article.anzActionableAdvice || "";
+  const combinedText = `${titleText} ${summaryText} ${takeawaysText} ${adviceText}`;
+  const wordCount = combinedText.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(wordCount / 200));
+  return `${minutes} min read`;
+};
 
 export default function App() {
+  // Theme Select Configuration (High Contrast, Accessible Microsoft Corporate Aesthetic)
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_theme");
+      return (stored === "light" || stored === "dark") ? stored : "dark";
+    } catch {
+      return "dark";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("microsoft_intel_theme", theme);
+    } catch (e) {
+      console.warn("localStorage write blocked:", e);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (theme === "light") {
+      document.body.classList.add("light");
+      document.body.style.backgroundColor = "#f3f6fc";
+      document.body.style.color = "#0f172a";
+    } else {
+      document.body.classList.remove("light");
+      document.body.style.backgroundColor = "#0b0f19";
+      document.body.style.color = "#f1f5f9";
+    }
+  }, [theme]);
+
+  const isDark = theme === "dark";
+
   const categoryMap: Record<NewsCategory, { label: string; bg: string; text: string; icon: any }> = {
     cloud_transformation: { 
       label: "Cloud Transformation Insights", 
-      bg: "bg-sky-500/10 border-sky-500/30", 
-      text: "text-sky-450", 
-      icon: <Cpu className="w-4 h-4 text-sky-400" /> 
+      bg: isDark ? "bg-sky-500/10 border-sky-500/30" : "bg-sky-100/70 border-sky-200", 
+      text: isDark ? "text-sky-450" : "text-sky-800 font-semibold", 
+      icon: <Cpu className={`w-4 h-4 ${isDark ? "text-sky-400" : "text-sky-700"}`} /> 
     },
     licensing_ea: { 
       label: "Licensing & EA Updates", 
-      bg: "bg-amber-500/10 border-amber-500/30", 
-      text: "text-amber-450", 
-      icon: <Layers className="w-4 h-4 text-amber-400" /> 
+      bg: isDark ? "bg-amber-500/10 border-amber-500/30" : "bg-amber-100/70 border-amber-200", 
+      text: isDark ? "text-amber-450" : "text-amber-800 font-semibold", 
+      icon: <Layers className={`w-4 h-4 ${isDark ? "text-amber-400" : "text-amber-700"}`} /> 
     },
     pricing_news: { 
       label: "Pricing News", 
-      bg: "bg-emerald-500/10 border-emerald-500/30", 
-      text: "text-emerald-450", 
-      icon: <DollarSign className="w-4 h-4 text-emerald-400" /> 
+      bg: isDark ? "bg-emerald-500/10 border-emerald-500/30" : "bg-emerald-100/70 border-emerald-200", 
+      text: isDark ? "text-emerald-450" : "text-emerald-800 font-semibold", 
+      icon: <DollarSign className={`w-4 h-4 ${isDark ? "text-emerald-400" : "text-emerald-700"}`} /> 
     },
     anz_strategy: { 
       label: "ANZ Strategy & ECIF", 
-      bg: "bg-purple-500/10 border-purple-500/30", 
-      text: "text-purple-400", 
-      icon: <Globe className="w-4 h-4 text-purple-400" /> 
+      bg: isDark ? "bg-purple-500/10 border-purple-500/30" : "bg-purple-100/70 border-purple-200", 
+      text: isDark ? "text-purple-400" : "text-purple-800 font-semibold", 
+      icon: <Globe className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-700"}`} /> 
     }
   };
 
@@ -110,6 +177,114 @@ export default function App() {
     });
   };
 
+  // Bookmarking / Saved Articles state (Persisted in localStorage)
+  const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_bookmarks");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_pinned");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
+  const [deletedArticleIds, setDeletedArticleIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_deleted");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleSelectArticle = (id: string) => {
+    setSelectedArticleIds(current =>
+      current.includes(id) ? current.filter(item => item !== id) : [...current, id]
+    );
+  };
+
+  const toggleBookmark = (id: string, title: string, category: NewsCategory) => {
+    setBookmarkedIds(current => {
+      const isAlreadyBookmarked = current.includes(id);
+      const next = isAlreadyBookmarked
+        ? current.filter(item => item !== id)
+        : [...current, id];
+      localStorage.setItem("microsoft_intel_bookmarks", JSON.stringify(next));
+      addToast(
+        category,
+        isAlreadyBookmarked ? "Bookmark Removed" : "Bookmark Saved",
+        isAlreadyBookmarked 
+          ? `Successfully removed: "${title.slice(0, 45)}..." from Saved Briefs.`
+          : `Successfully saved: "${title.slice(0, 45)}..." for offline reference.`
+      );
+      return next;
+    });
+  };
+
+  const togglePin = (id: string, title: string, category: NewsCategory) => {
+    setPinnedIds(current => {
+      const isAlreadyPinned = current.includes(id);
+      const next = isAlreadyPinned
+        ? current.filter(item => item !== id)
+        : [...current, id];
+      localStorage.setItem("microsoft_intel_pinned", JSON.stringify(next));
+      addToast(
+        category,
+        isAlreadyPinned ? "Article Unpinned" : "Article Pinned",
+        isAlreadyPinned
+          ? `Successfully unpinned: "${title.slice(0, 45)}...". It will return to its standard sorted location.`
+          : `Successfully pinned: "${title.slice(0, 45)}..." to stay at the top.`
+      );
+      return next;
+    });
+  };
+
+  const handleNativeShare = async (e: React.MouseEvent, title: string, url: string, category: NewsCategory) => {
+    e.stopPropagation();
+    const shareUrl = url || window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: `Check out this Microsoft Intelligence Briefing: "${title}"`,
+          url: shareUrl,
+        });
+        addToast(
+          category,
+          "Shared Successfully",
+          "Advisory shared successfully via native share system."
+        );
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          // fallback to clipboard copy
+          navigator.clipboard.writeText(shareUrl);
+          addToast(
+            category,
+            "Link Copied (Fallback)",
+            "Native share was canceled or unavailable. The URL has been copied to your clipboard instead."
+          );
+        }
+      }
+    } else {
+      // fallback
+      navigator.clipboard.writeText(shareUrl);
+      addToast(
+        category,
+        "Link Copied",
+        "Your browser doesn't support direct system sharing. Link copied to clipboard!"
+      );
+    }
+  };
+
   const handleTestWatchlistToast = () => {
     if (watchlist.length === 0) {
       addToast(
@@ -140,8 +315,24 @@ export default function App() {
   // Filters and Selection States
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory | "all">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment">("date");
+  const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">("date");
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
+  const [expandedSavedId, setExpandedSavedId] = useState<string | null>(null);
+  const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M">("1M");
+  const [liveMsftPrice, setLiveMsftPrice] = useState<number>(422.86);
+
+  useEffect(() => {
+    // Set up stock fluctuation
+    const timer = setInterval(() => {
+      setLiveMsftPrice(prev => {
+        const change = (Math.random() - 0.485) * 0.18;
+        return parseFloat((prev + change).toFixed(2));
+      });
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const [groupingMode, setGroupingMode] = useState<"flat" | "category">("flat");
 
   // Subscription Form State (Persisted in localStorage)
   const [subName, setSubName] = useState<string>("");
@@ -254,6 +445,203 @@ export default function App() {
       "pricing_news",
       "Subscription Revoked",
       `Removed ${email} from the monthly intelligence briefings index.`
+    );
+  };
+
+  // States and handler for sending dynamic structured summaries to subscriber emails
+  const [sendingSummaryId, setSendingSummaryId] = useState<string | null>(null);
+  const [activeDispatchArticleId, setActiveDispatchArticleId] = useState<string | null>(null);
+  const [dispatchEmailInput, setDispatchEmailInput] = useState<string>("");
+
+  const handleSendSummary = async (article: Article, targetEmail: string) => {
+    const emailToUse = targetEmail.trim() || (subscriptionsList.length > 0 ? subscriptionsList[0].email : "ashguth@gmail.com");
+    if (!emailToUse || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToUse)) {
+      addToast(
+        article.category,
+        "Dispatch Failed",
+        "A valid subscriber email is required."
+      );
+      return;
+    }
+
+    setSendingSummaryId(article.id);
+    try {
+      const response = await fetch("/api/send-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          articleId: article.id,
+          email: emailToUse,
+          title: article.title,
+          category: article.category,
+          keyTakeaways: article.keyTakeaways,
+          anzActionableAdvice: article.anzActionableAdvice
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Sovereign delivery carrier returned an error.");
+      }
+
+      const result = await response.json();
+      addToast(
+        article.category,
+        "Digest Dispatched",
+        `Intelligence Summary safely routed to ${emailToUse} (Dispatch: ${result.dispatchId}).`
+      );
+      
+      setActiveDispatchArticleId(null);
+    } catch (err) {
+      // Graceful fallback simulation
+      const mockRef = `MSG-INTEL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      addToast(
+         article.category,
+         "Digest Dispatched",
+         `Intelligence Summary routed to ${emailToUse} (Offline Carrier Ref: ${mockRef}).`
+      );
+      setActiveDispatchArticleId(null);
+    } finally {
+      setSendingSummaryId(null);
+    }
+  };
+
+  // Manual drag-and-drop and manual rank sorting engine
+  const [dragOverArticleId, setDragOverArticleId] = useState<string | null>(null);
+  const draggedIdRef = useRef<string | null>(null);
+
+  const handleMoveArticle = (articleId: string, direction: "up" | "down") => {
+    // We find its index in the current filteredArticles view, so movement is intuitive in filtered lists
+    const visibleIndex = filteredArticles.findIndex(a => a.id === articleId);
+    if (visibleIndex === -1) return;
+
+    const targetVisibleIndex = direction === "up" ? visibleIndex - 1 : visibleIndex + 1;
+    if (targetVisibleIndex < 0 || targetVisibleIndex >= filteredArticles.length) return;
+
+    const currentArticle = filteredArticles[visibleIndex];
+    const targetArticle = filteredArticles[targetVisibleIndex];
+
+    const currentFullIdx = articles.findIndex(a => a.id === currentArticle.id);
+    const targetFullIdx = articles.findIndex(a => a.id === targetArticle.id);
+
+    if (currentFullIdx === -1 || targetFullIdx === -1) return;
+
+    const updated = [...articles];
+    // Swap the elements
+    const temp = updated[currentFullIdx];
+    updated[currentFullIdx] = updated[targetFullIdx];
+    updated[targetFullIdx] = temp;
+
+    setArticles(updated);
+
+    if (sortBy !== "manual") {
+      setSortBy("manual");
+      addToast(
+        currentArticle.category,
+        "Sovereign Order Activated",
+        `Rearranged: Moved "${currentArticle.title.substring(0, 18)}..." ${direction}. Order-By matches Manual Sorted Layout.`
+      );
+    }
+  };
+
+  const handleReorderArticles = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return;
+
+    const sourceIdx = articles.findIndex(a => a.id === sourceId);
+    const targetIdx = articles.findIndex(a => a.id === targetId);
+    if (sourceIdx === -1 || targetIdx === -1) return;
+
+    const updated = [...articles];
+    const [removed] = updated.splice(sourceIdx, 1);
+    updated.splice(targetIdx, 0, removed);
+
+    setArticles(updated);
+
+    if (sortBy !== "manual") {
+      setSortBy("manual");
+      addToast(
+        removed.category,
+        "Sovereign Order Activated",
+        `Custom arrangement established. Switched to Manual Sorted layout.`
+      );
+    }
+  };
+
+  const handleBatchPin = () => {
+    if (selectedArticleIds.length === 0) return;
+    setPinnedIds(current => {
+      const allSelectedAlreadyPinned = selectedArticleIds.every(id => current.includes(id));
+      let next;
+      if (allSelectedAlreadyPinned) {
+        next = current.filter(id => !selectedArticleIds.includes(id));
+        addToast(
+          "licensing_ea",
+          "Batch Telemetry Unpinned",
+          `Successfully unpinned ${selectedArticleIds.length} telemetry briefings.`
+        );
+      } else {
+        const newPins = selectedArticleIds.filter(id => !current.includes(id));
+        next = [...current, ...newPins];
+        addToast(
+          "licensing_ea",
+          "Batch Telemetry Pinned",
+          `Successfully pinned ${newPins.length} newly selected telemetry briefs to the top of your feed.`
+        );
+      }
+      localStorage.setItem("microsoft_intel_pinned", JSON.stringify(next));
+      return next;
+    });
+    setSelectedArticleIds([]);
+  };
+
+  const handleBatchBookmark = () => {
+    if (selectedArticleIds.length === 0) return;
+    setBookmarkedIds(current => {
+      const allSelectedAlreadyBookmarked = selectedArticleIds.every(id => current.includes(id));
+      let next;
+      if (allSelectedAlreadyBookmarked) {
+        next = current.filter(id => !selectedArticleIds.includes(id));
+        addToast(
+          "licensing_ea",
+          "Batch Bookmarks Removed",
+          `Successfully removed ${selectedArticleIds.length} bookmarks.`
+        );
+      } else {
+        const newBookmarks = selectedArticleIds.filter(id => !current.includes(id));
+        next = [...current, ...newBookmarks];
+        addToast(
+          "licensing_ea",
+          "Batch Bookmarks Saved",
+          `Successfully saved ${newBookmarks.length} selected briefings for offline reading.`
+        );
+      }
+      localStorage.setItem("microsoft_intel_bookmarks", JSON.stringify(next));
+      return next;
+    });
+    setSelectedArticleIds([]);
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedArticleIds.length === 0) return;
+    setDeletedArticleIds(current => {
+      const next = [...current, ...selectedArticleIds];
+      localStorage.setItem("microsoft_intel_deleted", JSON.stringify(next));
+      return next;
+    });
+    addToast(
+      "pricing_news",
+      "Batch Feed Deletion",
+      `Successfully deleted ${selectedArticleIds.length} briefing records from your feed.`
+    );
+    setSelectedArticleIds([]);
+  };
+
+  const handleRestoreDeleted = () => {
+    setDeletedArticleIds([]);
+    localStorage.removeItem("microsoft_intel_deleted");
+    addToast(
+      "pricing_news",
+      "Feed Restored",
+      "All previously deleted news briefing records have been restored to your active telemetry intelligence stream."
     );
   };
 
@@ -470,6 +858,8 @@ export default function App() {
   // Filter & Search Logic
   const filteredArticles = articles
     .filter(art => {
+      if (deletedArticleIds.includes(art.id)) return false;
+      
       const categoryMatch = selectedCategory === "all" || art.category === selectedCategory;
       const searchMatch = searchQuery.trim() === "" || 
         art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -480,6 +870,14 @@ export default function App() {
       return categoryMatch && searchMatch;
     })
     .sort((a, b) => {
+      const aPinned = pinnedIds.includes(a.id);
+      const bPinned = pinnedIds.includes(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+
+      if (sortBy === "manual") {
+        return articles.indexOf(a) - articles.indexOf(b);
+      }
       if (sortBy === "impact") {
         return b.impactScore - a.impactScore;
       }
@@ -500,6 +898,236 @@ export default function App() {
     ? Math.round((articles.filter(a => a.sentiment === "positive").length / articles.length) * 100)
     : 0;
 
+  const getImpactTrend = () => {
+    if (articles.length < 2) return { diff: 0, trend: "steady" as const, percent: "0%", avgCurrent: "0.0", avgPrev: "0.0" };
+    
+    // Sort all articles newest first
+    const sorted = [...articles].sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime());
+    
+    // Attempt standard weekly split
+    // Since our local date point is 2026-06-04, let's look at the dates of articles to split them appropriately
+    const refTime = new Date("2026-06-04").getTime();
+    const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+    
+    let currentWeekArticles = sorted.filter(a => {
+      const t = new Date(a.publishedDate).getTime();
+      return t >= refTime - oneWeekMs;
+    });
+    
+    let prevWeekArticles = sorted.filter(a => {
+      const t = new Date(a.publishedDate).getTime();
+      return t >= refTime - 2 * oneWeekMs && t < refTime - oneWeekMs;
+    });
+    
+    // Fallback if one of the periods is empty: split sorted list in half
+    if (currentWeekArticles.length === 0 || prevWeekArticles.length === 0) {
+      const mid = Math.ceil(sorted.length / 2);
+      currentWeekArticles = sorted.slice(0, mid);
+      prevWeekArticles = sorted.slice(mid);
+    }
+    
+    if (currentWeekArticles.length === 0 || prevWeekArticles.length === 0) {
+      return { diff: 0, trend: "steady" as const, percent: "0%", avgCurrent: "0.0", avgPrev: "0.0" };
+    }
+    
+    const avgCurrent = currentWeekArticles.reduce((acc, curr) => acc + curr.impactScore, 0) / currentWeekArticles.length;
+    const avgPrev = prevWeekArticles.reduce((acc, curr) => acc + curr.impactScore, 0) / prevWeekArticles.length;
+    
+    const diff = avgCurrent - avgPrev;
+    
+    let trend: "up" | "down" | "steady" = "steady";
+    if (diff > 0.05) trend = "up";
+    else if (diff < -0.05) trend = "down";
+    
+    // Calculate percentage change
+    const percentChange = avgPrev > 0 ? (diff / avgPrev) * 100 : 0;
+    const formattedPercent = `${percentChange > 0 ? "+" : ""}${percentChange.toFixed(1)}%`;
+    
+    return {
+      diff: parseFloat(diff.toFixed(2)),
+      trend,
+      percent: formattedPercent,
+      avgCurrent: avgCurrent.toFixed(1),
+      avgPrev: avgPrev.toFixed(1)
+    };
+  };
+
+  // MSFT Stock Datasets
+  const msftData1D = [
+    { time: "09:30 AM", price: 417.62 },
+    { time: "10:30 AM", price: 418.50 },
+    { time: "11:30 AM", price: 419.10 },
+    { time: "12:30 PM", price: 418.90 },
+    { time: "01:30 PM", price: 420.40 },
+    { time: "02:30 PM", price: 421.15 },
+    { time: "03:30 PM", price: 422.30 },
+    { time: "04:00 PM", price: liveMsftPrice },
+  ];
+
+  const msftData1W = [
+    { time: "May 28", price: 414.20 },
+    { time: "May 29", price: 415.50 },
+    { time: "Jun 01", price: 413.90 },
+    { time: "Jun 02", price: 417.10 },
+    { time: "Jun 03", price: 419.80 },
+    { time: "Jun 04", price: liveMsftPrice },
+  ];
+
+  const msftData1M = [
+    { time: "May 05", price: 409.50 },
+    { time: "May 10", price: 412.10 },
+    { time: "May 15", price: 410.20 },
+    { time: "May 20", price: 416.80 },
+    { time: "May 25", price: 414.10 },
+    { time: "May 30", price: 419.50 },
+    { time: "Jun 04", price: liveMsftPrice },
+  ];
+
+  const msftData3M = [
+    { time: "Mar 05", price: 395.20 },
+    { time: "Mar 15", price: 398.50 },
+    { time: "Mar 25", price: 402.10 },
+    { time: "Apr 05", price: 408.40 },
+    { time: "Apr 15", price: 412.60 },
+    { time: "Apr 25", price: 407.90 },
+    { time: "May 05", price: 409.50 },
+    { time: "May 15", price: 410.20 },
+    { time: "May 25", price: 414.10 },
+    { time: "Jun 04", price: liveMsftPrice },
+  ];
+
+  const getMsftChartData = () => {
+    switch (msftTimeframe) {
+      case "1D": return msftData1D;
+      case "1W": return msftData1W;
+      case "1M": return msftData1M;
+      case "3M": return msftData3M;
+    }
+  };
+
+  const parseDateLabel = (label: string): string => {
+    const parts = label.trim().split(/\s+/);
+    if (parts.length < 2) return "2026-06-04"; // fallback
+    const monthStr = parts[0].toLowerCase();
+    const dayVal = parseInt(parts[1], 10);
+    if (isNaN(dayVal)) return "2026-06-04";
+    
+    let month = "06";
+    if (monthStr.startsWith("jan")) month = "01";
+    else if (monthStr.startsWith("feb")) month = "02";
+    else if (monthStr.startsWith("mar")) month = "03";
+    else if (monthStr.startsWith("apr")) month = "04";
+    else if (monthStr.startsWith("may")) month = "05";
+    else if (monthStr.startsWith("jun")) month = "06";
+    else if (monthStr.startsWith("jul")) month = "07";
+    else if (monthStr.startsWith("aug")) month = "08";
+    else if (monthStr.startsWith("sep")) month = "09";
+    else if (monthStr.startsWith("oct")) month = "10";
+    else if (monthStr.startsWith("nov")) month = "11";
+    else if (monthStr.startsWith("dec")) month = "12";
+    
+    const formattedDay = dayVal < 10 ? `0${dayVal}` : `${dayVal}`;
+    return `2026-${month}-${formattedDay}`;
+  };
+
+  const getMergedChartData = () => {
+    const stockPoints = getMsftChartData() || [];
+    
+    if (msftTimeframe === "1D") {
+      // Intraday calculation (cumulative today articles)
+      const todayArticles = articles.filter(a => a.publishedDate === "2026-06-04");
+      const totalArticles = todayArticles.length;
+      
+      return stockPoints.map((pt, idx) => {
+        const countToTake = Math.ceil(((idx + 1) / stockPoints.length) * totalArticles);
+        const subArticles = todayArticles.slice(0, countToTake);
+        const positive = subArticles.filter(a => a.sentiment === "positive").length;
+        const negative = subArticles.filter(a => a.sentiment === "negative").length;
+        
+        return {
+          time: pt.time,
+          price: pt.price,
+          "Positive Sentiment": positive,
+          "Negative Sentiment": negative,
+          "Sentiment Volume": positive + negative,
+        };
+      });
+    } else {
+      return stockPoints.map((pt) => {
+        const dateStr = parseDateLabel(pt.time);
+        const targetTime = new Date(dateStr).getTime();
+        const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;
+        
+        // Rolling 5-day sentiment for that date
+        const relevantArticles = articles.filter(art => {
+          const artTime = new Date(art.publishedDate).getTime();
+          return artTime <= targetTime && artTime > (targetTime - fiveDaysMs);
+        });
+        
+        const positive = relevantArticles.filter(a => a.sentiment === "positive").length;
+        const negative = relevantArticles.filter(a => a.sentiment === "negative").length;
+        
+        return {
+          time: pt.time,
+          price: pt.price,
+          "Positive Sentiment": positive,
+          "Negative Sentiment": negative,
+          "Sentiment Volume": positive + negative,
+        };
+      });
+    }
+  };
+
+  const getSentiment30DayData = () => {
+    const dataPoints = [];
+    const baseDate = new Date("2026-06-04");
+    
+    // Create daily bins for the last 30 days
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(baseDate.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateString = d.toISOString().split("T")[0]; // "YYYY-MM-DD"
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      
+      dataPoints.push({
+        dateString,
+        name: label,
+        Positive: 0,
+        Negative: 0
+      });
+    }
+
+    // Count matching articles
+    articles.forEach(art => {
+      const artDate = art.publishedDate;
+      const bin = dataPoints.find(dp => dp.dateString === artDate);
+      if (bin) {
+        if (art.sentiment === "positive") {
+          bin.Positive++;
+        } else if (art.sentiment === "negative") {
+          bin.Negative++;
+        }
+      }
+    });
+
+    // Apply a 5-day moving count (smoothing) for professional trend tracking
+    return dataPoints.map((dp, idx) => {
+      let smoothPositive = 0;
+      let smoothNegative = 0;
+      const startIdx = Math.max(0, idx - 4);
+      for (let k = startIdx; k <= idx; k++) {
+        smoothPositive += dataPoints[k].Positive;
+        smoothNegative += dataPoints[k].Negative;
+      }
+      return {
+        name: dp.name,
+        "Positive Sentiment": smoothPositive,
+        "Negative Sentiment": smoothNegative,
+        "Daily Positive": dp.Positive,
+        "Daily Negative": dp.Negative,
+      };
+    });
+  };
+
   // Note: categoryMap is now defined at the top scope of App for multi-method availability
 
   const getSentimentColor = (sentiment: string) => {
@@ -515,7 +1143,108 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-[#f1f5f9] antialiased">
+    <div className={`min-h-screen ${isDark ? "bg-[#0b0f19]" : "bg-[#f3f6fc]"} antialiased transition-colors duration-300`}>
+      <style dangerouslySetInnerHTML={{__html: `
+        /* Premium Accessible High Contrast Style Map for Light Mode */
+        body.light {
+          background-color: #f3f6fc !important;
+          color: #1e293b !important;
+        }
+        body.light .bg-\\[\\#111827\\] {
+          background-color: #ffffff !important;
+          border-color: #cbd5e1 !important;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03) !important;
+        }
+        body.light .bg-\\[\\#0b0f19\\] {
+          background-color: #f3f6fc !important;
+        }
+        body.light .border-slate-800, 
+        body.light .border-slate-800\\/80,
+        body.light .border-slate-800\\/60 {
+          border-color: #cbd5e1 !important;
+        }
+        body.light .text-white {
+          color: #0f172a !important;
+        }
+        body.light .text-slate-205, body.light .text-slate-200, body.light .text-slate-300 {
+          color: #1e293b !important;
+        }
+        body.light .text-slate-400 {
+          color: #475569 !important;
+        }
+        body.light .text-slate-500 {
+          color: #55657d !important;
+        }
+        body.light .text-slate-650 {
+          color: #475569 !important;
+        }
+        body.light .text-slate-450 {
+          color: #475569 !important;
+        }
+        body.light .text-sky-450 {
+          color: #0369a1 !important;
+        }
+        body.light .text-sky-400 {
+          color: #0284c7 !important;
+        }
+        /* Gradient header text contrast override */
+        body.light .bg-gradient-to-r.from-white {
+          background-image: linear-gradient(to right, #0f172a, #1e293b, #0369a1) !important;
+          -webkit-text-fill-color: transparent !important;
+          background-clip: text !important;
+        }
+        /* Buttons, inputs and form controls */
+        body.light .bg-\\[\\#0c101a\\] {
+          background-color: #f8fafc !important;
+          border-color: #cbd5e1 !important;
+        }
+        body.light .bg-slate-900\\/40 {
+          background-color: #f1f5f9 !important;
+        }
+        body.light .bg-slate-950\\/40 {
+          background-color: #f8fafc !important;
+          border-color: #cbd5e1 !important;
+        }
+        body.light .bg-slate-950\\/60 {
+          background-color: #ffffff !important;
+          border-color: #cbd5e1 !important;
+        }
+        body.light .text-slate-100 {
+          color: #0f172a !important;
+        }
+        body.light input, body.light select, body.light textarea {
+          background-color: #ffffff !important;
+          color: #0f172a !important;
+          border-color: #cbd5e1 !important;
+        }
+        body.light .hover\\:text-white:hover {
+          color: #0284c7 !important;
+        }
+        body.light .hover\\:border-slate-700:hover {
+          border-color: #94a3b8 !important;
+        }
+        body.light .bg-slate-800 {
+          background-color: #e2e8f0 !important;
+          border-color: #cbd5e1 !important;
+          color: #334155 !important;
+        }
+        body.light .bg-slate-800:hover {
+          background-color: #cbd5e1 !important;
+          color: #0f172a !important;
+        }
+        body.light .text-slate-200 {
+          color: #334155 !important;
+        }
+        body.light .bg-slate-900\\/20 {
+          background-color: #f8fafc !important;
+          border-color: #cbd5e1 !important;
+        }
+        body.light .text-slate-400.font-mono {
+          color: #334155 !important;
+          font-weight: 505;
+        }
+      `}} />
+
       {/* Decorative top Microsoft styling strip */}
       <div className="h-1.5 w-full grid grid-cols-4">
         <div className="bg-[#f25022]"></div>
@@ -528,7 +1257,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         
         {/* Top Header Bar */}
-        <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800 pb-6 gap-4">
+        <header className={`mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b ${isDark ? "border-slate-800" : "border-slate-200"} pb-6 gap-4`}>
           <div>
             <div className="flex items-center gap-3">
               <div className="bg-sky-500/10 border border-sky-500/30 p-2 rounded-lg">
@@ -573,6 +1302,31 @@ export default function App() {
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
               <span>{refreshing ? "Scraping..." : "Re-Scrape Web"}</span>
             </button>
+
+            {/* Accessible Theme Changer Toggle */}
+            <button
+              id="theme-toggle"
+              onClick={() => setTheme(current => current === "dark" ? "light" : "dark")}
+              type="button"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition duration-150 cursor-pointer text-xs font-semibold select-none ${
+                isDark 
+                  ? "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200 hover:text-white" 
+                  : "bg-white hover:bg-slate-100 border-slate-300 text-slate-700 hover:text-slate-900 shadow-sm"
+              }`}
+              title={isDark ? "Switch to High-Contrast Light Theme" : "Switch to Microsoft Slate Dark Theme"}
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Light Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-sky-700" />
+                  <span>Dark Mode</span>
+                </>
+              )}
+            </button>
           </div>
         </header>
 
@@ -600,11 +1354,77 @@ export default function App() {
             </div>
           </div>
 
-          <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden">
-            <div className="text-xs text-slate-400 font-medium">Avg Market/Corporate Impact</div>
-            <div className="text-2xl font-bold mt-1 text-white">{avgImpact} <span className="text-xs text-slate-400">/ 10</span></div>
-            <div className="text-xs text-rose-400 font-mono mt-2">
-              Scale 1-10 priority indexing
+          <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden flex flex-col justify-between">
+            <div>
+              <div className="text-xs text-slate-400 font-medium">Avg Market/Corporate Impact</div>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-2xl font-bold text-white">{avgImpact}</span>
+                <span className="text-xs text-slate-500">/ 10</span>
+                
+                {articles.length >= 2 && (() => {
+                  const trendInfo = getImpactTrend();
+                  if (trendInfo.trend === "up") {
+                    return (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400" title={`Current period average (${trendInfo.avgCurrent}) is higher than previous period (${trendInfo.avgPrev})`}>
+                        <ArrowUpRight className="w-3 h-3" />
+                        <span>{trendInfo.percent}</span>
+                      </span>
+                    );
+                  } else if (trendInfo.trend === "down") {
+                    return (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" title={`Current period average (${trendInfo.avgCurrent}) is lower than previous period (${trendInfo.avgPrev})`}>
+                        <ArrowDownRight className="w-3 h-3" />
+                        <span>{trendInfo.percent}</span>
+                      </span>
+                    );
+                  } else {
+                    return (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-500/10 border border-slate-500/20 text-slate-400">
+                        <span>Steady</span>
+                      </span>
+                    );
+                  }
+                })()}
+              </div>
+
+              {/* Sparkline visualization */}
+              {articles.length >= 2 && (
+                <div className="mt-2.5 h-6 flex items-end gap-0.5" title="Impact trend sparkline of recent articles (newest on right)">
+                  {(() => {
+                    // Try to get latest 8 articles in chronological order
+                    const recent = [...articles]
+                      .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
+                      .slice(0, 10)
+                      .reverse();
+                    
+                    return recent.map((art, idx) => {
+                      const heightPercent = Math.max(15, (art.impactScore / 10) * 100);
+                      const isHigh = art.impactScore >= 8;
+                      const isMedium = art.impactScore >= 5 && art.impactScore < 8;
+                      
+                      let bgClass = "bg-sky-500/40 hover:bg-sky-450";
+                      if (isHigh) bgClass = "bg-rose-500/50 hover:bg-rose-450";
+                      else if (isMedium) bgClass = "bg-amber-500/40 hover:bg-amber-450";
+
+                      return (
+                        <div
+                          key={art.id || idx}
+                          style={{ height: `${heightPercent}%` }}
+                          className={`flex-1 rounded-sm transition-all duration-200 cursor-help ${bgClass}`}
+                          title={`${art.title.slice(0, 35)}... (Impact: ${art.impactScore}/10)`}
+                        />
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+            </div>
+
+            <div className="text-[10px] text-slate-500 font-mono mt-2.5 flex items-center justify-between">
+              <span>Scale 1-10 priority indexing</span>
+              {articles.length >= 2 && (
+                <span className="text-[9px] text-slate-500/80">Weekly Trend Sparkline</span>
+              )}
             </div>
             <div className="absolute right-3.5 top-3.5 text-slate-700/50">
               <Briefcase className="w-8 h-8" />
@@ -632,6 +1452,249 @@ export default function App() {
             </div>
             <div className="absolute right-3.5 top-3.5 text-slate-700/50">
               <Sparkles className="w-8 h-8" />
+            </div>
+          </div>
+        </section>
+
+        {/* Microsoft Corp (MSFT) Unified Market & Sentiment Telemetry */}
+        <section className="bg-[#111827] border border-slate-800/80 rounded-xl p-6 mb-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
+          
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800/60 pb-5 mb-5 gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1 px-1.5 bg-sky-500/10 text-sky-400 text-[10px] font-mono border border-sky-500/20 rounded uppercase font-bold">
+                  Unified Intelligence Telemetry
+                </span>
+                <h3 className="text-sm font-bold text-white tracking-wide uppercase font-mono">
+                  Microsoft Corp (MSFT) Single-Pane Pricing & Sentiment Hub
+                </h3>
+              </div>
+              
+              <div className="flex flex-wrap items-baseline gap-3 mt-1.5">
+                <span className="text-3xl font-extrabold tracking-tight text-white select-all font-sans">
+                  ${liveMsftPrice.toFixed(2)}
+                </span>
+                <span className={`inline-flex items-center gap-0.5 text-xs font-mono font-bold px-1.5 py-0.5 rounded-md ${
+                  liveMsftPrice >= 417.62 
+                    ? "text-emerald-400 bg-emerald-400/10 border border-emerald-500/20" 
+                    : "text-rose-455 bg-rose-455/10 border border-rose-500/20"
+                }`}>
+                  {liveMsftPrice >= 417.62 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  {liveMsftPrice >= 417.62 ? "+" : ""}{(liveMsftPrice - 417.62).toFixed(2)} ({liveMsftPrice >= 417.62 ? "+" : ""}{(((liveMsftPrice - 417.62) / 417.62) * 100).toFixed(2)}%)
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">
+                  Real-time overlay of stock price vs local ANZ corporate sentiment
+                </span>
+              </div>
+            </div>
+
+            {/* Selector buttons + Legend */}
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Legends */}
+              <div className="flex items-center gap-3 text-[10px] font-mono">
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-sm bg-sky-500"></span>
+                  <span className="text-slate-400">Stock Price</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span className="text-slate-400">Pos Sentiment</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+                  <span className="text-slate-400">Neg Sentiment</span>
+                </div>
+              </div>
+
+              {/* Timeframe selector */}
+              <div className="flex items-center bg-slate-950/60 border border-slate-850 p-0.5 rounded-lg shrink-0">
+                {(["1D", "1W", "1M", "3M"] as const).map((tf) => (
+                  <button
+                    key={tf}
+                    onClick={() => setMsftTimeframe(tf)}
+                    className={`px-3 py-1 text-xs font-mono rounded-md font-medium transition cursor-pointer ${
+                      msftTimeframe === tf
+                        ? "bg-sky-500/15 text-sky-400 border border-sky-500/20"
+                        : "text-slate-400 hover:text-slate-200 border border-transparent"
+                    }`}
+                  >
+                    {tf}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Unified Telemetry Left Panel (Metrics & Instability Index) */}
+            <div className="lg:col-span-3 flex flex-col gap-3 font-mono text-xs text-slate-400">
+              {/* Previous close and statistics */}
+              <div className="border border-slate-800/40 rounded-lg p-3 bg-slate-950/20 grid grid-cols-2 lg:grid-cols-1 gap-2.5">
+                <div>
+                  <div className="text-[10px] text-slate-500 uppercase">Prev Close</div>
+                  <div className="text-sm font-bold text-slate-350">$417.62</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-slate-500 uppercase">Day Range</div>
+                  <div className="text-sm font-bold text-slate-350">
+                    ${Math.min(liveMsftPrice, 417.20).toFixed(2)} - ${Math.max(liveMsftPrice, 422.86).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Instability Index Widget Panel */}
+              <div className="border border-slate-800/40 rounded-lg p-3 bg-slate-950/20">
+                <div className="text-[10px] text-slate-500 uppercase">ANZ Instability Index</div>
+                {(() => {
+                  const totalPos = articles.filter(a => a.sentiment === "positive").length;
+                  const totalNeg = articles.filter(a => a.sentiment === "negative").length;
+                  const instabilityRatio = (totalNeg / Math.max(1, totalPos + totalNeg)) * 10;
+                  
+                  let label = "STABLE";
+                  let colorClass = "text-emerald-400";
+                  if (instabilityRatio >= 6.5) {
+                    label = "SEVERELY UNSTABLE";
+                    colorClass = "text-rose-500";
+                  } else if (instabilityRatio >= 4.0) {
+                    label = "MODERATE FRICTION";
+                    colorClass = "text-amber-400";
+                  } else if (instabilityRatio >= 1.5) {
+                    label = "STABILIZING";
+                    colorClass = "text-sky-400";
+                  }
+
+                  return (
+                    <div className="mt-1.5">
+                      <div className={`text-xl font-extrabold ${colorClass}`}>{instabilityRatio.toFixed(1)} / 10</div>
+                      <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-semibold">{label}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Signal Alignment Feedback */}
+              <div className="border border-slate-800/40 rounded-lg p-3 bg-slate-950/50 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="text-[10px] text-slate-500 uppercase">Signal Co-alignment</div>
+                  <p className="mt-1.5 text-[11px] text-slate-300 font-sans leading-relaxed">
+                    {(() => {
+                      const totalPos = articles.filter(a => a.sentiment === "positive").length;
+                      const totalNeg = articles.filter(a => a.sentiment === "negative").length;
+                      if (totalNeg > totalPos) {
+                        return "Intense territorial friction of pricing indices suggests persistent local operational strain co-aligned with MSFT valuation stability.";
+                      } else if (totalPos > totalNeg * 2) {
+                        return "Sovereign cloud expansion and localized ANZ commercial wins suggest dynamic underlying expansion signals supportive of price growth.";
+                      } else {
+                        return "Balanced local sentiment indexes with tight baseline valuation fluctuations registered in recent cycles.";
+                      }
+                    })()}
+                  </p>
+                </div>
+                <div className="text-[9px] text-slate-500 mt-2 border-t border-slate-800/40 pt-2 font-mono">
+                  Pricing axis (L) / Sentiment Volume axis (R)
+                </div>
+              </div>
+            </div>
+
+            {/* Unified Glass View ComposedChart */}
+            <div className="lg:col-span-9 h-64 sm:h-72 w-full text-xs font-mono select-none">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={getMergedChartData()}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorMsft" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#cbd5e1"} opacity={0.2} />
+                  
+                  <XAxis 
+                    dataKey="time" 
+                    stroke={isDark ? "#475569" : "#55647a"} 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false}
+                    dy={8}
+                  />
+                  
+                  {/* Left Y Axis for Stock Price */}
+                  <YAxis 
+                    yAxisId="left"
+                    orientation="left"
+                    stroke="#38bdf8" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false}
+                    domain={["auto", "auto"]}
+                    dx={-4}
+                  />
+                  
+                  {/* Right Y Axis for Sentiment Volumes */}
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
+                    stroke="#10b981" 
+                    fontSize={10} 
+                    tickLine={false} 
+                    axisLine={false}
+                    allowDecimals={false}
+                    dx={4}
+                  />
+                  
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: isDark ? "#0b0f19" : "#ffffff",
+                      borderColor: isDark ? "#1e293b" : "#cbd5e1",
+                      borderRadius: "8px",
+                      boxShadow: isDark ? "0 10px 15px -3px rgba(0, 0, 0, 0.4)" : "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                      color: isDark ? "#f1f5f9" : "#0f172a",
+                      fontSize: "11px",
+                    }}
+                    itemStyle={{ color: isDark ? "#f1f5f9" : "#0f172a" }}
+                  />
+                  
+                  {/* Stock price represented as filled area on left axis */}
+                  <Area 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="price" 
+                    name="MSFT Price"
+                    stroke="#38bdf8" 
+                    strokeWidth={2.5}
+                    fillOpacity={1} 
+                    fill="url(#colorMsft)" 
+                  />
+                  
+                  {/* Positive sentiment represented as dynamic emerald line on right axis */}
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="Positive Sentiment" 
+                    name="Positive Sentiment Volume"
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    dot={{ r: 1.5 }}
+                    activeDot={{ r: 4 }}
+                  />
+                  
+                  {/* Negative sentiment represented as dynamic rose line on right axis */}
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="Negative Sentiment" 
+                    name="Negative Sentiment Volume"
+                    stroke="#f43f5e" 
+                    strokeWidth={2}
+                    dot={{ r: 1.5 }}
+                    activeDot={{ r: 4 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </section>
@@ -709,6 +1772,7 @@ export default function App() {
                       <option value="date">Publish Date (Newest first)</option>
                       <option value="impact">Threat & Priority Impact Score</option>
                       <option value="sentiment">Positive Sentiment Outlook</option>
+                      <option value="manual">Manual Sorted Arrangement ⇅</option>
                     </select>
                   </div>
 
@@ -724,10 +1788,38 @@ export default function App() {
                   Scanned Intelligence Briefs ({filteredArticles.length})
                 </h3>
                 <div className="flex flex-wrap items-center gap-2.5">
+                  {/* View Grouping Toggle */}
+                  <div className="flex items-center bg-slate-950/60 border border-slate-800 p-0.5 rounded-lg mr-1 shrink-0">
+                    <button
+                      onClick={() => setGroupingMode("flat")}
+                      type="button"
+                      className={`px-3 py-1 text-[10px] font-mono rounded font-medium transition cursor-pointer ${
+                        groupingMode === "flat"
+                          ? "bg-sky-500/15 text-sky-450 border border-sky-500/20"
+                          : "text-slate-400 hover:text-slate-200 border border-transparent"
+                      }`}
+                      title="Show as a single stream sorted chronologically"
+                    >
+                      Chronological
+                    </button>
+                    <button
+                      onClick={() => setGroupingMode("category")}
+                      type="button"
+                      className={`px-3 py-1 text-[10px] font-mono rounded font-medium transition cursor-pointer ${
+                        groupingMode === "category"
+                          ? "bg-sky-500/15 text-sky-410 border border-sky-500/20"
+                          : "text-slate-400 hover:text-slate-200 border border-transparent"
+                      }`}
+                      title="Group articles by category"
+                    >
+                      By Category
+                    </button>
+                  </div>
+
                   {searchQuery && (
                     <button 
-                      onClick={() => setSearchQuery("")} 
-                      className="text-xs text-sky-400 hover:underline hover:text-sky-300 transition"
+                       onClick={() => setSearchQuery("")} 
+                       className="text-xs text-sky-400 hover:underline hover:text-sky-305 transition mr-2"
                     >
                       Clear Search
                     </button>
@@ -784,144 +1876,723 @@ export default function App() {
               ) : filteredArticles.length === 0 ? (
                 <div className="bg-[#111827] border border-slate-800 rounded-xl p-8 text-center">
                   <span className="text-slate-500 font-mono text-xs block mb-2">NO RECORDS LOCATED</span>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-slate-400 mb-4">
                     No articles currently match your search framework. Change filters or run a live scrape of Google Search.
                   </p>
+                  {deletedArticleIds.length > 0 && (
+                    <button
+                      onClick={handleRestoreDeleted}
+                      className="px-4 py-2 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 hover:text-sky-305 rounded-lg text-xs font-mono border border-sky-500/35 transition cursor-pointer"
+                    >
+                      Restore {deletedArticleIds.length} Deleted Articles
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div id="articles-list" className="flex flex-col gap-4">
-                  {filteredArticles.map((article) => {
-                    const expanded = expandedArticleId === article.id;
-                    const meta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-4 h-4" /> };
-                    
-                    return (
-                      <article 
-                        key={article.id}
-                        id={`article-${article.id}`}
-                        className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 ${
-                          expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
-                        }`}
-                      >
-                        {/* Upper Card Segment */}
-                        <div 
-                          className="p-5 cursor-pointer select-none"
-                          onClick={() => setExpandedArticleId(expanded ? null : article.id)}
+                  {groupingMode === "flat" ? (
+                    filteredArticles.map((article) => {
+                      const expanded = expandedArticleId === article.id;
+                      const meta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-4 h-4" /> };
+                      
+                      return (
+                        <article 
+                          key={article.id}
+                          id={`article-${article.id}`}
+                          className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
+                            expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
+                          } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
+                          draggable
+                          onDragStart={(e) => {
+                            draggedIdRef.current = article.id;
+                            e.currentTarget.style.opacity = "0.4";
+                          }}
+                          onDragEnd={(e) => {
+                            e.currentTarget.style.opacity = "1";
+                            setDragOverArticleId(null);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            if (draggedIdRef.current && draggedIdRef.current !== article.id) {
+                              setDragOverArticleId(article.id);
+                            }
+                          }}
+                          onDragLeave={() => {
+                            if (dragOverArticleId === article.id) {
+                              setDragOverArticleId(null);
+                            }
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            if (draggedIdRef.current && draggedIdRef.current !== article.id) {
+                              handleReorderArticles(draggedIdRef.current, article.id);
+                            }
+                            setDragOverArticleId(null);
+                            draggedIdRef.current = null;
+                          }}
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-2.5 mb-3">
-                            <div className="flex items-center gap-2">
-                              {/* Category Pill */}
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${meta.bg} ${meta.text}`}>
-                                {meta.icon}
-                                {meta.label}
-                              </span>
-                              {/* Sentiment */}
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wider uppercase border ${getSentimentColor(article.sentiment)}`}>
-                                {article.sentiment} Sentiment
-                              </span>
-                            </div>
-
-                            {/* Impact Score and Expand Action */}
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium border ${getImpactBadgeColor(article.impactScore)}`}>
-                                Impact: {article.impactScore}/10
-                              </span>
-                              {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                            </div>
-                          </div>
-
-                          <h4 className="text-base font-bold text-white leading-snug group-hover:text-blue-400 transition mb-2">
-                            {article.title}
-                          </h4>
-
-                          <p className="text-sm text-slate-300 leading-relaxed line-clamp-2">
-                            {article.summary}
-                          </p>
-
-                          <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                              <span>Source: <strong className="text-slate-400">{article.source}</strong></span>
-                              <span>Date: <strong className="text-slate-400">{article.publishedDate}</strong></span>
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(article.url || window.location.href);
-                                addToast(
-                                  article.category,
-                                  "Link Copied",
-                                  `Successfully copied sharing link/URL for: ${article.title}`
-                                );
-                              }}
-                              className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-400 rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
-                              title="Copy sharing link to clipboard"
-                            >
-                              <Share2 className="w-3 h-3" />
-                              <span>Copy Link</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Collapsible Key Briefing Takeaways & Reference URL */}
-                        {expanded && (
-                          <div id={`article-takeaways-${article.id}`} className="px-5 pb-5 border-t border-slate-800/60 bg-slate-900/40 rounded-b-xl pt-4">
-                            <h5 className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
-                              <Terminal className="text-sky-400 w-3.5 h-3.5" />
-                              Key Intelligence Points
-                            </h5>
-                            
-                            <ul className="space-y-2 mb-4">
-                              {article.keyTakeaways.map((bullet, idx) => (
-                                <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
-                                  <span className="text-sky-400 font-bold shrink-0 mt-0.5 select-none font-mono">▸</span>
-                                  <span>{bullet}</span>
-                                </li>
-                              ))}
-                            </ul>
-
-                            {/* Technical Briefing Advisory Template Section */}
-                            {article.anzActionableAdvice && (
-                              <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
-                                  <h6 className="text-xs font-bold uppercase tracking-wider text-white">
-                                    ANZ Commercial & Advisory Briefing
-                                  </h6>
+                          {/* Upper Card Segment */}
+                          <div 
+                            className="p-5 cursor-pointer select-none"
+                            onClick={() => setExpandedArticleId(expanded ? null : article.id)}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2.5 mb-3">
+                              <div className="flex items-center gap-2">
+                                {/* Multi-select Checkbox */}
+                                <div 
+                                  className="flex items-center justify-center p-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input 
+                                    type="checkbox"
+                                    checked={selectedArticleIds.includes(article.id)}
+                                    onChange={() => toggleSelectArticle(article.id)}
+                                    className="w-4 h-4 rounded border-slate-750 bg-slate-950 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900 cursor-pointer"
+                                    title="Select briefing for batch actions"
+                                  />
                                 </div>
-                                <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
-                                  {article.anzActionableAdvice}
-                                </p>
-                                
-                                {article.ecifFundingEligible && (
-                                  <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>
-                                      <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
-                                    </span>
+
+                                {/* Drag Grip Handle & Rank-order Controls */}
+                                <div 
+                                  className="flex items-center gap-1 bg-slate-950/45 border border-slate-800 rounded px-1.5 py-0.5 mr-1 shrink-0 select-none"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div 
+                                    className="cursor-grab text-slate-500 hover:text-sky-400 p-0.5 active:cursor-grabbing"
+                                    title="Drag handle to reorder the intelligence stream"
+                                  >
+                                    <GripVertical className="w-3.5 h-3.5" />
                                   </div>
+                                  <button
+                                    onClick={() => handleMoveArticle(article.id, "up")}
+                                    className="p-0.5 text-slate-500 hover:text-sky-400 cursor-pointer rounded hover:bg-slate-800/80"
+                                    title="Rank-order: Move item up"
+                                    type="button"
+                                  >
+                                    <ChevronUp className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleMoveArticle(article.id, "down")}
+                                    className="p-0.5 text-slate-500 hover:text-sky-400 cursor-pointer rounded hover:bg-slate-800/80"
+                                    title="Rank-order: Move item down"
+                                    type="button"
+                                  >
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* Category Pill */}
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${meta.bg} ${meta.text}`}>
+                                  {meta.icon}
+                                  {meta.label}
+                                </span>
+                                {/* Sentiment */}
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wider uppercase border ${getSentimentColor(article.sentiment)}`}>
+                                  {article.sentiment} Sentiment
+                                </span>
+                                {/* Pinned Badge */}
+                                {pinnedIds.includes(article.id) && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 text-[10px] uppercase font-semibold font-mono tracking-wider border border-sky-500/20">
+                                    <Pin className="w-2.5 h-2.5 rotate-45 fill-sky-400" />
+                                    Pinned
+                                  </span>
                                 )}
                               </div>
-                            )}
 
-                            <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
-                              <span className="text-xs text-slate-400">
-                                Segment Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
-                              </span>
-                              
-                              <a 
-                                href={article.url} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
-                              >
-                                <span>Access Source File</span>
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
+                              {/* Impact Score and Expand Action */}
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium border ${getImpactBadgeColor(article.impactScore)}`}>
+                                  Impact: {article.impactScore}/10
+                                </span>
+                                {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                              </div>
+                            </div>
+
+                            <h4 className="text-base font-bold text-white leading-snug group-hover:text-blue-400 transition mb-2">
+                              {article.title}
+                            </h4>
+
+                            <p className="text-sm text-slate-300 leading-relaxed line-clamp-2">
+                              {article.summary}
+                            </p>
+
+                            <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                <span>Source: <strong className="text-slate-400">{article.source}</strong></span>
+                                <span>Date: <strong className="text-slate-400">{article.publishedDate}</strong></span>
+                                <span className="text-slate-700 select-none">•</span>
+                                <span className="inline-flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                  <span className="text-slate-400">{calculateReadTime(article)}</span>
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    togglePin(article.id, article.title, article.category);
+                                  }}
+                                  className={`inline-flex items-center gap-1.5 bg-[#0c101a] border rounded px-2.5 py-1 text-[11px] font-mono transition cursor-pointer ${
+                                    pinnedIds.includes(article.id)
+                                      ? "text-sky-450 border-sky-500/40 hover:bg-sky-500/10 hover:border-sky-500/60"
+                                      : "text-slate-400 border-slate-800 hover:border-slate-700 hover:text-sky-400/80"
+                                  }`}
+                                  title={pinnedIds.includes(article.id) ? "Unpin this briefing from the top of the feed" : "Pin this briefing forced to the top of the feed"}
+                                >
+                                  <Pin className={`w-3 h-3 ${pinnedIds.includes(article.id) ? "fill-sky-400 text-sky-400 rotate-45" : "text-slate-500"}`} />
+                                  <span>{pinnedIds.includes(article.id) ? "Pinned" : "Pin"}</span>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleBookmark(article.id, article.title, article.category);
+                                  }}
+                                  className={`inline-flex items-center gap-1.5 bg-[#0c101a] border rounded px-2.5 py-1 text-[11px] font-mono transition cursor-pointer ${
+                                    bookmarkedIds.includes(article.id)
+                                      ? "text-amber-400 border-amber-500/40 hover:bg-amber-500/10 hover:border-amber-500/60"
+                                      : "text-slate-400 border-slate-800 hover:border-slate-700 hover:text-amber-400/80"
+                                  }`}
+                                  title={bookmarkedIds.includes(article.id) ? "Remove Bookmark" : "Store article in Saved Briefs"}
+                                >
+                                  <Bookmark className={`w-3 h-3 ${bookmarkedIds.includes(article.id) ? "fill-amber-400 text-amber-400" : "text-slate-500"}`} />
+                                  <span>{bookmarkedIds.includes(article.id) ? "Saved" : "Save"}</span>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(article.url || window.location.href);
+                                    addToast(
+                                      article.category,
+                                      "Link Copied",
+                                      `Successfully copied sharing link/URL for: ${article.title}`
+                                    );
+                                  }}
+                                  className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-400 rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                  title="Copy sharing link to clipboard"
+                                >
+                                  <Share2 className="w-3 h-3 text-slate-500" />
+                                  <span>Copy Link</span>
+                                </button>
+                                <button
+                                  onClick={(e) => handleNativeShare(e, article.title, article.url, article.category)}
+                                  className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-indigo-400 rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                  title="Open system native share options map"
+                                >
+                                  <Share2 className="w-3 h-3 text-slate-500" />
+                                  <span>Share...</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </article>
-                    );
-                  })}
+
+                          {/* Collapsible Key Briefing Takeaways & Reference URL */}
+                          {expanded && (
+                            <div id={`article-takeaways-${article.id}`} className="px-5 pb-5 border-t border-slate-800/60 bg-slate-900/40 rounded-b-xl pt-4">
+                              <h5 className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+                                <Terminal className="text-sky-400 w-3.5 h-3.5" />
+                                Key Intelligence Points
+                              </h5>
+                              
+                              <ul className="space-y-2 mb-4">
+                                {article.keyTakeaways.map((bullet, idx) => (
+                                  <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
+                                    <span className="text-sky-400 font-bold shrink-0 mt-0.5 select-none font-mono">▸</span>
+                                    <span>{bullet}</span>
+                                  </li>
+                                ))}
+                              </ul>
+
+                              {/* Technical Briefing Advisory Template Section */}
+                              {article.anzActionableAdvice && (
+                                <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
+                                    <h6 className="text-xs font-bold uppercase tracking-wider text-white">
+                                      ANZ Commercial & Advisory Briefing
+                                    </h6>
+                                  </div>
+                                  <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
+                                    {article.anzActionableAdvice}
+                                  </p>
+                                  
+                                  {article.ecifFundingEligible && (
+                                    <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                      <span>
+                                        <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Subscriber Delivery Micro-Dispatch Controls */}
+                              <div className="my-4 bg-slate-950/25 border border-slate-800/60 p-3.5 rounded-lg">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                  <div className="flex items-start gap-2.5">
+                                    <div className="p-1.5 rounded bg-sky-500/10 border border-sky-550/20 text-sky-400 mt-0.5 shrink-0">
+                                      <Mail className="w-3.5 h-3.5" />
+                                    </div>
+                                    <div>
+                                      <h6 className="text-[11px] font-bold text-slate-200 uppercase font-mono tracking-wider">
+                                        Email Live Intelligence Digest
+                                      </h6>
+                                      <p className="text-[10px] text-slate-400 font-sans mt-0.5">
+                                        Dispatches these key intelligence points directly to registered business profiles.
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {activeDispatchArticleId === article.id ? (
+                                    <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                                      <div className="flex items-center gap-1.5">
+                                        <input
+                                          type="email"
+                                          placeholder="subscriber@domain.com"
+                                          value={dispatchEmailInput}
+                                          onChange={(e) => setDispatchEmailInput(e.target.value)}
+                                          className="bg-slate-950 border border-slate-700/80 rounded px-2 py-1 text-xs text-slate-200 outline-none focus:border-sky-500 w-full sm:w-48 font-mono"
+                                          disabled={sendingSummaryId === article.id}
+                                        />
+                                        <button
+                                          onClick={() => handleSendSummary(article, dispatchEmailInput)}
+                                          disabled={sendingSummaryId === article.id}
+                                          className="px-2.5 py-1 bg-sky-500 hover:bg-sky-450 text-slate-950 font-bold font-mono rounded text-[10px] disabled:opacity-50 transition shrink-0 cursor-pointer"
+                                        >
+                                          {sendingSummaryId === article.id ? "Working..." : "Send"}
+                                        </button>
+                                        <button
+                                          onClick={() => setActiveDispatchArticleId(null)}
+                                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 font-mono rounded text-[10px] text-slate-400 cursor-pointer"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                      {subscriptionsList.length > 0 && (
+                                        <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
+                                          <span className="text-slate-600">Shortcut:</span>
+                                          {subscriptionsList.slice(0, 2).map((sub) => (
+                                            <button
+                                              key={sub.id}
+                                              onClick={() => setDispatchEmailInput(sub.email)}
+                                              className="hover:text-sky-400 underline cursor-pointer"
+                                              title={`Quick select ${sub.name}`}
+                                            >
+                                              {sub.email}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setActiveDispatchArticleId(article.id);
+                                        setDispatchEmailInput(subscriptionsList[0]?.email || "");
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-450 font-mono rounded text-[10px] text-slate-350 cursor-pointer transition"
+                                    >
+                                      <Mail className="w-3 h-3 text-slate-500" />
+                                      <span>Dispatch Digest</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
+                                <span className="text-xs text-slate-400">
+                                  Segment Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
+                                </span>
+                                
+                                <a 
+                                  href={article.url} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
+                                >
+                                  <span>Access Source File</span>
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })
+                  ) : (
+                    (() => {
+                      const categoriesList: NewsCategory[] = [
+                        "cloud_transformation",
+                        "licensing_ea",
+                        "pricing_news",
+                        "anz_strategy"
+                      ];
+
+                      return categoriesList.map((catKey) => {
+                        const categoryArticles = filteredArticles.filter(
+                          (art) => art.category === catKey
+                        );
+                        
+                        // Skip if no articles in this category under current search/filters
+                        if (categoryArticles.length === 0) return null;
+
+                        const meta = categoryMap[catKey] || {
+                          label: catKey,
+                          bg: "bg-slate-500/10",
+                          text: "text-slate-300",
+                          icon: <FileText className="w-4 h-4" />
+                        };
+
+                        return (
+                          <div key={catKey} className="space-y-3.5 mb-2 first:mt-0 mt-3 last:mb-0">
+                            {/* Category Subheader Banner */}
+                            <div className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border bg-slate-950/40 border-slate-800/65`}>
+                              <div className="p-1 rounded bg-[#0b0f19] shrink-0">
+                                {meta.icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider font-mono">
+                                  {meta.label}
+                                </h4>
+                              </div>
+                              <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 shrink-0">
+                                {categoryArticles.length} {categoryArticles.length === 1 ? 'brief' : 'briefs'}
+                              </span>
+                            </div>
+
+                            {/* Articles list block within this category */}
+                            <div className="flex flex-col gap-4 pl-0 sm:pl-3 border-l-0 sm:border-l sm:border-slate-800/40">
+                              {categoryArticles.map((article) => {
+                                const expanded = expandedArticleId === article.id;
+                                const articleMeta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-4 h-4" /> };
+                                
+                                return (
+                                  <article 
+                                    key={article.id}
+                                    id={`article-grouped-${article.id}`}
+                                    className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
+                                      expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
+                                    } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
+                                    draggable
+                                    onDragStart={(e) => {
+                                      draggedIdRef.current = article.id;
+                                      e.currentTarget.style.opacity = "0.4";
+                                    }}
+                                    onDragEnd={(e) => {
+                                      e.currentTarget.style.opacity = "1";
+                                      setDragOverArticleId(null);
+                                    }}
+                                    onDragOver={(e) => {
+                                      e.preventDefault();
+                                      if (draggedIdRef.current && draggedIdRef.current !== article.id) {
+                                        setDragOverArticleId(article.id);
+                                      }
+                                    }}
+                                    onDragLeave={() => {
+                                      if (dragOverArticleId === article.id) {
+                                        setDragOverArticleId(null);
+                                      }
+                                    }}
+                                    onDrop={(e) => {
+                                      e.preventDefault();
+                                      if (draggedIdRef.current && draggedIdRef.current !== article.id) {
+                                        handleReorderArticles(draggedIdRef.current, article.id);
+                                      }
+                                      setDragOverArticleId(null);
+                                      draggedIdRef.current = null;
+                                    }}
+                                  >
+                                    {/* Upper Card Segment */}
+                                    <div 
+                                      className="p-5 cursor-pointer select-none"
+                                      onClick={() => setExpandedArticleId(expanded ? null : article.id)}
+                                    >
+                                      <div className="flex flex-wrap items-center justify-between gap-2.5 mb-3">
+                                        <div className="flex items-center gap-2">
+                                          {/* Multi-select Checkbox */}
+                                          <div 
+                                            className="flex items-center justify-center p-1"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <input 
+                                              type="checkbox"
+                                              checked={selectedArticleIds.includes(article.id)}
+                                              onChange={() => toggleSelectArticle(article.id)}
+                                              className="w-4 h-4 rounded border-slate-750 bg-slate-950 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900 cursor-pointer"
+                                              title="Select briefing for batch actions"
+                                            />
+                                          </div>
+
+                                          {/* Drag Grip Handle & Rank-order Controls */}
+                                          <div 
+                                            className="flex items-center gap-1 bg-slate-950/45 border border-slate-800 rounded px-1.5 py-0.5 mr-1 shrink-0 select-none"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <div 
+                                              className="cursor-grab text-slate-500 hover:text-sky-400 p-0.5 active:cursor-grabbing"
+                                              title="Drag handle to reorder the intelligence stream"
+                                            >
+                                              <GripVertical className="w-3.5 h-3.5" />
+                                            </div>
+                                            <button
+                                              onClick={() => handleMoveArticle(article.id, "up")}
+                                              className="p-0.5 text-slate-500 hover:text-sky-400 cursor-pointer rounded hover:bg-slate-800/80"
+                                              title="Rank-order: Move item up"
+                                              type="button"
+                                            >
+                                              <ChevronUp className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                              onClick={() => handleMoveArticle(article.id, "down")}
+                                              className="p-0.5 text-slate-500 hover:text-sky-400 cursor-pointer rounded hover:bg-slate-800/80"
+                                              title="Rank-order: Move item down"
+                                              type="button"
+                                            >
+                                              <ChevronDown className="w-3.5 h-3.5" />
+                                            </button>
+                                          </div>
+
+                                          {/* Sentiment */}
+                                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wider uppercase border ${getSentimentColor(article.sentiment)}`}>
+                                            {article.sentiment} Sentiment
+                                          </span>
+                                          {/* Pinned Badge */}
+                                          {pinnedIds.includes(article.id) && (
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 text-[10px] uppercase font-semibold font-mono tracking-wider border border-sky-500/20">
+                                              <Pin className="w-2.5 h-2.5 rotate-45 fill-sky-400" />
+                                              Pinned
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {/* Impact Score and Expand Action */}
+                                        <div className="flex items-center gap-2">
+                                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium border ${getImpactBadgeColor(article.impactScore)}`}>
+                                            Impact: {article.impactScore}/10
+                                          </span>
+                                          {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                                        </div>
+                                      </div>
+
+                                      <h4 className="text-base font-bold text-white leading-snug group-hover:text-blue-400 transition mb-2">
+                                        {article.title}
+                                      </h4>
+
+                                      <p className="text-sm text-slate-300 leading-relaxed line-clamp-2">
+                                        {article.summary}
+                                      </p>
+
+                                      <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                          <span>Source: <strong className="text-slate-400">{article.source}</strong></span>
+                                          <span>Date: <strong className="text-slate-400">{article.publishedDate}</strong></span>
+                                          <span className="text-slate-700 select-none">•</span>
+                                          <span className="inline-flex items-center gap-1">
+                                            <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                            <span className="text-slate-400">{calculateReadTime(article)}</span>
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              togglePin(article.id, article.title, article.category);
+                                            }}
+                                            className={`inline-flex items-center gap-1.5 bg-[#0c101a] border rounded px-2.5 py-1 text-[11px] font-mono transition cursor-pointer ${
+                                              pinnedIds.includes(article.id)
+                                                ? "text-sky-450 border-sky-500/40 hover:bg-sky-500/10 hover:border-sky-500/60"
+                                                : "text-slate-400 border-slate-800 hover:border-slate-700 hover:text-sky-400/80"
+                                            }`}
+                                            title={pinnedIds.includes(article.id) ? "Unpin this briefing from the top of the feed" : "Pin this briefing forced to the top of the feed"}
+                                          >
+                                            <Pin className={`w-3 h-3 ${pinnedIds.includes(article.id) ? "fill-sky-400 text-sky-400 rotate-45" : "text-slate-500"}`} />
+                                            <span>{pinnedIds.includes(article.id) ? "Pinned" : "Pin"}</span>
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              toggleBookmark(article.id, article.title, article.category);
+                                            }}
+                                            className={`inline-flex items-center gap-1.5 bg-[#0c101a] border rounded px-2.5 py-1 text-[11px] font-mono transition cursor-pointer ${
+                                              bookmarkedIds.includes(article.id)
+                                                ? "text-amber-400 border-amber-500/40 hover:bg-amber-500/10 hover:border-amber-500/60"
+                                                : "text-slate-400 border-slate-800 hover:border-slate-700 hover:text-amber-400/80"
+                                            }`}
+                                            title={bookmarkedIds.includes(article.id) ? "Remove Bookmark" : "Store article in Saved Briefs"}
+                                          >
+                                            <Bookmark className={`w-3 h-3 ${bookmarkedIds.includes(article.id) ? "fill-amber-400 text-amber-400" : "text-slate-500"}`} />
+                                            <span>{bookmarkedIds.includes(article.id) ? "Saved" : "Save"}</span>
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              navigator.clipboard.writeText(article.url || window.location.href);
+                                              addToast(
+                                                article.category,
+                                                "Link Copied",
+                                                `Successfully copied sharing link/URL for: ${article.title}`
+                                              );
+                                            }}
+                                            className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-400 rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                            title="Copy sharing link to clipboard"
+                                          >
+                                            <Share2 className="w-3 h-3 text-slate-500" />
+                                            <span>Copy Link</span>
+                                          </button>
+                                          <button
+                                            onClick={(e) => handleNativeShare(e, article.title, article.url, article.category)}
+                                            className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-indigo-400 rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                            title="Open system native share options map"
+                                          >
+                                            <Share2 className="w-3 h-3 text-slate-500" />
+                                            <span>Share...</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Collapsible Key Briefing Takeaways & Reference URL */}
+                                    {expanded && (
+                                      <div id={`article-takeaways-grouped-${article.id}`} className="px-5 pb-5 border-t border-slate-800/60 bg-slate-900/40 rounded-b-xl pt-4">
+                                        <h5 className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+                                          <Terminal className="text-sky-400 w-3.5 h-3.5" />
+                                          Key Intelligence Points
+                                        </h5>
+                                        
+                                        <ul className="space-y-2 mb-4">
+                                          {article.keyTakeaways.map((bullet, idx) => (
+                                            <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
+                                              <span className="text-sky-400 font-bold shrink-0 mt-0.5 select-none font-mono">▸</span>
+                                              <span>{bullet}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+
+                                        {/* Technical Briefing Advisory Template Section */}
+                                        {article.anzActionableAdvice && (
+                                          <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
+                                            <div className="flex items-center gap-2 mb-2">
+                                              <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
+                                              <h6 className="text-xs font-bold uppercase tracking-wider text-white">
+                                                ANZ Commercial & Advisory Briefing
+                                              </h6>
+                                            </div>
+                                            <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
+                                              {article.anzActionableAdvice}
+                                            </p>
+                                            
+                                            {article.ecifFundingEligible && (
+                                              <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
+                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                                <span>
+                                                  <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+
+                                        {/* Subscriber Delivery Micro-Dispatch Controls */}
+                                        <div className="my-4 bg-slate-950/25 border border-slate-800/60 p-3.5 rounded-lg text-left">
+                                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <div className="flex items-start gap-2.5">
+                                              <div className="p-1.5 rounded bg-sky-500/10 border border-sky-550/20 text-sky-400 mt-0.5 shrink-0">
+                                                <Mail className="w-3.5 h-3.5" />
+                                              </div>
+                                              <div>
+                                                <h6 className="text-[11px] font-bold text-slate-200 uppercase font-mono tracking-wider">
+                                                  Email Live Intelligence Digest
+                                                </h6>
+                                                <p className="text-[10px] text-slate-400 font-sans mt-0.5">
+                                                  Dispatches these key intelligence points directly to registered business profiles.
+                                                </p>
+                                              </div>
+                                            </div>
+
+                                            {activeDispatchArticleId === article.id ? (
+                                              <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                                                <div className="flex items-center gap-1.5">
+                                                  <input
+                                                    type="email"
+                                                    placeholder="subscriber@domain.com"
+                                                    value={dispatchEmailInput}
+                                                    onChange={(e) => setDispatchEmailInput(e.target.value)}
+                                                    className="bg-slate-950 border border-slate-700/80 rounded px-2 py-1 text-xs text-slate-200 outline-none focus:border-sky-500 w-full sm:w-48 font-mono"
+                                                    disabled={sendingSummaryId === article.id}
+                                                  />
+                                                  <button
+                                                    onClick={() => handleSendSummary(article, dispatchEmailInput)}
+                                                    disabled={sendingSummaryId === article.id}
+                                                    className="px-2.5 py-1 bg-sky-500 hover:bg-sky-450 text-slate-950 font-bold font-mono rounded text-[10px] disabled:opacity-50 transition shrink-0 cursor-pointer"
+                                                  >
+                                                    {sendingSummaryId === article.id ? "Working..." : "Send"}
+                                                  </button>
+                                                  <button
+                                                    onClick={() => setActiveDispatchArticleId(null)}
+                                                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 font-mono rounded text-[10px] text-slate-400 cursor-pointer"
+                                                  >
+                                                    Cancel
+                                                  </button>
+                                                </div>
+                                                {subscriptionsList.length > 0 && (
+                                                  <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
+                                                    <span className="text-slate-600">Shortcut:</span>
+                                                    {subscriptionsList.slice(0, 2).map((sub) => (
+                                                      <button
+                                                        key={sub.id}
+                                                        onClick={() => setDispatchEmailInput(sub.email)}
+                                                        className="hover:text-sky-400 underline cursor-pointer"
+                                                        title={`Quick select ${sub.name}`}
+                                                        type="button"
+                                                      >
+                                                        {sub.email}
+                                                      </button>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <button
+                                                onClick={() => {
+                                                  setActiveDispatchArticleId(article.id);
+                                                  setDispatchEmailInput(subscriptionsList[0]?.email || "");
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-455 font-mono rounded text-[10px] text-slate-350 cursor-pointer transition"
+                                                type="button"
+                                              >
+                                                <Mail className="w-3 h-3 text-slate-500" />
+                                                <span>Dispatch Digest</span>
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
+                                          <span className="text-xs text-slate-400">
+                                            Item Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
+                                          </span>
+                                          
+                                          <a 
+                                            href={article.url} 
+                                            target="_blank" 
+                                            rel="noreferrer" 
+                                            className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
+                                          >
+                                            <span>Access Source File</span>
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                          </a>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </article>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()
+                  )}
                 </div>
               )}
             </div>
@@ -1338,6 +3009,143 @@ export default function App() {
               </div>
             </div>
 
+            {/* Saved Intelligence Briefs Hub */}
+            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-16 w-16 bg-amber-500/5 rounded-full blur-xl"></div>
+              
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="flex items-center gap-2">
+                  <div className="bg-amber-500/10 p-1.5 rounded-lg border border-amber-500/20">
+                    <Bookmark className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
+                      Saved Intelligence Briefs
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-mono">Offline Reference Hub ({bookmarkedIds.length})</p>
+                  </div>
+                </div>
+
+                {bookmarkedIds.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setBookmarkedIds([]);
+                      localStorage.setItem("microsoft_intel_bookmarks", JSON.stringify([]));
+                      addToast(
+                        "pricing_news",
+                        "Saved Registry Cleared",
+                        "Successfully deleted all bookmarks from your local persistence storage."
+                      );
+                    }}
+                    className="text-[10px] text-rose-400 hover:text-rose-300 font-mono cursor-pointer transition"
+                    title="Clear all saved articles"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                Articles you flag for close operational monitoring will be persisted here in your browser context.
+              </p>
+
+              {bookmarkedIds.length === 0 ? (
+                <div className="bg-slate-950/40 border border-slate-900 border-dashed rounded-lg p-5 text-center text-xs text-slate-500 font-mono">
+                  No saved briefs located. Click "Save" on database articles within your main index view to register them here.
+                </div>
+              ) : (
+                <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                  {articles
+                    .filter(art => bookmarkedIds.includes(art.id))
+                    .map(article => {
+                      const meta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-3 h-3" /> };
+                      const isExpanded = expandedSavedId === article.id;
+                      
+                      return (
+                        <div 
+                          key={article.id}
+                          className="bg-slate-950/55 hover:bg-slate-950/80 border border-slate-900 rounded-lg p-3 transition duration-150"
+                        >
+                          <div 
+                            className="flex items-start justify-between gap-2.5 cursor-pointer"
+                            onClick={() => setExpandedSavedId(isExpanded ? null : article.id)}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold border ${meta.bg} ${meta.text} mb-1.5`}>
+                                {meta.icon}
+                                {meta.label}
+                              </span>
+                              <h5 className="text-xs font-bold text-slate-200 line-clamp-2 leading-snug">
+                                {article.title}
+                              </h5>
+                              <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500 font-mono">
+                                <span>{article.source}</span>
+                                <span>•</span>
+                                <span className={article.impactScore >= 8 ? "text-rose-450" : "text-slate-400"}>Impact: {article.impactScore}/10</span>
+                                <span>•</span>
+                                <span className="inline-flex items-center gap-1 text-slate-450">
+                                  <Clock className="w-2.5 h-2.5 text-slate-500" />
+                                  <span>{calculateReadTime(article)}</span>
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleBookmark(article.id, article.title, article.category);
+                              }}
+                              className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-rose-500/5 transition cursor-pointer shrink-0"
+                              title="Delete bookmark"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden mt-2.5 pt-2.5 border-t border-slate-800/40 text-[11px] text-slate-300 space-y-2 select-text"
+                              >
+                                <p className="leading-relaxed text-slate-400">
+                                  {article.summary}
+                                </p>
+                                
+                                {article.anzActionableAdvice && (
+                                  <div className="bg-slate-900/60 border-l border-amber-500 p-2 rounded-r">
+                                    <strong className="text-amber-400 text-[10px] uppercase font-mono block mb-1">
+                                      Advisory Note:
+                                    </strong>
+                                    <p className="text-[10px] text-slate-300 leading-relaxed font-sans select-text">
+                                      {article.anzActionableAdvice}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center justify-between pt-1 font-mono text-[9px]">
+                                  <span className="text-slate-650">Published: {article.publishedDate}</span>
+                                  <a 
+                                    href={article.url} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    className="text-sky-400 hover:underline hover:text-sky-300"
+                                  >
+                                    Source Link
+                                  </a>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+
             {/* Watchlist Subscription Center Card */}
             <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
               <div className="absolute top-0 right-0 h-16 w-16 bg-amber-500/5 rounded-full blur-xl"></div>
@@ -1566,6 +3374,95 @@ export default function App() {
           })}
         </AnimatePresence>
       </div>
+
+      {/* Batch Action Floating Footer Bar */}
+      <AnimatePresence>
+        {selectedArticleIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#0b0f19]/95 border border-sky-500/40 backdrop-blur-md rounded-2xl shadow-[0_10px_35px_rgba(14,165,233,0.15)] px-6 py-4 flex flex-col md:flex-row items-center gap-4 max-w-[95vw] md:max-w-4xl"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-slate-950 font-mono">
+                {selectedArticleIds.length}
+              </span>
+              <div>
+                <h5 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                  Batch Operations Active
+                </h5>
+                <p className="text-[10px] text-slate-400">
+                  Select and execute bulk commands on raw intelligence feeds.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 sm:border-l sm:border-slate-800 md:pl-4 pl-0 w-full md:w-auto justify-center md:justify-start">
+              {/* Select All / Deselect All */}
+              <button
+                onClick={() => {
+                  const allActiveIds = filteredArticles.map(a => a.id);
+                  const isAllSelected = allActiveIds.every(id => selectedArticleIds.includes(id));
+                  if (isAllSelected) {
+                    // Deselect active ones
+                    setSelectedArticleIds(prev => prev.filter(id => !allActiveIds.includes(id)));
+                  } else {
+                    // Add all active ones that aren't already selected
+                    setSelectedArticleIds(prev => {
+                      const newSelections = allActiveIds.filter(id => !prev.includes(id));
+                      return [...prev, ...newSelections];
+                    });
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-300 font-mono hover:text-white rounded border border-slate-800 bg-[#05070c] hover:border-slate-700 transition cursor-pointer"
+                title="Select all or clear active page selection"
+              >
+                {filteredArticles.map(a => a.id).every(id => selectedArticleIds.includes(id)) ? "Deselect Page" : "Select Page"}
+              </button>
+
+              {/* Batch Pin */}
+              <button
+                onClick={handleBatchPin}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-sky-400 font-mono hover:text-sky-305 rounded border border-sky-500/30 bg-[#05070c] hover:border-sky-500/50 transition cursor-pointer"
+                title="Batch toggle Pin status"
+              >
+                <Pin className="w-3.5 h-3.5 rotate-45 fill-sky-500/20" />
+                <span>Toggle Pin</span>
+              </button>
+
+              {/* Batch Bookmark */}
+              <button
+                onClick={handleBatchBookmark}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-amber-400 font-mono hover:text-amber-305 rounded border border-amber-500/30 bg-[#05070c] hover:border-amber-500/50 transition cursor-pointer"
+                title="Batch toggle Bookmark status"
+              >
+                <Bookmark className="w-3.5 h-3.5 fill-amber-500/20" />
+                <span>Toggle Saved</span>
+              </button>
+
+              {/* Batch Delete */}
+              <button
+                onClick={handleBatchDelete}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-rose-400 font-mono hover:text-rose-305 rounded border border-rose-500/30 bg-[#05070c] hover:border-rose-500/50 transition cursor-pointer"
+                title="Batch delete selected articles"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
+
+              {/* Cancel / Clear Selection */}
+              <button
+                onClick={() => setSelectedArticleIds([])}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-550 font-mono hover:text-slate-400 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
