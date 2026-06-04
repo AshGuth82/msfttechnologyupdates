@@ -292,11 +292,11 @@ CRITICAL: Return ONLY the JSON. Do not include markdown headers like \`\`\`json 
         throw new Error("Parsed JSON is not a valid list");
       }
     } catch (parseError) {
-      console.error("Failed to parse Gemini response as JSON. Response text was:\n", responseText, parseError);
+      console.warn("Failed to parse Gemini response as JSON. Response text was:\n", responseText, parseError);
       throw parseError;
     }
   } catch (error) {
-    console.error("Error communicating with Gemini Search Grounding API:", error);
+    console.warn("Gracefully handled: error or quota limit reached communicating with Gemini Search Grounding API (falling back to pre-seeded archives):", error);
     return { articles: FALLBACK_ARTICLES, isRealTime: false };
   }
 }

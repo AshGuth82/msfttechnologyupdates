@@ -6,6 +6,26 @@
     <title>Microsoft Corporate Intelligence Hub</title>
     <script>
       // Graceful handler to prevent third-party extension and iframe wrapper fetch setter errors from interrupting runtime
+      (function() {
+        const originalFetch = window.fetch;
+        let currentFetch = originalFetch;
+        try {
+          Object.defineProperty(window, 'fetch', {
+            get: function() {
+              return currentFetch;
+            },
+            set: function(val) {
+              console.warn('Interception: Attempt to overwrite window.fetch handled gracefully');
+              currentFetch = val;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        } catch (e) {
+          console.warn('Could not define custom fetch getter/setter:', e);
+        }
+      })();
+
       window.addEventListener('error', function(event) {
         if (event.message && (event.message.indexOf('fetch') !== -1 || event.message.indexOf('only a getter') !== -1)) {
           console.warn('Swallowed window.fetch or read-only getter error:', event.message);
