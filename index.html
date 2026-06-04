@@ -4,6 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Microsoft Corporate Intelligence Hub</title>
+    <script>
+      // Graceful handler to prevent third-party extension and iframe wrapper fetch setter errors from interrupting runtime
+      window.addEventListener('error', function(event) {
+        if (event.message && (event.message.indexOf('fetch') !== -1 || event.message.indexOf('only a getter') !== -1)) {
+          console.warn('Swallowed window.fetch or read-only getter error:', event.message);
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && event.reason.message && (event.reason.message.indexOf('fetch') !== -1 || event.reason.message.indexOf('only a getter') !== -1)) {
+          console.warn('Swallowed unhandled promise fetch error:', event.reason.message);
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

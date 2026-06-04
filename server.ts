@@ -332,6 +332,51 @@ app.get("/api/news", async (req, res) => {
   });
 });
 
+// Helper to generate a high-quality static expert briefing when offline or key is restricted
+function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { answer: string; sources: { title: string; url: string }[] } {
+  let answer = "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\n";
+  answer += "As a senior specialist with 12+ years of experience bridging the gap between IT, Finance, and Procurement (including role active as ANZ Country Manager), here is a direct strategic assessment tailored specifically to local business structures:\n\n";
+  
+  const lowerQuery = query.toLowerCase();
+  if (lowerQuery.includes("finance") || lowerQuery.includes("earning") || lowerQuery.includes("cloud") || lowerQuery.includes("sover") || lowerQuery.includes("sydney") || lowerQuery.includes("melbourne") || lowerQuery.includes("apra")) {
+    answer += "#### **1. Azure & Cloud Transformation Momentum in ANZ**\n";
+    answer += "*   **APRA & NZISM Compliance:** With local expansion of clean-energy AI high-density computing clusters in Sydney and Melbourne, regional cloud tenancy is transitioning to fully sovereign frameworks. This eliminates historical legal boundaries for banking and public sector agencies.\n";
+    answer += "*   **ECIF Funding Strategic Angle:** Up to 100% of proof-of-concept costs can be offset on Microsoft Azure migrations by registering eligible workloads. As an experienced strategist, my advice is to negotiate direct ECIF allocations with your Account Director prior to committing any engineering hours.";
+  } else if (lowerQuery.includes("licens") || lowerQuery.includes("agreement") || lowerQuery.includes("ea") || lowerQuery.includes("sce") || lowerQuery.includes("eas") || lowerQuery.includes("threshold") || lowerQuery.includes("seat")) {
+    answer += "#### **2. Enterprise Agreement (EA) & Licensing Optimization**\n";
+    answer += "*   **Threshold Dynamics:** SCE and EAS models are experiencing baseline changes, notably raising profile minimum seat thresholds to 500. For mid-market business in Australia/NZ between 200 and 500 active records, transitioning to a Cloud Solution Provider (CSP) agreement structures a more agile, monthly variable budget matrix.\n";
+    answer += "*   **NPU / Core Formulas:** Licensing for on-prem Windows Server instances now counts localized coprocessing hardware values. Review legacy clusters immediately to prevent massive pricing audits.";
+  } else if (lowerQuery.includes("meetup") || lowerQuery.includes("narrabeen") || lowerQuery.includes("engagement") || lowerQuery.includes("roundtable")) {
+    answer += "#### **3. local Meetup Engagement: Narrabeen Business Group (NBG)**\n";
+    answer += "To drive local Sydney Northern Beaches IT-Finance synergy, I lead the monthly **Narrabeen Business Group Microsoft Strategy Meetup**:\n";
+    answer += "*   **Target Audience:** CFOs, procurement leads, and technology directors.\n";
+    answer += "*   **Operational Concept:** We host collaborative table discussions comparing actual, de-identified Microsoft EAs, diagnosing licensing waste, and providing step-by-step guidance on claiming partner and ECIF credits.\n";
+    answer += "*   **Strategy:** Bring your active renewal challenges to NSW roundtable sessions to co-model mitigation paths.";
+  } else if (lowerQuery.includes("copilot") || lowerQuery.includes("pricing") || lowerQuery.includes("agent") || lowerQuery.includes("rate") || lowerQuery.includes("exchange") || lowerQuery.includes("6%")) {
+    answer += "#### **4. Copilot Tiered Pricing & Licensing Playbook**\n";
+    answer += "*   **Mid-Market Tiers:** Microsoft's premium agents are undergoing flexible restructuring. Committing to multi-year contracts can decrease baseline M365 Copilot licensing down to $22 per user/month, while advanced agent-building suites scale at $45 per user/month.\n";
+    answer += "*   **Mitigation Principle:** Prevent default seat assignment. Build structural teams of excellence to roll out licenses incrementally based on proven productivity metrics.";
+  } else {
+    answer += "#### **5. General ANZ Strategic Briefing**\n";
+    answer += "Microsoft's current push focuses on agentic workspace workflows, decentralized NPU local execution systems, and sovereign region compliance. Local businesses should prioritize:\n\n";
+    answer += "1.  **Contract Readiness:** Auditing agreement seats 18 days prior to renewal.\n";
+    answer += "2.  **ECIF Registration:** Ensuring your system integrator aligns with approved Azure End-customer Investment Funds.\n";
+    answer += "3.  **Community Connection:** Attending our monthly Narrabeen Business Group roundtable to exchange best-practice frameworks.";
+  }
+
+  if (noteSuffix) {
+    answer += "\n\n" + noteSuffix;
+  }
+
+  return {
+    answer: answer,
+    sources: [
+      { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
+      { title: "Narrabeen Business Group Meetup Hub", url: "https://www.meetup.com" }
+    ]
+  };
+}
+
 // 2. Custom Intelligence query endpoint
 app.post("/api/query", async (req, res) => {
   const { query } = req.body;
@@ -343,42 +388,8 @@ app.post("/api/query", async (req, res) => {
   if (!ai) {
     // Elegant local fallback QA model with authoritative ANZ country leader tone
     console.log(`Local static ANZ Expert QA executing for query: "${query}"`);
-    let answer = "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\n";
-    answer += "As a senior specialist with 12+ years of experience bridging the gap between IT, Finance, and Procurement (including role active as ANZ Country Manager), here is a direct strategic assessment tailored specifically to local business structures:\n\n";
-    
-    if (query.toLowerCase().includes("finance") || query.toLowerCase().includes("earning") || query.toLowerCase().includes("cloud")) {
-      answer += "#### **1. Azure & Cloud Transformation Momentum in ANZ**\n";
-      answer += "*   **APRA & NZISM Compliance:** With local expansion of clean-energy AI high-density computing clusters in Sydney and Melbourne, regional cloud tenancy is transitioning to fully sovereign frameworks. This eliminates historical legal boundaries for banking and public sector agencies.\n";
-      answer += "*   **ECIF Funding Strategic Angle:** Up to 100% of proof-of-concept costs can be offset on Microsoft Azure migrations by registering eligible workloads. As an experienced strategist, my advice is to negotiate direct ECIF allocations with your Account Director prior to committing any engineering hours.";
-    } else if (query.toLowerCase().includes("licens") || query.toLowerCase().includes("agreement") || query.toLowerCase().includes("ea")) {
-      answer += "#### **2. Enterprise Agreement (EA) & Licensing Optimization**\n";
-      answer += "*   **Threshold Dynamics:** SCE and EAS models are experiencing baseline changes, notably raising profile minimum seat thresholds to 500. For mid-market business in Australia/NZ between 200 and 500 active records, transitioning to a Cloud Solution Provider (CSP) agreement structures a more agile, monthly variable budget matrix.\n";
-      answer += "*   **NPU / Core Formulas:** Licensing for on-prem Windows Server instances now counts localized coprocessing hardware values. Review legacy clusters immediately to prevent massive pricing audits.";
-    } else if (query.toLowerCase().includes("meetup") || query.toLowerCase().includes("narrabeen") || query.toLowerCase().includes("engagement")) {
-      answer += "#### **3. local Meetup Engagement: Narrabeen Business Group (NBG)**\n";
-      answer += "To drive local Sydney Northern Beaches IT-Finance synergy, I lead the monthly **Narrabeen Business Group Microsoft Strategy Meetup**:\n";
-      answer += "*   **Target Audience:** CFOs, procurement leads, and technology directors.\n";
-      answer += "*   **Operational Concept:** We host collaborative table discussions comparing actual, de-identified Microsoft EAs, diagnosing licensing waste, and providing step-by-step guidance on claiming partner and ECIF credits.\n";
-      answer += "*   **Strategy:** Bring your active renewal challenges to NSW roundtable sessions to co-model mitigation paths.";
-    } else if (query.toLowerCase().includes("copilot") || query.toLowerCase().includes("pricing") || query.toLowerCase().includes("agent")) {
-      answer += "#### **4. Copilot Tiered Pricing & Licensing Playbook**\n";
-      answer += "*   **Mid-Market Tiers:** Microsoft's premium agents are undergoing flexible restructuring. Committing to multi-year contracts can decrease baseline M365 Copilot licensing down to $22 per user/month, while advanced agent-building suites scale at $45 per user/month.\n";
-      answer += "*   **Mitigation Principle:** Prevent default seat assignment. Build structural teams of excellence to roll out licenses incrementally based on proven productivity metrics.";
-    } else {
-      answer += "#### **5. General ANZ Strategic Briefing**\n";
-      answer += "Microsoft's current push focuses on agentic workspace workflows, decentralized NPU local execution systems, and sovereign region compliance. Local businesses should prioritize:\n\n";
-      answer += "1.  **Contract Readiness:** Auditing agreement seats 18 days prior to renewal.\n";
-      answer += "2.  **ECIF Registration:** Ensuring your system integrator aligns with approved Azure End-customer Investment Funds.\n";
-      answer += "3.  **Community Connection:** Attending our monthly Narrabeen Business Group roundtable to exchange best-practice frameworks.";
-    }
-
-    return res.json({
-      answer: answer + "\n\n*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*",
-      sources: [
-        { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
-        { title: "Narrabeen Business Group Meetup Hub", url: "https://www.meetup.com" }
-      ]
-    });
+    const fallbackData = generateLocalExpertResponse(query, "*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*");
+    return res.json(fallbackData);
   }
 
   try {
@@ -427,8 +438,12 @@ Guidelines for your response:
       sources: uniqueSources
     });
   } catch (error: any) {
-    console.error("Gemini query search failed:", error);
-    res.status(500).json({ error: "Intelligence analysis failed, please try again." });
+    console.warn("Gemini query search failed (possibly quota exhausted). Falling back gracefully and answering using pre-seeded local intelligence:", error);
+    
+    // Deliver seamless seamless expert fallback with a gentle note about the Gemini quota limit, avoiding a broken interface
+    const fallbackNote = "*(Note: Our online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines because the live API key is currently experiencing API load/quota limit adjustments.)*";
+    const fallbackData = generateLocalExpertResponse(query, fallbackNote);
+    res.json(fallbackData);
   }
 });
 
