@@ -43,7 +43,9 @@ import {
   Moon,
   GripVertical,
   Pin,
-  Trash2
+  Trash2,
+  Upload,
+  Plus
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse } from "./types";
 import { motion, AnimatePresence } from "motion/react";
@@ -311,6 +313,54 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Uploaded Briefings State (Persisted in localStorage)
+  const [uploadedArticles, setUploadedArticles] = useState<Article[]>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_uploaded_briefs");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [showCompose, setShowCompose] = useState(false);
+  const [newBriefTitle, setNewBriefTitle] = useState("");
+  const [newBriefCategory, setNewBriefCategory] = useState<NewsCategory>("cloud_transformation");
+  const [newBriefSummary, setNewBriefSummary] = useState("");
+  const [newBriefSource, setNewBriefSource] = useState("");
+  const [newBriefSentiment, setNewBriefSentiment] = useState<"positive" | "neutral" | "negative">("neutral");
+  const [newBriefImpact, setNewBriefImpact] = useState(5);
+  const [newBriefTakeaways, setNewBriefTakeaways] = useState("");
+  const [newBriefAdvice, setNewBriefAdvice] = useState("");
+  const [newBriefEcif, setNewBriefEcif] = useState(false);
+
+  const addUploadedBriefs = (newBriefs: Article[]) => {
+    setUploadedArticles(prev => {
+      const updated = [...newBriefs, ...prev];
+      localStorage.setItem("microsoft_intel_uploaded_briefs", JSON.stringify(updated));
+      return updated;
+    });
+
+    setArticles(current => {
+      const filteredCurrent = current.filter(art => !newBriefs.some(nb => nb.id === art.id));
+      return [...newBriefs, ...filteredCurrent];
+    });
+  };
+
+  const clearUploadedBriefs = () => {
+    setUploadedArticles([]);
+    localStorage.removeItem("microsoft_intel_uploaded_briefs");
+    loadNews(false);
+    addToast(
+      "pricing_news",
+      "Feed Reset",
+      "Cleared all uploaded briefs. Resettled the feed back to original system briefings."
+    );
+  };
 
   // Filters and Selection States
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory | "all">("all");
@@ -754,14 +804,28 @@ export default function App() {
       }
       
       const data = await response.json();
-      setArticles(data.articles || []);
+      const rawArticles = data.articles || [];
+      
+      // Merge with custom uploaded articles from local storage
+      let localCustom: Article[] = [];
+      try {
+        const stored = localStorage.getItem("microsoft_intel_uploaded_briefs");
+        if (stored) {
+          localCustom = JSON.parse(stored);
+        }
+      } catch (err) {
+        console.warn("Failed to parse custom briefs", err);
+      }
+      
+      const combined = [...localCustom, ...rawArticles.filter((ra: any) => !localCustom.some((lc: any) => lc.id === ra.id))];
+      setArticles(combined);
       setLastUpdated(data.lastUpdated || new Date().toISOString());
       setIsLive(data.isLive || false);
       setHasApiKey(data.hasApiKey || false);
 
       // Analyze news articles against watchlist for immediate toast indicators
-      if (data.articles && data.articles.length > 0) {
-        const matching = data.articles.filter((art: any) => watchlist.includes(art.category));
+      if (rawArticles && rawArticles.length > 0) {
+        const matching = rawArticles.filter((art: any) => watchlist.includes(art.category));
         if (matching.length > 0) {
           if (forceRefresh) {
             // Group matching items by category to offer structured alerts
@@ -795,6 +859,169 @@ export default function App() {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      
+      if (file.name.endsWith(".json")) {
+        reader.onload = (e) => {
+          try {
+            const content = e.target?.result as string;
+            const parsed = JSON.parse(content);
+            const briefsToImport: Article[] = [];
+            
+            const processArticle = (art: any): Article => {
+              return {
+                id: art.id || `uploaded-${Math.random().toString(36).substring(2, 9)}`,
+                title: art.title || "Untitled Uploaded Briefing",
+                summary: art.summary || "No summary provided in the uploaded briefing.",
+                category: ["cloud_transformation", "licensing_ea", "pricing_news", "anz_strategy"].includes(art.category)
+                  ? art.category
+                  : "cloud_transformation",
+                url: art.url || "https://news.microsoft.com/en-au/",
+                source: art.source || file.name,
+                publishedDate: art.publishedDate || new Date().toISOString().split("T")[0],
+                sentiment: ["positive", "neutral", "negative"].includes(art.sentiment)
+                  ? art.sentiment
+                  : "neutral",
+                impactScore: Number(art.impactScore) || 5,
+                keyTakeaways: Array.isArray(art.keyTakeaways) ? art.keyTakeaways : ["Uploaded briefing file content ingested"],
+                anzActionableAdvice: art.anzActionableAdvice || "No specific local advisory mapped for this custom item.",
+                ecifFundingEligible: art.ecifFundingEligible !== undefined ? !!art.ecifFundingEligible : false
+              };
+            };
+
+            if (Array.isArray(parsed)) {
+              parsed.forEach(item => briefsToImport.push(processArticle(item)));
+            } else if (parsed && typeof parsed === "object") {
+              if (Array.isArray(parsed.articles)) {
+                parsed.articles.forEach((item: any) => briefsToImport.push(processArticle(item)));
+              } else {
+                briefsToImport.push(processArticle(parsed));
+              }
+            }
+            
+            if (briefsToImport.length > 0) {
+              addUploadedBriefs(briefsToImport);
+              addToast(
+                briefsToImport[0].category,
+                "Briefing JSON Ingested",
+                `Successfully processed & registered ${briefsToImport.length} uploaded brief(s).`
+              );
+            } else {
+              addToast(
+                "pricing_news",
+                "Ingestion Failed",
+                "JSON format does not correspond to a valid Microsoft Intelligence Brief structure."
+              );
+            }
+          } catch (err) {
+            addToast(
+              "pricing_news",
+              "Upload Error",
+              "Could not parse selected JSON file. Check matching structures."
+            );
+          }
+        };
+        reader.readAsText(file);
+      } else if (file.name.endsWith(".txt") || file.name.endsWith(".md")) {
+        reader.onload = (e) => {
+          try {
+            const content = e.target?.result as string;
+            const lines = content.split("\n").map(l => l.trim()).filter(Boolean);
+            if (lines.length === 0) return;
+            
+            const title = lines[0].replace(/^[#\s*▸-]+/, "");
+            const summary = lines.slice(1).join("\n").slice(0, 300) || "Ingested plain text document summary.";
+            
+            const singleBrief: Article = {
+              id: `uploaded-${Math.random().toString(36).substring(2, 9)}`,
+              title: title.length > 100 ? title.slice(0, 100) + "..." : title,
+              summary: summary,
+              category: "cloud_transformation",
+              url: "https://news.microsoft.com/en-au/",
+              source: `Uploaded Document (${file.name})`,
+              publishedDate: new Date().toISOString().split("T")[0],
+              sentiment: "neutral",
+              impactScore: 6,
+              keyTakeaways: lines.slice(1).filter(l => l.startsWith("-") || l.startsWith("*") || l.startsWith("▸")).slice(0, 4)
+                .map(l => l.replace(/^[-*▸\s]+/, "")) || ["Document text analyzed for insights"],
+              anzActionableAdvice: "Advisory review pending. Ingested from custom file upload stream.",
+              ecifFundingEligible: false
+            };
+            
+            if (singleBrief.keyTakeaways.length === 0) {
+              singleBrief.keyTakeaways = [
+                "Detailed brief loaded from uploaded text document",
+                "Review detailed sections for specific operational impacts"
+              ];
+            }
+            
+            addUploadedBriefs([singleBrief]);
+            addToast(
+              "cloud_transformation",
+              "Briefing Document Ingested",
+              `Ingested custom document briefing: "${singleBrief.title.slice(0, 30)}..."`
+            );
+          } catch (err) {
+            addToast(
+              "pricing_news",
+              "Upload Error",
+              "Could not ingest plain text files. Check content layout."
+            );
+          }
+        };
+        reader.readAsText(file);
+      } else {
+        addToast(
+          "pricing_news",
+          "File Type Rejected",
+          "Please upload only .json briefings or plain-text .txt/.md files."
+        );
+      }
+    });
+  };
+
+  const handleComposeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBriefTitle.trim() || !newBriefSummary.trim()) {
+      addToast("pricing_news", "Form Incomplete", "Please fill in at least the Title and Summary fields.");
+      return;
+    }
+
+    const compiled: Article = {
+      id: `uploaded-manual-${Math.random().toString(36).substring(2, 9)}`,
+      title: newBriefTitle.trim(),
+      summary: newBriefSummary.trim(),
+      category: newBriefCategory,
+      url: "https://news.microsoft.com/en-au/",
+      source: newBriefSource.trim() || "Manual Executive Post",
+      publishedDate: new Date().toISOString().split("T")[0],
+      sentiment: newBriefSentiment,
+      impactScore: Number(newBriefImpact) || 5,
+      keyTakeaways: newBriefTakeaways.trim()
+        ? newBriefTakeaways.split("\n").map(t => t.trim()).filter(Boolean)
+        : ["Operational advisory recorded manually.", "No granular details reported."],
+      anzActionableAdvice: newBriefAdvice.trim() || "Operational review recommended for other segments.",
+      ecifFundingEligible: newBriefEcif
+    };
+
+    addUploadedBriefs([compiled]);
+    
+    // Reset Form
+    setNewBriefTitle("");
+    setNewBriefSummary("");
+    setNewBriefSource("");
+    setNewBriefSentiment("neutral");
+    setNewBriefImpact(5);
+    setNewBriefTakeaways("");
+    setNewBriefAdvice("");
+    setNewBriefEcif(false);
+    setShowCompose(false);
   };
 
   useEffect(() => {
@@ -1268,7 +1495,7 @@ export default function App() {
                   Microsoft Corporate Intelligence Hub
                 </h1>
                 <p className="text-xs text-slate-400 font-mono mt-0.5">
-                  AI-Powered Real-Time Scraping & Grounded Search Analysis
+                  Secure Document Ingestion & Strategic Advisory Intelligence
                 </p>
               </div>
             </div>
@@ -1343,7 +1570,7 @@ export default function App() {
         {/* Overview Statistics Dash Row */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden">
-            <div className="text-xs text-slate-400 font-medium">Scanned Base Articles</div>
+            <div className="text-xs text-slate-400 font-medium">Active Briefing Stream</div>
             <div className="text-2xl font-bold mt-1 text-white">{articles.length}</div>
             <div className="text-xs text-sky-400 font-mono mt-2 flex items-center gap-1">
               <TrendingUp className="w-3.5 h-3.5" />
@@ -1754,7 +1981,7 @@ export default function App() {
                       id="news-search-input"
                       type="text"
                       className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition"
-                      placeholder="Search scanned database titles..."
+                      placeholder="Search uploaded & custom briefings..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -1781,11 +2008,216 @@ export default function App() {
               </div>
             </div>
 
+            {/* Corporate Briefings Ingestion Hub */}
+            <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4 flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded bg-sky-500/10 text-sky-400">
+                    <Upload className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
+                      Corporate Briefings Ingestion Hub
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-sans mt-0.5">
+                      Ingest external JSON models, markdown dispatches, or author briefings manually.
+                    </p>
+                  </div>
+                </div>
+                {uploadedArticles.length > 0 && (
+                  <button
+                    onClick={clearUploadedBriefs}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-350 font-mono text-[10px] rounded border border-rose-500/20 transition cursor-pointer"
+                    title="Wipe your uploaded items and restore original pre-seeded briefs database"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Reset Feed</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Ingestion Dropzone */}
+              <div 
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFileUpload(e.dataTransfer.files); }}
+                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-lg p-5 text-center flex flex-col items-center justify-center gap-2 cursor-pointer transition duration-150 ${
+                  isDragging 
+                    ? "border-sky-500 bg-sky-500/10 text-sky-400" 
+                    : "border-slate-800 hover:border-slate-705 bg-slate-950/20 text-slate-400"
+                }`}
+              >
+                <div className={`p-3 rounded-full ${isDragging ? "bg-sky-500/20 text-sky-400" : "bg-slate-900 text-slate-500"}`}>
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-200 font-mono">
+                    Drag & Drop briefing files (.json, .txt, .md) here
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    or click to browse local files on your computer
+                  </p>
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept=".json,.txt,.md" 
+                  onChange={(e) => handleFileUpload(e.target.files)} 
+                  multiple 
+                />
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center justify-between text-[11px] font-mono border-t border-slate-850 pt-2.5">
+                  <span className="text-slate-500">
+                    Active Custom Uploads: <strong className="text-sky-400">{uploadedArticles.length}</strong>
+                  </span>
+                  <button
+                    onClick={() => setShowCompose(!showCompose)}
+                    className="inline-flex items-center gap-1 text-sky-450 hover:text-sky-400 transition cursor-pointer text-[11px]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{showCompose ? "Close Composer" : "Write Custom Briefing"}</span>
+                  </button>
+                </div>
+
+                {showCompose && (
+                  <form onSubmit={handleComposeSubmit} className="mt-2 bg-slate-950/40 border border-slate-850 p-4 rounded-lg flex flex-col gap-3">
+                    <h4 className="text-xs font-mono font-bold text-slate-200 border-b border-slate-850 pb-1.5 uppercase">
+                      New Executive Intelligence Article
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">Title</label>
+                        <input 
+                          type="text" 
+                          required
+                          value={newBriefTitle}
+                          onChange={(e) => setNewBriefTitle(e.target.value)}
+                          placeholder="e.g. M365 Copilot Agentic Integration"
+                          className="bg-[#0b0f19] border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">Source Publisher</label>
+                        <input 
+                          type="text" 
+                          value={newBriefSource}
+                          onChange={(e) => setNewBriefSource(e.target.value)}
+                          placeholder="e.g. Microsoft ANZ Briefing Desk"
+                          className="bg-[#0b0f19] border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">Domain Category</label>
+                        <select 
+                          value={newBriefCategory}
+                          onChange={(e) => setNewBriefCategory(e.target.value as NewsCategory)}
+                          className="bg-[#0b0f19] border border-slate-800 rounded px-2 px-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500"
+                        >
+                          <option value="cloud_transformation">Cloud Transformation</option>
+                          <option value="licensing_ea">Licensing & EA Adjustments</option>
+                          <option value="pricing_news">Pricing & Rates News</option>
+                          <option value="anz_strategy">A/NZ Advisory Strategy</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">Sentiment outlook</label>
+                        <select 
+                          value={newBriefSentiment}
+                          onChange={(e) => setNewBriefSentiment(e.target.value as any)}
+                          className="bg-[#0b0f19] border border-slate-800 rounded px-2 px-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500"
+                        >
+                          <option value="positive">🔵 Positive (Growth / Savings)</option>
+                          <option value="neutral">⚪ Neutral</option>
+                          <option value="negative">🔴 Negative (Cost Increase / Deficit)</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between items-center text-[10px] uppercase font-mono font-semibold text-slate-500">
+                          <span>Impact Score</span>
+                          <span className="text-sky-400">{newBriefImpact}/10</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min="1" 
+                          max="10" 
+                          value={newBriefImpact}
+                          onChange={(e) => setNewBriefImpact(Number(e.target.value))}
+                          className="h-7 w-full accent-sky-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">Executive Summary</label>
+                      <textarea 
+                        required
+                        rows={2}
+                        value={newBriefSummary}
+                        onChange={(e) => setNewBriefSummary(e.target.value)}
+                        placeholder="Write a clear 2-3 sentence corporate intelligence executive summary..."
+                        className="bg-[#0b0f19] border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500 resize-none font-sans"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">Key Bullet Takeaways (one per line)</label>
+                      <textarea 
+                        rows={3}
+                        value={newBriefTakeaways}
+                        onChange={(e) => setNewBriefTakeaways(e.target.value)}
+                        placeholder="e.g. Saves up to 10 development hours a week&#10;Full compliance with local government standards&#10;Offers direct API key authentication integrations"
+                        className="bg-[#0b0f19] border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500 resize-none font-mono"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] uppercase font-mono tracking-wider text-slate-500 font-semibold">ANZ Actionable Advisor Advice / Best Practices</label>
+                      <textarea 
+                        rows={2}
+                        value={newBriefAdvice}
+                        onChange={(e) => setNewBriefAdvice(e.target.value)}
+                        placeholder="What should CTOs/CIOs in Australia and New Zealand execute immediately on learning this brief?"
+                        className="bg-[#0b0f19] border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500 resize-none font-sans"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-1 py-1">
+                      <input 
+                        type="checkbox" 
+                        id="new-brief-ecif"
+                        checked={newBriefEcif}
+                        onChange={(e) => setNewBriefEcif(e.target.checked)}
+                        className="rounded border-slate-800 h-3.5 w-3.5 text-sky-600 focus:ring-sky-500/20"
+                      />
+                      <label htmlFor="new-brief-ecif" className="text-xs text-slate-350 cursor-pointer select-none">
+                        This update is eligible for <strong>Microsoft ECIF Funding Options</strong>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full mt-1.5 py-2 bg-sky-500 hover:bg-sky-450 text-slate-950 font-bold font-mono rounded text-xs transition cursor-pointer"
+                    >
+                      Publish Briefing to Operational List
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
             {/* News Database Cards Output */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111827] p-3.5 border border-slate-800 rounded-xl">
                 <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
-                  Scanned Intelligence Briefs ({filteredArticles.length})
+                  Uploaded & Custom Intelligence Briefs ({filteredArticles.length})
                 </h3>
                 <div className="flex flex-wrap items-center gap-2.5">
                   {/* View Grouping Toggle */}
