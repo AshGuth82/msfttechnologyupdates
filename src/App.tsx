@@ -45,9 +45,16 @@ import {
   Pin,
   Trash2,
   Upload,
-  Plus
+  Plus,
+  Cloud,
+  Award,
+  Star,
+  Building2,
+  ThumbsUp,
+  MessageSquare,
+  Building
 } from "lucide-react";
-import { Article, NewsCategory, CachedNews, CustomQueryResponse } from "./types";
+import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview } from "./types";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ResponsiveContainer, 
@@ -75,6 +82,82 @@ const calculateReadTime = (article: Article): string => {
   const minutes = Math.max(1, Math.ceil(wordCount / 200));
   return `${minutes} min read`;
 };
+
+const DEFAULT_PARTNERS: MicrosoftPartner[] = [
+  {
+    id: "partner-1",
+    name: "Melbourne Cloud Scaling",
+    location: "Melbourne, VIC",
+    rating: 4.9,
+    ratingCount: 48,
+    promoted: true,
+    specialization: ["Cloud Migration", "Sovereign Identity", "M365 Optimisation"],
+    description: "The leading cloud agency specializing in APRA regulatory configurations and sovereign Azure structures.",
+    caseStudyTitle: "50,000-seat APRA-compliant Sovereign Migration",
+    caseStudyContext: "Negotiated complex sovereignty guarantees under security profiles while unlocking $450k in ECIF co-investment.",
+    contactEmail: "contact@melbcloudscaling.com.au",
+    reviews: [
+      {
+        id: "rev-1",
+        reviewer: "Ash Guthrie",
+        rating: 5,
+        comment: "Outstanding service. Structured our enterprise enrollment with full pricing exemptions.",
+        date: "2026-05-12"
+      },
+      {
+        id: "rev-2",
+        reviewer: "Samantha Miller",
+        rating: 4,
+        comment: "Excellent technical depth. Great compliance and identity integration.",
+        date: "2026-05-24"
+      }
+    ]
+  },
+  {
+    id: "partner-2",
+    name: "Sydney Unified Systems",
+    location: "Sydney, NSW",
+    rating: 4.8,
+    ratingCount: 32,
+    promoted: false,
+    specialization: ["Microsoft 365 Copilot", "Cybersecurity", "Team Automation"],
+    description: "Systems integration leaders focused on secure productivity structures and agentic AI pipelines.",
+    caseStudyTitle: "ASX 50 Team Productivity Enablement",
+    caseStudyContext: "Configured custom security labels and agent workspace structures to optimize workflow speed.",
+    contactEmail: "experts@sydneyunified.com.au",
+    reviews: [
+      {
+        id: "rev-3",
+        reviewer: "John Donnelly",
+        rating: 5,
+        comment: "Best Copilot deployment specialists in Australia.",
+        date: "2026-04-18"
+      }
+    ]
+  },
+  {
+    id: "partner-3",
+    name: "Auckland Sovereign AI",
+    location: "Auckland, NZ",
+    rating: 4.7,
+    ratingCount: 24,
+    promoted: false,
+    specialization: ["Azure Data Lakes", "Sovereign AI", "NZISM Compliance"],
+    description: "Specialized New Zealand consulting practice helping regional enterprises build customized secure Azure compute systems.",
+    caseStudyTitle: "Health Sector Localized Lakehouses",
+    caseStudyContext: "Deployed regional HIPAA and NZISM compliant hybrid databases for regional clinical services.",
+    contactEmail: "nzteam@aucklandsovereignai.co.nz",
+    reviews: [
+      {
+        id: "rev-4",
+        reviewer: "Aroha Kerei",
+        rating: 5,
+        comment: "Crucial team for sovereign compliance and Azure tenant segregation.",
+        date: "2026-06-02"
+      }
+    ]
+  }
+];
 
 export default function App() {
   // Theme Select Configuration (High Contrast, Accessible Microsoft Corporate Aesthetic)
@@ -110,29 +193,29 @@ export default function App() {
   const isDark = theme === "dark";
 
   const categoryMap: Record<NewsCategory, { label: string; bg: string; text: string; icon: any }> = {
-    cloud_transformation: { 
-      label: "Cloud Transformation Insights", 
+    technology_updates: { 
+      label: "Technology Updates", 
       bg: isDark ? "bg-sky-500/10 border-sky-500/30" : "bg-sky-100/70 border-sky-200", 
       text: isDark ? "text-sky-450" : "text-sky-800 font-semibold", 
       icon: <Cpu className={`w-4 h-4 ${isDark ? "text-sky-400" : "text-sky-700"}`} /> 
     },
-    licensing_ea: { 
-      label: "Licensing & EA Updates", 
-      bg: isDark ? "bg-amber-500/10 border-amber-500/30" : "bg-amber-100/70 border-amber-200", 
-      text: isDark ? "text-amber-450" : "text-amber-800 font-semibold", 
-      icon: <Layers className={`w-4 h-4 ${isDark ? "text-amber-400" : "text-amber-700"}`} /> 
-    },
-    pricing_news: { 
-      label: "Pricing News", 
+    licensing_pricing: { 
+      label: "Licensing & Pricing", 
       bg: isDark ? "bg-emerald-500/10 border-emerald-500/30" : "bg-emerald-100/70 border-emerald-200", 
       text: isDark ? "text-emerald-450" : "text-emerald-800 font-semibold", 
       icon: <DollarSign className={`w-4 h-4 ${isDark ? "text-emerald-400" : "text-emerald-700"}`} /> 
     },
     anz_strategy: { 
-      label: "ANZ Strategy & ECIF", 
+      label: "ANZ Strategy", 
       bg: isDark ? "bg-purple-500/10 border-purple-500/30" : "bg-purple-100/70 border-purple-200", 
       text: isDark ? "text-purple-400" : "text-purple-800 font-semibold", 
       icon: <Globe className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-700"}`} /> 
+    },
+    cloud_transformations: { 
+      label: "Cloud Transformations", 
+      bg: isDark ? "bg-indigo-500/10 border-indigo-500/30" : "bg-indigo-100/70 border-indigo-200", 
+      text: isDark ? "text-indigo-400" : "text-indigo-800 font-semibold", 
+      icon: <Cloud className={`w-4 h-4 ${isDark ? "text-indigo-400" : "text-indigo-700"}`} /> 
     }
   };
 
@@ -140,11 +223,159 @@ export default function App() {
   const [watchlist, setWatchlist] = useState<NewsCategory[]>(() => {
     try {
       const stored = localStorage.getItem("microsoft_intel_watchlist");
-      return stored ? JSON.parse(stored) : ["pricing_news"];
+      return stored ? JSON.parse(stored) : ["licensing_pricing"];
     } catch {
-      return ["pricing_news"];
+      return ["licensing_pricing"];
     }
   });
+
+  // Microsoft Partners State
+  const [partners, setPartners] = useState<MicrosoftPartner[]>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_partners");
+      return stored ? JSON.parse(stored) : DEFAULT_PARTNERS;
+    } catch {
+      return DEFAULT_PARTNERS;
+    }
+  });
+
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "partners">("briefings");
+
+  const [partnerReviewer, setPartnerReviewer] = useState("");
+  const [partnerRating, setPartnerRating] = useState(5);
+  const [partnerComment, setPartnerComment] = useState("");
+  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
+
+  // States for creating a custom partner
+  const [showAddPartnerForm, setShowAddPartnerForm] = useState(false);
+  const [newPartnerName, setNewPartnerName] = useState("");
+  const [newPartnerLocation, setNewPartnerLocation] = useState("");
+  const [newPartnerSpecialization, setNewPartnerSpecialization] = useState("");
+  const [newPartnerDescription, setNewPartnerDescription] = useState("");
+  const [newPartnerCaseStudyTitle, setNewPartnerCaseStudyTitle] = useState("");
+  const [newPartnerCaseStudyContext, setNewPartnerCaseStudyContext] = useState("");
+  const [newPartnerEmail, setNewPartnerEmail] = useState("");
+
+  const handlePromotePartner = (id: string) => {
+    setPartners(current => {
+      const next = current.map(p => ({
+        ...p,
+        promoted: p.id === id
+      }));
+      localStorage.setItem("microsoft_intel_partners", JSON.stringify(next));
+      return next;
+    });
+    
+    const promotedPartner = partners.find(p => p.id === id);
+    addToast(
+      "anz_strategy",
+      "Spotlight Partner Updated",
+      `Successfully promoted ${promotedPartner?.name || "selected partner"} as the Active Featured Spotlight Partner.`
+    );
+  };
+
+  const handleAddReview = (partnerId: string) => {
+    if (!partnerReviewer.trim() || !partnerComment.trim()) {
+      addToast("licensing_pricing", "Review Incomplete", "Please supply your Name and review Comments.");
+      return;
+    }
+
+    setPartners(current => {
+      const next = current.map(p => {
+        if (p.id !== partnerId) return p;
+        
+        const newRev: PartnerReview = {
+          id: `rev-${Math.random().toString(36).substring(2, 9)}`,
+          reviewer: partnerReviewer.trim(),
+          rating: partnerRating,
+          comment: partnerComment.trim(),
+          date: new Date().toISOString().split("T")[0]
+        };
+        
+        const updatedReviews = [newRev, ...p.reviews];
+        const avgRating = parseFloat((updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length).toFixed(1));
+        
+        return {
+          ...p,
+          reviews: updatedReviews,
+          rating: avgRating,
+          ratingCount: updatedReviews.length
+        };
+      });
+      localStorage.setItem("microsoft_intel_partners", JSON.stringify(next));
+      return next;
+    });
+
+    addToast(
+      "anz_strategy",
+      "Customer Review Added",
+      `Your review for this Microsoft Partner has been recorded and updated in real-time.`
+    );
+
+    setPartnerReviewer("");
+    setPartnerComment("");
+    setPartnerRating(5);
+    setActiveReviewId(null);
+  };
+
+  const handleCreatePartner = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPartnerName.trim() || !newPartnerDescription.trim()) {
+      addToast("licensing_pricing", "Partner Info Incomplete", "Please provide a Partner Name and description.");
+      return;
+    }
+
+    const specializationsArray = newPartnerSpecialization
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const freshPartner: MicrosoftPartner = {
+      id: `partner-${Math.random().toString(36).substring(2, 9)}`,
+      name: newPartnerName.trim(),
+      location: newPartnerLocation.trim() || "Australia & New Zealand",
+      rating: 5.0,
+      ratingCount: 1,
+      promoted: false,
+      specialization: specializationsArray.length ? specializationsArray : ["General Services", "Cloud Consultant"],
+      description: newPartnerDescription.trim(),
+      caseStudyTitle: newPartnerCaseStudyTitle.trim() || "Enterprise Implementation",
+      caseStudyContext: newPartnerCaseStudyContext.trim() || "Custom infrastructure audit and direct tenant optimisation services.",
+      contactEmail: newPartnerEmail.trim() || "procurement-support@microsoft.com.au",
+      reviews: [
+        {
+          id: `rev-${Math.random().toString(36).substring(2, 9)}`,
+          reviewer: "System Verified",
+          rating: 5,
+          comment: "Created and verified custom Microsoft Partner profile.",
+          date: new Date().toISOString().split("T")[0]
+        }
+      ]
+    };
+
+    setPartners(prev => {
+      const next = [...prev, freshPartner];
+      localStorage.setItem("microsoft_intel_partners", JSON.stringify(next));
+      return next;
+    });
+
+    addToast(
+      "anz_strategy",
+      "Partner Directory Registered",
+      `Custom Microsoft Partner: ${freshPartner.name} registered successfully.`
+    );
+
+    setNewPartnerName("");
+    setNewPartnerLocation("");
+    setNewPartnerSpecialization("");
+    setNewPartnerDescription("");
+    setNewPartnerCaseStudyTitle("");
+    setNewPartnerCaseStudyContext("");
+    setNewPartnerEmail("");
+    setShowAddPartnerForm(false);
+  };
+
+  const spotlightPartner = partners.find(p => p.promoted) || partners[0];
 
   const [toasts, setToasts] = useState<{
     id: string;
@@ -290,7 +521,7 @@ export default function App() {
   const handleTestWatchlistToast = () => {
     if (watchlist.length === 0) {
       addToast(
-        "pricing_news",
+        "licensing_pricing",
         "Watchlist Alert",
         "Your Watchlist is empty. Toggle a corporate policy domain below in the center to activate tracking!"
       );
@@ -329,7 +560,7 @@ export default function App() {
 
   const [showCompose, setShowCompose] = useState(false);
   const [newBriefTitle, setNewBriefTitle] = useState("");
-  const [newBriefCategory, setNewBriefCategory] = useState<NewsCategory>("cloud_transformation");
+  const [newBriefCategory, setNewBriefCategory] = useState<NewsCategory>("technology_updates");
   const [newBriefSummary, setNewBriefSummary] = useState("");
   const [newBriefSource, setNewBriefSource] = useState("");
   const [newBriefSentiment, setNewBriefSentiment] = useState<"positive" | "neutral" | "negative">("neutral");
@@ -356,7 +587,7 @@ export default function App() {
     localStorage.removeItem("microsoft_intel_uploaded_briefs");
     loadNews(false);
     addToast(
-      "pricing_news",
+      "licensing_pricing",
       "Feed Reset",
       "Cleared all uploaded briefs. Resettled the feed back to original system briefings."
     );
@@ -370,6 +601,7 @@ export default function App() {
   const [expandedSavedId, setExpandedSavedId] = useState<string | null>(null);
   const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M">("1M");
   const [liveMsftPrice, setLiveMsftPrice] = useState<number>(422.86);
+  const [showSentimentOverlay, setShowSentimentOverlay] = useState<boolean>(false);
 
   useEffect(() => {
     // Set up stock fluctuation
@@ -390,10 +622,10 @@ export default function App() {
   const [subOrg, setSubOrg] = useState<string>("");
   const [subRole, setSubRole] = useState<string>("IT Leader");
   const [subCategories, setSubCategories] = useState<NewsCategory[]>([
-    "cloud_transformation",
-    "licensing_ea",
-    "pricing_news",
-    "anz_strategy"
+    "technology_updates",
+    "licensing_pricing",
+    "anz_strategy",
+    "cloud_transformations"
   ]);
   const [subFrequency, setSubFrequency] = useState<string>("monthly");
   const [isSubmittingSub, setIsSubmittingSub] = useState<boolean>(false);
@@ -419,7 +651,7 @@ export default function App() {
           email: "ashguth@gmail.com",
           org: "ANZ Corporate Services",
           role: "Procurement Director",
-          categories: ["pricing_news", "licensing_ea"],
+          categories: ["licensing_pricing", "technology_updates"],
           frequency: "monthly",
           date: new Date().toLocaleDateString()
         }
@@ -492,7 +724,7 @@ export default function App() {
     setSubscriptionsList(updated);
     
     addToast(
-      "pricing_news",
+      "licensing_pricing",
       "Subscription Revoked",
       `Removed ${email} from the monthly intelligence briefings index.`
     );
@@ -624,7 +856,7 @@ export default function App() {
       if (allSelectedAlreadyPinned) {
         next = current.filter(id => !selectedArticleIds.includes(id));
         addToast(
-          "licensing_ea",
+          "licensing_pricing",
           "Batch Telemetry Unpinned",
           `Successfully unpinned ${selectedArticleIds.length} telemetry briefings.`
         );
@@ -632,7 +864,7 @@ export default function App() {
         const newPins = selectedArticleIds.filter(id => !current.includes(id));
         next = [...current, ...newPins];
         addToast(
-          "licensing_ea",
+          "licensing_pricing",
           "Batch Telemetry Pinned",
           `Successfully pinned ${newPins.length} newly selected telemetry briefs to the top of your feed.`
         );
@@ -651,7 +883,7 @@ export default function App() {
       if (allSelectedAlreadyBookmarked) {
         next = current.filter(id => !selectedArticleIds.includes(id));
         addToast(
-          "licensing_ea",
+          "licensing_pricing",
           "Batch Bookmarks Removed",
           `Successfully removed ${selectedArticleIds.length} bookmarks.`
         );
@@ -659,7 +891,7 @@ export default function App() {
         const newBookmarks = selectedArticleIds.filter(id => !current.includes(id));
         next = [...current, ...newBookmarks];
         addToast(
-          "licensing_ea",
+          "licensing_pricing",
           "Batch Bookmarks Saved",
           `Successfully saved ${newBookmarks.length} selected briefings for offline reading.`
         );
@@ -678,7 +910,7 @@ export default function App() {
       return next;
     });
     addToast(
-      "pricing_news",
+      "licensing_pricing",
       "Batch Feed Deletion",
       `Successfully deleted ${selectedArticleIds.length} briefing records from your feed.`
     );
@@ -689,7 +921,7 @@ export default function App() {
     setDeletedArticleIds([]);
     localStorage.removeItem("microsoft_intel_deleted");
     addToast(
-      "pricing_news",
+      "licensing_pricing",
       "Feed Restored",
       "All previously deleted news briefing records have been restored to your active telemetry intelligence stream."
     );
@@ -753,7 +985,7 @@ export default function App() {
     document.body.removeChild(link);
     
     addToast(
-      "pricing_news",
+      "licensing_pricing",
       "Export CSV Successful",
       `Successfully generated CSV file containing ${filteredArticles.length} filtered bulletins.`
     );
@@ -775,7 +1007,7 @@ export default function App() {
     document.body.removeChild(link);
 
     addToast(
-      "pricing_news",
+      "licensing_pricing",
       "Export JSON Successful",
       `Successfully generated JSON file containing ${filteredArticles.length} filtered bulletins.`
     );
@@ -879,9 +1111,9 @@ export default function App() {
                 id: art.id || `uploaded-${Math.random().toString(36).substring(2, 9)}`,
                 title: art.title || "Untitled Uploaded Briefing",
                 summary: art.summary || "No summary provided in the uploaded briefing.",
-                category: ["cloud_transformation", "licensing_ea", "pricing_news", "anz_strategy"].includes(art.category)
+                category: ["technology_updates", "licensing_pricing", "anz_strategy", "cloud_transformations"].includes(art.category)
                   ? art.category
-                  : "cloud_transformation",
+                  : "technology_updates",
                 url: art.url || "https://news.microsoft.com/en-au/",
                 source: art.source || file.name,
                 publishedDate: art.publishedDate || new Date().toISOString().split("T")[0],
@@ -914,14 +1146,14 @@ export default function App() {
               );
             } else {
               addToast(
-                "pricing_news",
+                "licensing_pricing",
                 "Ingestion Failed",
                 "JSON format does not correspond to a valid Microsoft Intelligence Brief structure."
               );
             }
           } catch (err) {
             addToast(
-              "pricing_news",
+              "licensing_pricing",
               "Upload Error",
               "Could not parse selected JSON file. Check matching structures."
             );
@@ -942,7 +1174,7 @@ export default function App() {
               id: `uploaded-${Math.random().toString(36).substring(2, 9)}`,
               title: title.length > 100 ? title.slice(0, 100) + "..." : title,
               summary: summary,
-              category: "cloud_transformation",
+              category: "technology_updates",
               url: "https://news.microsoft.com/en-au/",
               source: `Uploaded Document (${file.name})`,
               publishedDate: new Date().toISOString().split("T")[0],
@@ -963,13 +1195,13 @@ export default function App() {
             
             addUploadedBriefs([singleBrief]);
             addToast(
-              "cloud_transformation",
+              "technology_updates",
               "Briefing Document Ingested",
               `Ingested custom document briefing: "${singleBrief.title.slice(0, 30)}..."`
             );
           } catch (err) {
             addToast(
-              "pricing_news",
+              "licensing_pricing",
               "Upload Error",
               "Could not ingest plain text files. Check content layout."
             );
@@ -978,7 +1210,7 @@ export default function App() {
         reader.readAsText(file);
       } else {
         addToast(
-          "pricing_news",
+          "licensing_pricing",
           "File Type Rejected",
           "Please upload only .json briefings or plain-text .txt/.md files."
         );
@@ -989,7 +1221,7 @@ export default function App() {
   const handleComposeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBriefTitle.trim() || !newBriefSummary.trim()) {
-      addToast("pricing_news", "Form Incomplete", "Please fill in at least the Title and Summary fields.");
+      addToast("licensing_pricing", "Form Incomplete", "Please fill in at least the Title and Summary fields.");
       return;
     }
 
@@ -1684,246 +1916,419 @@ export default function App() {
         </section>
 
         {/* Microsoft Corp (MSFT) Unified Market & Sentiment Telemetry */}
-        <section className="bg-[#111827] border border-slate-800/80 rounded-xl p-6 mb-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
+        <section className={`border rounded-2xl p-6 mb-8 relative overflow-hidden transition-all duration-300 shadow-md ${
+          isDark 
+            ? "bg-gradient-to-b from-[#111827] to-[#0f1523] border-slate-800/80 hover:border-slate-800" 
+            : "bg-white border-slate-200/80 hover:border-slate-300"
+        }`}>
+          {/* Subtle glowing ambient circles behind in dark mode */}
+          {isDark && <div className="absolute top-0 right-0 h-44 w-44 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>}
           
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-800/60 pb-5 mb-5 gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="p-1 px-1.5 bg-sky-500/10 text-sky-400 text-[10px] font-mono border border-sky-500/20 rounded uppercase font-bold">
-                  Unified Intelligence Telemetry
-                </span>
-                <h3 className="text-sm font-bold text-white tracking-wide uppercase font-mono">
-                  Microsoft Corp (MSFT) Single-Pane Pricing & Sentiment Hub
-                </h3>
-              </div>
-              
-              <div className="flex flex-wrap items-baseline gap-3 mt-1.5">
-                <span className="text-3xl font-extrabold tracking-tight text-white select-all font-sans">
-                  ${liveMsftPrice.toFixed(2)}
-                </span>
-                <span className={`inline-flex items-center gap-0.5 text-xs font-mono font-bold px-1.5 py-0.5 rounded-md ${
-                  liveMsftPrice >= 417.62 
-                    ? "text-emerald-400 bg-emerald-400/10 border border-emerald-500/20" 
-                    : "text-rose-455 bg-rose-455/10 border border-rose-500/20"
-                }`}>
-                  {liveMsftPrice >= 417.62 ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  {liveMsftPrice >= 417.62 ? "+" : ""}{(liveMsftPrice - 417.62).toFixed(2)} ({liveMsftPrice >= 417.62 ? "+" : ""}{(((liveMsftPrice - 417.62) / 417.62) * 100).toFixed(2)}%)
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">
-                  Real-time overlay of stock price vs local ANZ corporate sentiment
-                </span>
-              </div>
-            </div>
+          {(() => {
+            // Local variables calculation for Google Finance realism
+            const getStartingPrice = () => {
+              switch (msftTimeframe) {
+                case "1D": return 417.62;
+                case "1W": return 414.20;
+                case "1M": return 409.50;
+                case "3M": return 395.20;
+                default: return 417.62;
+              }
+            };
+            const startingPrice = getStartingPrice();
+            const deltaPrice = liveMsftPrice - startingPrice;
+            const percentChange = (deltaPrice / startingPrice) * 100;
+            const isPositiveChange = deltaPrice >= 0;
 
-            {/* Selector buttons + Legend */}
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Legends */}
-              <div className="flex items-center gap-3 text-[10px] font-mono">
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-sm bg-sky-500"></span>
-                  <span className="text-slate-400">Stock Price</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <span className="text-slate-400">Pos Sentiment</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-                  <span className="text-slate-400">Neg Sentiment</span>
-                </div>
-              </div>
+            const activeDataset = getMsftChartData() || [];
+            const pricesInDataset = activeDataset.map(d => d.price);
+            const periodHigh = pricesInDataset.length > 0 ? Math.max(...pricesInDataset) : liveMsftPrice;
+            const periodLow = pricesInDataset.length > 0 ? Math.min(...pricesInDataset) : liveMsftPrice;
 
-              {/* Timeframe selector */}
-              <div className="flex items-center bg-slate-950/60 border border-slate-850 p-0.5 rounded-lg shrink-0">
-                {(["1D", "1W", "1M", "3M"] as const).map((tf) => (
-                  <button
-                    key={tf}
-                    onClick={() => setMsftTimeframe(tf)}
-                    className={`px-3 py-1 text-xs font-mono rounded-md font-medium transition cursor-pointer ${
-                      msftTimeframe === tf
-                        ? "bg-sky-500/15 text-sky-400 border border-sky-500/20"
-                        : "text-slate-400 hover:text-slate-200 border border-transparent"
-                    }`}
-                  >
-                    {tf}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+            const dayPrices = msftData1D.map(d => d.price);
+            const dayHigh = Math.max(...dayPrices);
+            const dayLow = Math.min(...dayPrices);
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Unified Telemetry Left Panel (Metrics & Instability Index) */}
-            <div className="lg:col-span-3 flex flex-col gap-3 font-mono text-xs text-slate-400">
-              {/* Previous close and statistics */}
-              <div className="border border-slate-800/40 rounded-lg p-3 bg-slate-950/20 grid grid-cols-2 lg:grid-cols-1 gap-2.5">
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase">Prev Close</div>
-                  <div className="text-sm font-bold text-slate-350">$417.62</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase">Day Range</div>
-                  <div className="text-sm font-bold text-slate-350">
-                    ${Math.min(liveMsftPrice, 417.20).toFixed(2)} - ${Math.max(liveMsftPrice, 422.86).toFixed(2)}
+            // Dynamic Stroke and Gradient Setup
+            const trendStrokeColor = isPositiveChange ? "#10b981" : "#ef4444";
+            const trendGradientId = `colorMsft-${msftTimeframe}-${isPositiveChange ? "positive" : "negative"}`;
+
+            return (
+              <>
+                {/* Header Information Pane (Styled exactly like Google Finance Quote Box) */}
+                <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between border-b pb-6 mb-6 gap-6 border-slate-200/60 dark:border-slate-800/60">
+                  <div className="flex-1">
+                    {/* Breadcrumbs / Market Identification */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10px] md:text-xs font-mono font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase mb-2">
+                      <span>Home</span>
+                      <span>•</span>
+                      <span>Share Price Indices</span>
+                      <span>•</span>
+                      <span className="text-sky-500 dark:text-sky-400">Microsoft Corp</span>
+                    </div>
+
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <h3 className={`text-2xl md:text-3xl font-extrabold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                        Microsoft Corp
+                      </h3>
+                      <span className={`text-xs font-mono font-bold px-1.5 py-0.5 rounded ${
+                        isDark ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"
+                      }`}>
+                        NASDAQ: MSFT
+                      </span>
+                      <span className="text-xs text-slate-400 select-none">•</span>
+                      <span className="text-xs text-slate-400 font-medium">Real-Time Data (USD)</span>
+                    </div>
+
+                    {/* Stock Price & Multi-timeframe trend delta */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
+                      <span className={`text-4xl md:text-5xl font-extrabold tracking-tight select-all font-sans ${
+                        isDark ? "text-white" : "text-slate-900"
+                      }`}>
+                        ${liveMsftPrice.toFixed(2)}
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center gap-0.5 text-sm md:text-base font-bold font-sans px-2.5 py-0.5 rounded-full ${
+                          isPositiveChange 
+                            ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" 
+                            : "text-rose-600 dark:text-rose-455 bg-rose-500/10"
+                        }`}>
+                          {isPositiveChange ? <ChevronUp className="w-4 h-4 text-emerald-500" /> : <ChevronDown className="w-4 h-4 text-rose-500" />}
+                          {isPositiveChange ? "+" : ""}{deltaPrice.toFixed(2)} ({isPositiveChange ? "+" : ""}{percentChange.toFixed(2)}%)
+                        </span>
+
+                        <span className={`text-xs font-semibold font-mono px-2 py-0.5 rounded uppercase ${
+                          isDark ? "bg-slate-950/65 text-slate-350" : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {msftTimeframe === "1D" && "Today"}
+                          {msftTimeframe === "1W" && "Past 5 Days"}
+                          {msftTimeframe === "1M" && "Past Month"}
+                          {msftTimeframe === "3M" && "Past 3 Months"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Meta Status Indicator matching live timezone bounds */}
+                    <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                      <span className="relative flex h-2 w-2 select-none">
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isPositiveChange ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                        <span className={`relative inline-flex rounded-full h-2 w-2 ${isPositiveChange ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                      </span>
+                      <span>Market Closed • Quote last updated Friday, Jun 5, 4:00 PM EDT • Disclaimer</span>
+                    </div>
+                  </div>
+
+                  {/* Interactive Control Deck */}
+                  <div className="flex flex-wrap items-center gap-3.5">
+                    {/* Sentiment overlay legend shown when toggled */}
+                    {showSentimentOverlay && (
+                      <div className="flex items-center gap-2.5 text-[10px] font-mono font-bold tracking-wider">
+                        <div className="flex items-center gap-1">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                          <span className="text-emerald-500">Positive sentiment Volume</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+                          <span className="text-rose-455">Negative sentiment Volume</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Google Finance Timeframe Selection strip */}
+                    <div className="flex items-center bg-slate-100/90 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-1 rounded-xl">
+                      {([
+                        { label: "1D", val: "1D" },
+                        { label: "5D", val: "1W" },
+                        { label: "1M", val: "1M" },
+                        { label: "6M", val: "3M" },
+                      ] as const).map(({ label, val }) => (
+                        <button
+                          key={label}
+                          onClick={() => setMsftTimeframe(val)}
+                          className={`px-3 py-1 text-xs font-bold rounded-lg font-mono transition-all duration-150 cursor-pointer ${
+                            msftTimeframe === val
+                              ? isPositiveChange
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/20 dark:border-emerald-500/25"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-450 border border-rose-500/20 dark:border-rose-500/25"
+                              : `${isDark ? "text-slate-400 hover:text-slate-200" : "text-slate-600 hover:text-slate-900"} border border-transparent`
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Interactive Sentiment Overlay Switch */}
+                    <button
+                      onClick={() => setShowSentimentOverlay(!showSentimentOverlay)}
+                      className={`px-3.5 py-1 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                        showSentimentOverlay
+                          ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25 font-semibold"
+                          : `border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 ${
+                              isDark ? "bg-slate-900/60 hover:text-slate-200" : "bg-slate-50 hover:text-slate-800"
+                            }`
+                      }`}
+                      title="Toggle overlaying localized enterprise sentiment scores on secondary axis"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5 text-sky-450" />
+                      <span>ANZ Sentiment Overlay</span>
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              {/* Instability Index Widget Panel */}
-              <div className="border border-slate-800/40 rounded-lg p-3 bg-slate-950/20">
-                <div className="text-[10px] text-slate-500 uppercase">ANZ Instability Index</div>
-                {(() => {
-                  const totalPos = articles.filter(a => a.sentiment === "positive").length;
-                  const totalNeg = articles.filter(a => a.sentiment === "negative").length;
-                  const instabilityRatio = (totalNeg / Math.max(1, totalPos + totalNeg)) * 10;
+                {/* Primary Chart Visualization Stage */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                   
-                  let label = "STABLE";
-                  let colorClass = "text-emerald-400";
-                  if (instabilityRatio >= 6.5) {
-                    label = "SEVERELY UNSTABLE";
-                    colorClass = "text-rose-500";
-                  } else if (instabilityRatio >= 4.0) {
-                    label = "MODERATE FRICTION";
-                    colorClass = "text-amber-400";
-                  } else if (instabilityRatio >= 1.5) {
-                    label = "STABILIZING";
-                    colorClass = "text-sky-400";
-                  }
-
-                  return (
-                    <div className="mt-1.5">
-                      <div className={`text-xl font-extrabold ${colorClass}`}>{instabilityRatio.toFixed(1)} / 10</div>
-                      <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-semibold">{label}</div>
+                  {/* Google Finance Styled Interactive AreaChart (Full width / 9 cols) */}
+                  <div className="lg:col-span-9 w-full">
+                    <div className="h-72 sm:h-80 w-full text-xs font-mono select-none relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart
+                          data={getMergedChartData()}
+                          margin={{ top: 10, right: 10, left: -22, bottom: 5 }}
+                        >
+                          <defs>
+                            <linearGradient id={trendGradientId} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={trendStrokeColor} stopOpacity={0.16}/>
+                              <stop offset="95%" stopColor={trendStrokeColor} stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          
+                          <CartesianGrid 
+                            strokeDasharray="2 3" 
+                            stroke={isDark ? "#1e293b" : "#cbd5e1"} 
+                            opacity={isDark ? 0.08 : 0.12} 
+                          />
+                          
+                          <XAxis 
+                            dataKey="time" 
+                            stroke={isDark ? "#475569" : "#64748b"} 
+                            fontSize={10} 
+                            tickLine={false} 
+                            axisLine={false}
+                            dy={8}
+                          />
+                          
+                          {/* Price Y Axis (Left Side) */}
+                          <YAxis 
+                            yAxisId="left"
+                            orientation="left"
+                            stroke={trendStrokeColor} 
+                            fontSize={10} 
+                            tickLine={false} 
+                            axisLine={false}
+                            domain={["auto", "auto"]}
+                            dx={-4}
+                          />
+                          
+                          {/* Sentiment Intensity Y Axis (Right Side) - rendered only if active */}
+                          {showSentimentOverlay && (
+                            <YAxis 
+                              yAxisId="right"
+                              orientation="right"
+                              stroke="#0284c7" 
+                              fontSize={10} 
+                              tickLine={false} 
+                              axisLine={false}
+                              allowDecimals={false}
+                              dx={4}
+                            />
+                          )}
+                          
+                          <Tooltip
+                            content={({ active, payload, label }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className={`p-3.5 border rounded-xl shadow-xl font-sans text-xs flex flex-col gap-1.5 ${
+                                    isDark ? "bg-[#0b0f19] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"
+                                  }`}>
+                                    <div className="font-mono text-[10px] text-slate-400 uppercase tracking-wider">{label}</div>
+                                    {payload.map((p: any) => {
+                                      const isPrice = p.name === "MSFT Price" || p.dataKey === "price";
+                                      const bulletColor = isPrice ? trendStrokeColor : p.color;
+                                      return (
+                                        <div key={p.name} className="flex items-center justify-between gap-6">
+                                          <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: bulletColor }}></span>
+                                            {p.name}:
+                                          </span>
+                                          <span className="font-bold font-mono">
+                                            {isPrice ? `$${parseFloat(p.value).toFixed(2)}` : p.value}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          
+                          {/* Stock Area Series - colored dynamic green/red based on period trend */}
+                          <Area 
+                            yAxisId="left"
+                            type="monotone" 
+                            dataKey="price" 
+                            name="MSFT Price"
+                            stroke={trendStrokeColor} 
+                            strokeWidth={2}
+                            fillOpacity={1} 
+                            fill={`url(#${trendGradientId})`} 
+                          />
+                          
+                          {/* Sentiment Volume Overlay Lines - shown only when toggle enabled */}
+                          {showSentimentOverlay && (
+                            <Line 
+                              yAxisId="right"
+                              type="monotone" 
+                              dataKey="Positive Sentiment" 
+                              name="Pos Sentiment Volume"
+                              stroke="#10b981" 
+                              strokeWidth={1.8}
+                              dot={{ r: 1 }}
+                              activeDot={{ r: 3 }}
+                            />
+                          )}
+                          
+                          {showSentimentOverlay && (
+                            <Line 
+                              yAxisId="right"
+                              type="monotone" 
+                              dataKey="Negative Sentiment" 
+                              name="Neg Sentiment Volume"
+                              stroke="#f43f5e" 
+                              strokeWidth={1.8}
+                              dot={{ r: 1 }}
+                              activeDot={{ r: 3 }}
+                            />
+                          )}
+                        </ComposedChart>
+                      </ResponsiveContainer>
                     </div>
-                  );
-                })()}
-              </div>
 
-              {/* Signal Alignment Feedback */}
-              <div className="border border-slate-800/40 rounded-lg p-3 bg-slate-950/50 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase">Signal Co-alignment</div>
-                  <p className="mt-1.5 text-[11px] text-slate-300 font-sans leading-relaxed">
-                    {(() => {
-                      const totalPos = articles.filter(a => a.sentiment === "positive").length;
-                      const totalNeg = articles.filter(a => a.sentiment === "negative").length;
-                      if (totalNeg > totalPos) {
-                        return "Intense territorial friction of pricing indices suggests persistent local operational strain co-aligned with MSFT valuation stability.";
-                      } else if (totalPos > totalNeg * 2) {
-                        return "Sovereign cloud expansion and localized ANZ commercial wins suggest dynamic underlying expansion signals supportive of price growth.";
-                      } else {
-                        return "Balanced local sentiment indexes with tight baseline valuation fluctuations registered in recent cycles.";
-                      }
-                    })()}
-                  </p>
-                </div>
-                <div className="text-[9px] text-slate-500 mt-2 border-t border-slate-800/40 pt-2 font-mono">
-                  Pricing axis (L) / Sentiment Volume axis (R)
-                </div>
-              </div>
-            </div>
+                    {/* Google Finance Inspired Key Information Grid (Bottom stats bar) */}
+                    <div className="mt-8">
+                      <h4 className={`text-xs font-bold uppercase tracking-wider mb-4 font-mono ${
+                        isDark ? "text-slate-400" : "text-slate-700 font-semibold"
+                      }`}>
+                        Key Financial Stats (NASDAQ: MSFT)
+                      </h4>
+                      <div className={`grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 font-sans border rounded-xl p-4.5 ${
+                        isDark ? "bg-[#0b0f19]/35 border-slate-800" : "bg-slate-50/50 border-slate-200"
+                      }`}>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">Open</div>
+                          <div className={`text-sm font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>$417.80</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">Prev Close</div>
+                          <div className={`text-sm font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>$417.62</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">High (Period)</div>
+                          <div className="text-sm font-bold font-mono text-emerald-500">${periodHigh.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">Low (Period)</div>
+                          <div className="text-sm font-bold font-mono text-rose-500">${periodLow.toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">Day Range</div>
+                          <div className={`text-[12px] font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>
+                            ${dayLow.toFixed(2)} - ${dayHigh.toFixed(2)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">Mkt Cap</div>
+                          <div className={`text-sm font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>$3.15T</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">P/E Ratio</div>
+                          <div className={`text-sm font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>34.82</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">Div Yield</div>
+                          <div className={`text-sm font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>0.71%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Unified Glass View ComposedChart */}
-            <div className="lg:col-span-9 h-64 sm:h-72 w-full text-xs font-mono select-none">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart
-                  data={getMergedChartData()}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorMsft" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#cbd5e1"} opacity={0.2} />
-                  
-                  <XAxis 
-                    dataKey="time" 
-                    stroke={isDark ? "#475569" : "#55647a"} 
-                    fontSize={10} 
-                    tickLine={false} 
-                    axisLine={false}
-                    dy={8}
-                  />
-                  
-                  {/* Left Y Axis for Stock Price */}
-                  <YAxis 
-                    yAxisId="left"
-                    orientation="left"
-                    stroke="#38bdf8" 
-                    fontSize={10} 
-                    tickLine={false} 
-                    axisLine={false}
-                    domain={["auto", "auto"]}
-                    dx={-4}
-                  />
-                  
-                  {/* Right Y Axis for Sentiment Volumes */}
-                  <YAxis 
-                    yAxisId="right"
-                    orientation="right"
-                    stroke="#10b981" 
-                    fontSize={10} 
-                    tickLine={false} 
-                    axisLine={false}
-                    allowDecimals={false}
-                    dx={4}
-                  />
-                  
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: isDark ? "#0b0f19" : "#ffffff",
-                      borderColor: isDark ? "#1e293b" : "#cbd5e1",
-                      borderRadius: "8px",
-                      boxShadow: isDark ? "0 10px 15px -3px rgba(0, 0, 0, 0.4)" : "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                      color: isDark ? "#f1f5f9" : "#0f172a",
-                      fontSize: "11px",
-                    }}
-                    itemStyle={{ color: isDark ? "#f1f5f9" : "#0f172a" }}
-                  />
-                  
-                  {/* Stock price represented as filled area on left axis */}
-                  <Area 
-                    yAxisId="left"
-                    type="monotone" 
-                    dataKey="price" 
-                    name="MSFT Price"
-                    stroke="#38bdf8" 
-                    strokeWidth={2.5}
-                    fillOpacity={1} 
-                    fill="url(#colorMsft)" 
-                  />
-                  
-                  {/* Positive sentiment represented as dynamic emerald line on right axis */}
-                  <Line 
-                    yAxisId="right"
-                    type="monotone" 
-                    dataKey="Positive Sentiment" 
-                    name="Positive Sentiment Volume"
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    dot={{ r: 1.5 }}
-                    activeDot={{ r: 4 }}
-                  />
-                  
-                  {/* Negative sentiment represented as dynamic rose line on right axis */}
-                  <Line 
-                    yAxisId="right"
-                    type="monotone" 
-                    dataKey="Negative Sentiment" 
-                    name="Negative Sentiment Volume"
-                    stroke="#f43f5e" 
-                    strokeWidth={2}
-                    dot={{ r: 1.5 }}
-                    activeDot={{ r: 4 }}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+                  {/* Sentiment Intelligence Side Panel (3 cols) */}
+                  <div className="lg:col-span-3 flex flex-col gap-4 font-mono text-xs">
+                    
+                    {/* Instability Index Panel */}
+                    <div className={`border rounded-xl p-4 transition duration-200 ${
+                      isDark ? "bg-[#0b0f19]/30 border-slate-800 hover:border-slate-700/60" : "bg-slate-50/50 border-slate-200 hover:border-slate-350"
+                    }`}>
+                      <div className="text-[10px] text-slate-450 dark:text-slate-500 uppercase font-bold tracking-wider mb-2.5">
+                        ANZ Instability index
+                      </div>
+                      {(() => {
+                        const totalPos = articles.filter(a => a.sentiment === "positive").length;
+                        const totalNeg = articles.filter(a => a.sentiment === "negative").length;
+                        const instabilityRatio = (totalNeg / Math.max(1, totalPos + totalNeg)) * 10;
+                        
+                        let label = "STABLE";
+                        let colorClass = isDark ? "text-emerald-400" : "text-emerald-600";
+                        if (instabilityRatio >= 6.5) {
+                          label = "SEVERELY UNSTABLE";
+                          colorClass = isDark ? "text-rose-500" : "text-rose-600 font-bold";
+                        } else if (instabilityRatio >= 4.0) {
+                          label = "MODERATE FRICTION";
+                          colorClass = isDark ? "text-amber-400" : "text-amber-600 font-bold";
+                        } else if (instabilityRatio >= 1.5) {
+                          label = "STABILIZING";
+                          colorClass = isDark ? "text-sky-400" : "text-sky-600 font-bold";
+                        }
+
+                        return (
+                          <div>
+                            <div className={`text-2xl font-extrabold ${colorClass}`}>{instabilityRatio.toFixed(1)} / 10</div>
+                            <div className="text-[9px] uppercase tracking-wider font-extrabold mt-1.5 opacity-90">{label}</div>
+                            <p className="text-[11px] font-sans text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                              Evaluated based on licensing disruptions, regional audits, and SLA disputes reported in the ANZ territory.
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Signal Co-alignment Expert Advisory Advisory */}
+                    <div className={`border rounded-xl p-4 flex-1 flex flex-col justify-between transition duration-200 ${
+                      isDark ? "bg-[#0b0f19]/30 border-slate-800 hover:border-slate-700/60" : "bg-slate-50/50 border-slate-200 hover:border-slate-350"
+                    }`}>
+                      <div>
+                        <div className="text-[10px] text-slate-450 dark:text-slate-500 uppercase font-bold tracking-wider mb-2.5">
+                          Signal Co-alignment Advisory
+                        </div>
+                        <p className={`text-[11px] font-sans leading-relaxed ${isDark ? "text-slate-300" : "text-slate-650"}`}>
+                          {(() => {
+                            const totalPos = articles.filter(a => a.sentiment === "positive").length;
+                            const totalNeg = articles.filter(a => a.sentiment === "negative").length;
+                            if (totalNeg > totalPos) {
+                              return "Intense territorial friction of pricing indices suggests persistent local operational strain co-aligned with MSFT valuation stability.";
+                            } else if (totalPos > totalNeg * 2) {
+                              return "Sovereign cloud expansion and localized ANZ commercial wins suggest dynamic underlying expansion signals supportive of price growth.";
+                            } else {
+                              return "Balanced local sentiment indexes with tight baseline valuation fluctuations registered in recent cycles.";
+                            }
+                          })()}
+                        </p>
+                      </div>
+                      
+                      <div className="text-[9px] text-slate-450 dark:text-slate-500 mt-4 border-t border-slate-250 dark:border-slate-800/40 pt-2 flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3 text-sky-400" />
+                        <span>Correlation Index Updated Hourly</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </section>
 
         {/* Double-Pane Main Screen Workflow */}
@@ -1931,8 +2336,87 @@ export default function App() {
           
           {/* LEFT COLUMN: News Explorer Grid (7 out of 12 columns) */}
           <main className="lg:col-span-7 flex flex-col gap-6">
-            
-            {/* Interactive Filters Area */}
+
+            {/* Active Partner Spotlight Banner */}
+            {spotlightPartner && (
+              <div id="partner-spotlight-banner" className="bg-gradient-to-r from-sky-950/40 via-[#0b0f19] to-indigo-950/40 border border-sky-500/20 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-lg relative overflow-hidden backdrop-blur-sm font-sans">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-sky-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 h-16 w-16 bg-indigo-500/10 rounded-full blur-xl pointer-events-none"></div>
+                
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="bg-sky-500/15 p-2 rounded-lg border border-sky-500/30 text-sky-400 shrink-0">
+                    <Award className="w-5 h-5 text-sky-400 animate-pulse" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[9px] uppercase font-bold tracking-wider font-mono text-sky-450 bg-sky-500/10 px-1.5 py-0.5 rounded">
+                        Partner Spotlight
+                      </span>
+                      <span className="text-[9px] uppercase font-bold tracking-wider font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                        Gold {spotlightPartner.location}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-semibold text-slate-100 font-sans mt-1">
+                      {spotlightPartner.name}
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5 max-w-md line-clamp-1">
+                      {spotlightPartner.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      setActiveMainView("partners");
+                      setActiveReviewId(spotlightPartner.id);
+                      document.getElementById(`partner-card-${spotlightPartner.id}`)?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-705 text-slate-300 hover:text-white transition rounded-lg text-xs font-semibold cursor-pointer"
+                  >
+                    Reviews
+                  </button>
+                  <a
+                    href={`mailto:${spotlightPartner.contactEmail}`}
+                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg text-xs font-bold hover:scale-[1.02] transition cursor-pointer"
+                  >
+                    Contact Partner
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Main Segmented Toggle */}
+            <div className="flex bg-[#111827] border border-slate-800 p-1.5 rounded-xl font-sans shrink-0 shadow-md">
+              <button
+                id="main-tab-briefings"
+                onClick={() => setActiveMainView("briefings")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
+                  activeMainView === "briefings"
+                    ? "bg-slate-800 text-white shadow-sm border border-slate-700"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Intelligence Briefings ({filteredArticles.length})</span>
+              </button>
+              <button
+                id="main-tab-partners"
+                onClick={() => setActiveMainView("partners")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
+                  activeMainView === "partners"
+                    ? "bg-slate-800 text-white shadow-sm border border-slate-700"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>Microsoft Partner Directory ({partners.length})</span>
+              </button>
+            </div>
+
+            {activeMainView === "briefings" ? (
+              <>
+                {/* Interactive Filters Area */}
             <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4">
               <div className="flex flex-col gap-3.5">
                 
@@ -2121,10 +2605,10 @@ export default function App() {
                           onChange={(e) => setNewBriefCategory(e.target.value as NewsCategory)}
                           className="bg-[#0b0f19] border border-slate-800 rounded px-2 px-1.5 text-xs text-slate-205 focus:outline-none focus:border-sky-500"
                         >
-                          <option value="cloud_transformation">Cloud Transformation</option>
-                          <option value="licensing_ea">Licensing & EA Adjustments</option>
-                          <option value="pricing_news">Pricing & Rates News</option>
-                          <option value="anz_strategy">A/NZ Advisory Strategy</option>
+                          <option value="technology_updates">Technology Updates</option>
+                          <option value="licensing_pricing">Licensing & Pricing</option>
+                          <option value="anz_strategy">ANZ Strategy</option>
+                          <option value="cloud_transformations">Cloud Transformations</option>
                         </select>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -2440,8 +2924,18 @@ export default function App() {
                               </div>
                             </div>
 
-                            <h4 className="text-base font-bold text-white leading-snug group-hover:text-blue-400 transition mb-2">
-                              {article.title}
+                            <h4 className="text-base font-bold text-white hover:text-sky-400 leading-snug group-hover:text-sky-400 transition mb-2">
+                              <a 
+                                href={article.url} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                onClick={(e) => e.stopPropagation()} 
+                                className="inline-flex items-center gap-1.5 hover:underline decoration-sky-500/40"
+                                title="Open original source briefing in a new tab"
+                              >
+                                <span>{article.title}</span>
+                                <ExternalLink className="w-3.5 h-3.5 text-slate-500 hover:text-sky-400 transition shrink-0 inline-block align-middle" />
+                              </a>
                             </h4>
 
                             <p className="text-sm text-slate-300 leading-relaxed line-clamp-2">
@@ -2450,7 +2944,20 @@ export default function App() {
 
                             <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
                               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                <span>Source: <strong className="text-slate-400">{article.source}</strong></span>
+                                <span>
+                                  Source:{" "}
+                                  <a 
+                                    href={article.url} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    onClick={(e) => e.stopPropagation()} 
+                                    className="font-bold text-sky-400 hover:text-sky-305 hover:underline inline-flex items-center gap-0.5 transition"
+                                    title={`Visit original updates publisher: ${article.source}`}
+                                  >
+                                    <span>{article.source}</span>
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                </span>
                                 <span>Date: <strong className="text-slate-400">{article.publishedDate}</strong></span>
                                 <span className="text-slate-700 select-none">•</span>
                                 <span className="inline-flex items-center gap-1">
@@ -2654,10 +3161,10 @@ export default function App() {
                   ) : (
                     (() => {
                       const categoriesList: NewsCategory[] = [
-                        "cloud_transformation",
-                        "licensing_ea",
-                        "pricing_news",
-                        "anz_strategy"
+                        "technology_updates",
+                        "licensing_pricing",
+                        "anz_strategy",
+                        "cloud_transformations"
                       ];
 
                       return categoriesList.map((catKey) => {
@@ -2806,8 +3313,18 @@ export default function App() {
                                         </div>
                                       </div>
 
-                                      <h4 className="text-base font-bold text-white leading-snug group-hover:text-blue-400 transition mb-2">
-                                        {article.title}
+                                      <h4 className="text-base font-bold text-white hover:text-sky-400 leading-snug group-hover:text-sky-400 transition mb-2">
+                                        <a 
+                                          href={article.url} 
+                                          target="_blank" 
+                                          rel="noreferrer" 
+                                          onClick={(e) => e.stopPropagation()} 
+                                          className="inline-flex items-center gap-1.5 hover:underline decoration-sky-500/40"
+                                          title="Open original source briefing in a new tab"
+                                        >
+                                          <span>{article.title}</span>
+                                          <ExternalLink className="w-3.5 h-3.5 text-slate-500 hover:text-sky-400 transition shrink-0 inline-block align-middle" />
+                                        </a>
                                       </h4>
 
                                       <p className="text-sm text-slate-300 leading-relaxed line-clamp-2">
@@ -2816,7 +3333,20 @@ export default function App() {
 
                                       <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                                          <span>Source: <strong className="text-slate-400">{article.source}</strong></span>
+                                          <span>
+                                            Source:{" "}
+                                            <a 
+                                              href={article.url} 
+                                              target="_blank" 
+                                              rel="noreferrer" 
+                                              onClick={(e) => e.stopPropagation()} 
+                                              className="font-bold text-sky-400 hover:text-sky-305 hover:underline inline-flex items-center gap-0.5 transition"
+                                              title={`Visit original updates publisher: ${article.source}`}
+                                            >
+                                              <span>{article.source}</span>
+                                              <ExternalLink className="w-2.5 h-2.5" />
+                                            </a>
+                                          </span>
                                           <span>Date: <strong className="text-slate-400">{article.publishedDate}</strong></span>
                                           <span className="text-slate-700 select-none">•</span>
                                           <span className="inline-flex items-center gap-1">
@@ -3282,7 +3812,442 @@ export default function App() {
                 </div>
               )}
             </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-6">
+                {/* ECIF Program Co-Investment Guide */}
+                <div className="bg-gradient-to-br from-[#121b2e] via-[#0f1524] to-[#121625] border border-sky-500/25 rounded-xl p-5 shadow-xl relative overflow-hidden font-sans">
+                  <div className="absolute top-0 right-0 h-28 w-28 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                  <div className="absolute bottom-0 left-0 h-20 w-20 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                  
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-800/85 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 p-2 rounded-xl border border-sky-500/30 text-sky-400">
+                        <Coins className="w-5 h-5 text-sky-450 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-sm font-bold text-white tracking-tight">
+                            Microsoft End Customer Investment Fund (ECIF)
+                          </h3>
+                          <span className="text-[9px] uppercase font-bold tracking-widest font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                            Active ANZ Co-Investment
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1">
+                          Unlocking subsidized deep cloud engineering & certified professional advisory across Australia & New Zealand.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* For Partners Block */}
+                    <div className="bg-slate-950/45 border border-slate-800/80 hover:border-slate-700/50 transition duration-200 rounded-xl p-4 flex flex-col gap-3 relative">
+                      <div className="absolute top-3 right-3 text-emerald-450 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10 text-[9px] font-mono font-bold tracking-wider uppercase">
+                        Marginal Protection
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="bg-emerald-500/10 p-1.5 rounded-lg border border-emerald-500/20 text-emerald-400 shrink-0">
+                          <Briefcase className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <strong className="text-xs uppercase font-mono tracking-wider text-emerald-400">
+                          💼 For Partners (Supercharging Profitability)
+                        </strong>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        Rather than discounting pre-sales engineering or proof-of-concepts to secure deals, certified partners can leverage ECIF to deliver fully funded assessments. This protects valuable professional services margins, improves resource utilization, and builds deep co-sell alignment with local Microsoft account teams while paving the way for multi-tier downstream deployments.
+                      </p>
+                    </div>
+
+                    {/* For End Users Block */}
+                    <div className="bg-slate-950/45 border border-slate-800/80 hover:border-slate-700/50 transition duration-200 rounded-xl p-4 flex flex-col gap-3 relative">
+                      <div className="absolute top-3 right-3 text-sky-400 bg-sky-500/5 px-2 py-0.5 rounded border border-sky-500/10 text-[9px] font-mono font-bold tracking-wider uppercase">
+                        Zero Upfront Cost
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="bg-sky-500/10 p-1.5 rounded-lg border border-sky-500/20 text-sky-400 shrink-0">
+                          <ShieldCheck className="w-4 h-4 text-sky-400" />
+                        </div>
+                        <strong className="text-xs uppercase font-mono tracking-wider text-sky-400">
+                          🏢 For End Users (De-risking Cloud Innovation)
+                        </strong>
+                      </div>
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        Organizations look for high speed-to-value while navigating tight budgets and strict regional regulations (such as APRA or ASD guidelines). ECIF-backed engagements allow technology leaders to access elite, specialized consulting partners, validate complex cloud architectures, and run pilots of advanced agentic AI networks—at zero or minimal upfront cost.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Collapsible Add Partner Form */}
+                <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 shadow-lg relative overflow-hidden font-sans">
+                  <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl pointer-events-none"></div>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-sky-500/10 p-1.5 rounded-lg border border-sky-500/20">
+                        <Building className="w-4 h-4 text-sky-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
+                          Microsoft Partner Center
+                        </h3>
+                        <p className="text-[10px] text-slate-400 font-mono">ANZ Specialist Directory</p>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => setShowAddPartnerForm(!showAddPartnerForm)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-405 border border-sky-500/20 hover:border-sky-500/30 text-xs font-mono rounded-lg transition cursor-pointer"
+                    >
+                      {showAddPartnerForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                      <span>{showAddPartnerForm ? "Cancel Form" : "Register Custom Partner"}</span>
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {showAddPartnerForm && (
+                      <motion.form 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        onSubmit={handleCreatePartner}
+                        className="space-y-4 pt-3 border-t border-slate-800/80 overflow-hidden font-sans"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
+                              Partner Name *
+                            </label>
+                            <input 
+                              type="text"
+                              required
+                              placeholder="e.g. Melbourne Cloud Scaling"
+                              value={newPartnerName}
+                              onChange={(e) => setNewPartnerName(e.target.value)}
+                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
+                              Primary Location / Region
+                            </label>
+                            <input 
+                              type="text"
+                              placeholder="e.g. Brisbane, QLD"
+                              value={newPartnerLocation}
+                              onChange={(e) => setNewPartnerLocation(e.target.value)}
+                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
+                            Expert Specializations (comma separated)
+                          </label>
+                          <input 
+                            type="text"
+                            placeholder="e.g. Cloud Migration, M365 Optimisation, AI Data Modeling"
+                            value={newPartnerSpecialization}
+                            onChange={(e) => setNewPartnerSpecialization(e.target.value)}
+                            className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
+                            Executive Overview / Mission Description *
+                          </label>
+                          <textarea 
+                            required
+                            rows={3}
+                            placeholder="Detail regional cloud reach, custom audit specialties or systems configuration services..."
+                            value={newPartnerDescription}
+                            onChange={(e) => setNewPartnerDescription(e.target.value)}
+                            className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition resize-none"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
+                              Procurement / Contact Email *
+                            </label>
+                            <input 
+                              type="email"
+                              required
+                              placeholder="procure@agency.com.au"
+                              value={newPartnerEmail}
+                              onChange={(e) => setNewPartnerEmail(e.target.value)}
+                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 focus:outline-none focus:border-sky-500/55 transition"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
+                              Recent Case Study Title
+                            </label>
+                            <input 
+                              type="text"
+                              placeholder="e.g. APRA-compliant Sovereign Migration"
+                              value={newPartnerCaseStudyTitle}
+                              onChange={(e) => setNewPartnerCaseStudyTitle(e.target.value)}
+                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
+                            Case Study Achievements & Metrics Summary
+                          </label>
+                          <textarea 
+                            rows={2}
+                            placeholder="Detail high-priority customer deliverables, pricing savings list, etc..."
+                            value={newPartnerCaseStudyContext}
+                            onChange={(e) => setNewPartnerCaseStudyContext(e.target.value)}
+                            className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 focus:outline-none focus:border-sky-500/55 transition resize-none"
+                          />
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                          <button
+                            type="submit"
+                            className="w-full sm:w-auto px-5 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg transition cursor-pointer"
+                          >
+                            Save & Register Partner
+                          </button>
+                        </div>
+                      </motion.form>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Partners Directory Grid */}
+                <div className="space-y-4 font-sans">
+                  {partners.map((partner) => {
+                    const showReviews = activeReviewId === partner.id;
+                    
+                    return (
+                      <div 
+                        key={partner.id}
+                        id={`partner-card-${partner.id}`}
+                        className={`bg-[#111827] border rounded-xl p-5 transition duration-200 relative ${
+                          partner.promoted 
+                            ? "border-sky-500/30 bg-gradient-to-br from-[#111827] to-sky-950/10 shadow-lg" 
+                            : "border-slate-800/80"
+                        }`}
+                      >
+                        <div className="absolute top-4 right-4 flex items-center gap-2">
+                          {partner.promoted ? (
+                            <span className="flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold font-mono text-sky-450 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                              <Award className="w-3 h-3 text-sky-400 animate-pulse" />
+                              <span>Active Spotlight</span>
+                            </span>
+                          ) : (
+                            <button
+                              id={`promote-btn-${partner.id}`}
+                              onClick={() => handlePromotePartner(partner.id)}
+                              className="text-[9px] uppercase tracking-wider font-bold font-mono bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white px-2 py-0.5 rounded transition cursor-pointer"
+                              title="Promote this partner to spotlight across the site"
+                            >
+                              Promote
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <h4 className="text-base font-bold text-slate-100 flex items-center gap-2 pr-24">
+                              <span>{partner.name}</span>
+                              <span className="text-slate-500 text-xs font-normal">({partner.location})</span>
+                            </h4>
+                            
+                            {/* Rating score */}
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center text-amber-400">
+                                {Array.from({ length: 5 }).map((_, idx) => (
+                                  <Star 
+                                    key={idx}
+                                    className={`w-3.5 h-3.5 ${idx < Math.round(partner.rating) ? "fill-amber-400 text-amber-500" : "text-slate-750"}`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs font-mono font-bold text-amber-450">{partner.rating}</span>
+                              <span className="text-slate-500 text-[10px] font-mono">({partner.ratingCount} evaluations)</span>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-slate-300 leading-relaxed mt-0.5 pr-2">
+                            {partner.description}
+                          </p>
+
+                          {/* Specializations tag list */}
+                          <div className="flex flex-wrap gap-1.5">
+                            {partner.specialization.map((spec) => (
+                              <span 
+                                key={spec}
+                                className="text-[9px] uppercase font-bold tracking-wider font-mono bg-[#0b0f19] border border-slate-800 text-slate-450 px-2.5 py-0.5 rounded-md"
+                              >
+                                {spec}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Case Study Block */}
+                          {partner.caseStudyTitle && (
+                            <div className="bg-[#0b0f19]/80 border border-slate-850 rounded-lg p-3.5 mt-1 font-mono text-xs text-slate-400 animate-fade-in">
+                              <div className="flex items-center gap-1.5 text-sky-455 font-bold mb-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                                <span className="text-[9px] uppercase tracking-wider">ANZ Case Study Highlight:</span>
+                              </div>
+                              <strong className="text-slate-200 text-xs font-sans font-semibold block">{partner.caseStudyTitle}</strong>
+                              <p className="text-[11px] text-slate-400 mt-1 font-sans leading-relaxed">
+                                {partner.caseStudyContext}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Contact and reviews button */}
+                          <div className="flex flex-wrap items-center justify-between gap-4 mt-1.5 pt-3 border-t border-slate-850/60">
+                            <a 
+                              href={`mailto:${partner.contactEmail}`}
+                              className="text-xs font-mono text-sky-400 hover:text-sky-355 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Mail className="w-3.5 h-3.5 text-sky-450" />
+                              <span>{partner.contactEmail}</span>
+                            </a>
+                            
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => setActiveReviewId(showReviews ? null : partner.id)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-mono rounded-lg transition shrink-0 cursor-pointer"
+                              >
+                                <MessageSquare className="w-3.5 h-3.5" />
+                                <span>Customer Reviews ({partner.reviews.length})</span>
+                                <ChevronDown className={`w-3.5 h-3.5 transform transition ${showReviews ? "rotate-180" : ""}`} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Collapsible reviews and review compose block */}
+                          <AnimatePresence>
+                            {showReviews && (
+                              <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mt-4 pt-4 border-t border-slate-800/80 space-y-4 overflow-hidden"
+                              >
+                                {/* Reviews feed/list */}
+                                <div className="space-y-3">
+                                  <h5 className="text-[10px] uppercase font-bold tracking-wider font-mono text-slate-505">
+                                    Direct Customer Evaluations
+                                  </h5>
+                                  {partner.reviews.length === 0 ? (
+                                    <p className="text-xs text-slate-500 italic block">No reviews registered for this partner yet.</p>
+                                  ) : (
+                                    partner.reviews.map((rev) => (
+                                      <div key={rev.id} className="bg-slate-950/20 border border-slate-850 p-3 rounded-lg font-sans">
+                                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                                          <span className="text-xs font-semibold text-slate-200">{rev.reviewer}</span>
+                                          <span className="text-[9px] font-mono text-slate-500">{rev.date}</span>
+                                        </div>
+                                        <div className="flex items-center text-amber-400 mb-2">
+                                          {Array.from({ length: 5 }).map((_, i) => (
+                                            <Star 
+                                              key={i} 
+                                              className={`w-2.5 h-2.5 ${i < rev.rating ? "fill-amber-400 text-amber-500" : "text-slate-800"}`}
+                                            />
+                                          ))}
+                                        </div>
+                                        <p className="text-xs text-slate-350 leading-relaxed italic pr-1">
+                                          "{rev.comment}"
+                                        </p>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+
+                                {/* Write review form */}
+                                <div className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-3.5">
+                                  <h5 className="text-xs font-bold text-slate-205 font-sans flex items-center gap-1.5">
+                                    <ThumbsUp className="w-3.5 h-3.5 text-sky-400" />
+                                    <span>Submit Real-Time Assessment</span>
+                                  </h5>
+                                  
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1">
+                                    <div>
+                                      <label className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono block mb-1">
+                                        Your Full Name
+                                      </label>
+                                      <input 
+                                        type="text"
+                                        required
+                                        placeholder="e.g. Liam Reynolds, CTO"
+                                        value={partnerReviewer}
+                                        onChange={(e) => setPartnerReviewer(e.target.value)}
+                                        className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500/50 transition"
+                                      />
+                                    </div>
+                                    
+                                    <div>
+                                      <label className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono block mb-1">
+                                        Give Star Rating
+                                      </label>
+                                      <select 
+                                        value={partnerRating}
+                                        onChange={(e) => setPartnerRating(parseInt(e.target.value))}
+                                        className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500/50 transition"
+                                      >
+                                        <option value={5}>⭐⭐⭐⭐⭐ (Excellent Performance)</option>
+                                        <option value={4}>⭐⭐⭐⭐ (Very Good Results)</option>
+                                        <option value={3}>⭐⭐⭐ (Meets Baseline/Standards)</option>
+                                        <option value={2}>⭐⭐ (Below Expected Deliverables)</option>
+                                        <option value={1}>⭐ (Poor Integration Delivery)</option>
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono block mb-1">
+                                      Detailed Evaluation Comments
+                                    </label>
+                                    <textarea 
+                                      required
+                                      rows={2}
+                                      placeholder="Comment on licensing advisory capabilities, EA structure audits, or sovereign identity configurations..."
+                                      value={partnerComment}
+                                      onChange={(e) => setPartnerComment(e.target.value)}
+                                      className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 focus:outline-none focus:border-sky-500/50 transition resize-none"
+                                    />
+                                  </div>
+
+                                  <div className="flex justify-end pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddReview(partner.id)}
+                                      className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg transition cursor-pointer"
+                                    >
+                                      Submit Evaluation
+                                    </button>
+                                  </div>
+                                </div>
+
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </main>
 
           {/* RIGHT COLUMN: Scrape Intelligence & Grounded Query Copilot (5 out of 12 columns) */}
@@ -3464,7 +4429,7 @@ export default function App() {
                       setBookmarkedIds([]);
                       localStorage.setItem("microsoft_intel_bookmarks", JSON.stringify([]));
                       addToast(
-                        "pricing_news",
+                        "licensing_pricing",
                         "Saved Registry Cleared",
                         "Successfully deleted all bookmarks from your local persistence storage."
                       );
@@ -3507,11 +4472,33 @@ export default function App() {
                                 {meta.icon}
                                 {meta.label}
                               </span>
-                              <h5 className="text-xs font-bold text-slate-200 line-clamp-2 leading-snug">
-                                {article.title}
+                              <h5 className="text-xs font-bold text-slate-200 hover:text-sky-400 line-clamp-2 leading-snug">
+                                <a 
+                                  href={article.url} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  onClick={(e) => e.stopPropagation()} 
+                                  className="hover:underline inline-flex items-center gap-1"
+                                  title="Open original source briefing in a new tab"
+                                >
+                                  <span>{article.title}</span>
+                                  <ExternalLink className="w-3 h-3 text-slate-500 shrink-0 inline inline-block" />
+                                </a>
                               </h5>
                               <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500 font-mono">
-                                <span>{article.source}</span>
+                                <span>
+                                  <a 
+                                    href={article.url} 
+                                    target="_blank" 
+                                    rel="noreferrer" 
+                                    onClick={(e) => e.stopPropagation()} 
+                                    className="text-sky-400 hover:text-sky-305 hover:underline inline-flex items-center gap-0.5"
+                                    title={`Visit original updates publisher: ${article.source}`}
+                                  >
+                                    <span>{article.source}</span>
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                </span>
                                 <span>•</span>
                                 <span className={article.impactScore >= 8 ? "text-rose-450" : "text-slate-400"}>Impact: {article.impactScore}/10</span>
                                 <span>•</span>
@@ -3740,17 +4727,20 @@ export default function App() {
       >
         <AnimatePresence>
           {toasts.map(toast => {
-            const isPricing = toast.category === "pricing_news";
-            const isLicensing = toast.category === "licensing_ea";
-            const isCloud = toast.category === "cloud_transformation";
+            const isTech = toast.category === "technology_updates";
+            const isLicensingPricing = toast.category === "licensing_pricing";
+            const isCloud = toast.category === "cloud_transformations";
             
             let cardBorder = "border-amber-500/40";
             let alertIconBadgeColor = "text-amber-400 bg-amber-500/10";
             
-            if (isPricing) {
+            if (isLicensingPricing) {
               cardBorder = "border-emerald-500/40";
               alertIconBadgeColor = "text-emerald-400 bg-emerald-500/10";
             } else if (isCloud) {
+              cardBorder = "border-indigo-500/40";
+              alertIconBadgeColor = "text-indigo-400 bg-indigo-500/10";
+            } else if (isTech) {
               cardBorder = "border-sky-500/40";
               alertIconBadgeColor = "text-sky-400 bg-sky-500/10";
             } else if (toast.category === "anz_strategy") {

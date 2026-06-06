@@ -28,7 +28,7 @@ const FALLBACK_ARTICLES: Article[] = [
     id: "anz-cloud-1",
     title: "Azure Australia East Local Region Solidifies Sovereign AI for ANZ Governments",
     summary: "Microsoft announced high-density clean-energy AI cluster modules in Sydney and Melbourne, enabling local sovereign model processing. The expansion satisfies APRA compliance and New Zealand NZISM security guidelines.",
-    category: "cloud_transformation",
+    category: "cloud_transformations",
     url: "https://news.microsoft.com/en-au/",
     source: "ANZ Cloud Transformation Briefing",
     publishedDate: "2026-05-18",
@@ -46,7 +46,7 @@ const FALLBACK_ARTICLES: Article[] = [
     id: "anz-cloud-2",
     title: "Microsoft 365 Copilot Agentic Workflows Deployed for ANZ Enterprise Portfolios",
     summary: "A joint pilot program reveals that ASX 100 companies are deploying agentic Copilots, resulting in an average saving of 8.2 hours per employee week in finance, auditing, and multi-tier supplier compliance checks.",
-    category: "cloud_transformation",
+    category: "technology_updates",
     url: "https://news.microsoft.com/en-au/",
     source: "AFR Tech Index",
     publishedDate: "2026-05-24",
@@ -64,7 +64,7 @@ const FALLBACK_ARTICLES: Article[] = [
     id: "anz-ea-1",
     title: "Microsoft Enterprise Agreement (EA) 2026 Restructuring: Navigating SCE and EAS Options",
     summary: "Microsoft is adjusting the base eligibility seat-counts and commitments for Server and Cloud Enrollment (SCE) Agreements. IT procurement teams in ANZ must prepare for a minimum baseline count rise to 500 profiles.",
-    category: "licensing_ea",
+    category: "licensing_pricing",
     url: "https://www.microsoft.com/licensing",
     source: "Strategic Licensing Review",
     publishedDate: "2026-05-11",
@@ -82,7 +82,7 @@ const FALLBACK_ARTICLES: Article[] = [
     id: "anz-ea-2",
     title: "Windows Server 2026 Core Licensing Shifts to Account for local GPU & NPU Hardware Density",
     summary: "Microsoft is standardizing virtual core execution mappings for on-premises enterprise data centers. The new core structures tie Windows Server licensing directly to the presence of physical AI processing cores.",
-    category: "licensing_ea",
+    category: "licensing_pricing",
     url: "https://www.microsoft.com/licensing",
     source: "Redmond Licensing Portal",
     publishedDate: "2026-05-02",
@@ -100,7 +100,7 @@ const FALLBACK_ARTICLES: Article[] = [
     id: "anz-price-1",
     title: "Microsoft Adjusts ANZ Price Lists Following Foreign Exchange Stabilization",
     summary: "Effective July 1, 2026, Microsoft is enacting a 6% price list adjustment for products transacted in AUD and NZD. The adjustment aligns Australia & New Zealand pricing tables with standard global USD baselines.",
-    category: "pricing_news",
+    category: "licensing_pricing",
     url: "https://news.microsoft.com/en-au/",
     source: "Microsoft Business Desk",
     publishedDate: "2026-06-01",
@@ -115,10 +115,29 @@ const FALLBACK_ARTICLES: Article[] = [
     ecifFundingEligible: false
   },
   {
+    id: "m365-global-update-2026",
+    title: "Microsoft 2026 Commercial Licensing Update: M365 Global Packaging & Pricing Changes",
+    summary: "On December 4, Microsoft announced a global price and packaging update for select Microsoft 365 commercial suites and standalone components, including Enterprise (E3/E5), Business, Frontline (F1/F3), and Government editions. The changes take effect on July 1, 2026.",
+    category: "licensing_pricing",
+    url: "https://www.microsoft.com/en-us/licensing/news/2026-m365-packaging-pricing-updates",
+    source: "Microsoft Commercial Licensing News",
+    publishedDate: "2026-06-05",
+    sentiment: "negative",
+    impactScore: 9,
+    keyTakeaways: [
+      "Applies global pricing updates across Microsoft 365 E3 and E5 enterprise packages",
+      "Affects Business Standard, Business Premium, Frontline worker tiers (F1/F3), and public sector models",
+      "Streamlines secure collaboration by integrating automated high-density security packaging policies directly into standard commercial profiles",
+      "SaaS and enterprise procurement teams can lock in standard rates for 12 months with pre-deadline annual term activations"
+    ],
+    anzActionableAdvice: "Enterprise procurement managers in Australia and New Zealand must review their licensing footprints ahead of the July 1, 2026 cliff. Transitioning monthly cloud solution subscriptions into annual contract commits prior to the deadline locks in existing baseline pricing and prevents immediate regional budget increases.",
+    ecifFundingEligible: false
+  },
+  {
     id: "anz-price-2",
     title: "M365 Copilot Dynamic Tiered Licensing Prices Announced for Mid-Market Segments",
     summary: "To encourage widespread digital enablement across medium-sized offices, Microsoft is launching discounted tiering levels for Copilot. Organizations adding 100+ seats gain a 15% system fee reduction.",
-    category: "pricing_news",
+    category: "licensing_pricing",
     url: "https://www.microsoft.com/en-au/licensing",
     source: "ZDNet Tech Analyst",
     publishedDate: "2026-05-15",
@@ -199,11 +218,13 @@ async function fetchNewsViaGemini(): Promise<{ articles: Article[]; isRealTime: 
     const prompt = `You are a professional corporate intelligence tool specialized in Microsoft cloud strategy and licensing for the Australia/New Zealand (ANZ) enterprise market.
 Search the web for recent high-quality news and articles from 2026 regarding the Microsoft Corporation, tailored to the regional ANZ procurement, finance, and IT leadership context.
 
+Specifically, search for and incorporate updates from the official Microsoft announcement at: https://www.microsoft.com/en-us/licensing/news/2026-m365-packaging-pricing-updates regarding global M365 commercial packaging and price changes taking effect on July 1, 2026.
+
 You must fetch several news updates, especially covering these four specific categories:
-1. 'cloud_transformation' (e.g., Azure cloud developments, sovereign clusters, Copilot workspace deployments, major digital transformations in ANZ)
-2. 'licensing_ea' (e.g., Enterprise Agreement terms restructuring, SCE or EAS models, subscription changes, product terms)
-3. 'pricing_news' (e.g., regional price audits, foreign exchange currency adjustments for AUD/NZD, regional cloud list prices, licensing tier prices)
-4. 'anz_strategy' (e.g., local Microsoft operations strategy, funding opportunities such as ECIF, local partner ecosystems, Sydney/Auckland tech events)
+1. 'technology_updates' (e.g., product updates, new technical capabilities, Copilot workspace agentic deployments, Microsoft workspace extensions)
+2. 'licensing_pricing' (e.g., global commercial pricing and packaging updates, Enterprise Agreement restructurings, price list adjustments, licensing tier terms, SCE or EAS models, custom subscription rules)
+3. 'anz_strategy' (e.g., local ANZ operations, Sydney/Melbourne/Auckland tech strategy, funding opportunities such as ECIF, local partner ecosystems, Microsoft ANZ events)
+4. 'cloud_transformations' (e.g., Azure cloud developments, regional sovereign datacenters, migration stories, security and compliance infrastructure in ANZ)
 
 Return the news as a valid raw string of a JSON array, representing a list of articles. Each article in the JSON array MUST follow this exact schema:
 [
@@ -211,7 +232,7 @@ Return the news as a valid raw string of a JSON array, representing a list of ar
     "id": "highly-unique-string-identifier-1",
     "title": "Specific news title",
     "summary": "2-3 sentence overview of why this news is critical for enterprise managers",
-    "category": "one of: 'cloud_transformation' | 'licensing_ea' | 'pricing_news' | 'anz_strategy'",
+    "category": "one of: 'technology_updates' | 'licensing_pricing' | 'anz_strategy' | 'cloud_transformations'",
     "url": "Actual URL webpage/resource found in your Web Search results (if unavailable, output a valid Microsoft domain URL)",
     "source": "Name of the publishing newspaper/blog/outlet (e.g., AFR, ZDNet AU, CRN Australia, IT Brief NZ, WSJ)",
     "publishedDate": "Date in format YYYY-MM-DD",
@@ -255,8 +276,8 @@ CRITICAL: Return ONLY the JSON. Do not include markdown headers like \`\`\`json 
         const fallbackUrls = chunks ? chunks.map(chunk => chunk.web?.uri).filter(Boolean) as string[] : [];
         
         const validatedArticles: Article[] = parsedArticles.map((art: any, index: number) => {
-          let category: any = "cloud_transformation";
-          if (["cloud_transformation", "licensing_ea", "pricing_news", "anz_strategy"].includes(art.category)) {
+          let category: any = "technology_updates";
+          if (["technology_updates", "licensing_pricing", "anz_strategy", "cloud_transformations"].includes(art.category)) {
             category = art.category;
           }
           

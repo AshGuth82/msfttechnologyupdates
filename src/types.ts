@@ -3,7 +3,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type NewsCategory = 'cloud_transformation' | 'licensing_ea' | 'pricing_news' | 'anz_strategy';
+export type NewsCategory = 'technology_updates' | 'licensing_pricing' | 'anz_strategy' | 'cloud_transformations';
+
+export interface PartnerReview {
+  id: string;
+  reviewer: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+export interface MicrosoftPartner {
+  id: string;
+  name: string;
+  location: string;
+  rating: number;
+  ratingCount: number;
+  promoted: boolean;
+  specialization: string[];
+  description: string;
+  caseStudyTitle: string;
+  caseStudyContext: string;
+  contactEmail: string;
+  reviews: PartnerReview[];
+}
 
 export interface Article {
   id: string;
