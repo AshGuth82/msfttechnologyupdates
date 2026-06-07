@@ -5471,6 +5471,99 @@ ${advice}
               )}
             </AnimatePresence>
 
+            {/* Microsoft Partner Centre Scraping & Link Segment */}
+            <div className={`border p-6 rounded-2xl relative overflow-hidden ${isDark ? "bg-[#0b0f19]/35 border-slate-800" : "bg-slate-50/50 border-slate-200 shadow-sm"}`}>
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-200/50 dark:border-slate-800/60 relative z-10">
+                <div className="flex items-start gap-3 w-full">
+                  <div className="p-2.5 bg-sky-500/10 text-sky-450 rounded-xl shrink-0">
+                    <Cloud className="w-5 h-5 text-sky-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2 flex-wrap">
+                      <span>Official Microsoft AI Cloud Partner Program</span>
+                      <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/15 rounded shrink-0">
+                        INFO CENTRE CONNECT
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                      Build, innovate, and grow your solutions at the scale of Microsoft. Scraped information is curated live from <span className="font-mono text-sky-400">partner.microsoft.com</span>.
+                    </p>
+                  </div>
+                </div>
+
+                <a
+                  href="https://partner.microsoft.com/en-AU/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-4 py-2.5 shadow hover:shadow-sky-500/20 active:scale-[98] rounded-xl cursor-pointer transition shrink-0 self-start md:self-auto"
+                >
+                  <span>Launch Partner Centre</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+
+              {/* Scraped content cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10 w-full">
+                <div className={`p-4 rounded-xl border ${isDark ? "bg-[#0a0d17]/40 border-slate-850" : "bg-white border-slate-150 shadow-xs"}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                      <Award className="w-3.5 h-3.5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider font-mono">
+                      Partnership Paths
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Choose from standard developer and independent software vendor (ISV) tracks to design, build, and deploy high-performing solutions.
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-xl border ${isDark ? "bg-[#0a0d17]/40 border-slate-850" : "bg-white border-slate-150 shadow-xs"}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider font-mono">
+                      MCAPS for Partners
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Collaborate directly with Microsoft business channels, alignment programs, and enterprise co-sell motions to boost market reach.
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-xl border ${isDark ? "bg-[#0a0d17]/40 border-slate-850" : "bg-white border-slate-150 shadow-xs"}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+                      <FileText className="w-3.5 h-3.5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider font-mono">
+                      Partner Skilling Hub
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Build specialized technical talent, master generative AI systems, and unlock modern skilling badges.
+                  </p>
+                </div>
+
+                <div className={`p-4 rounded-xl border ${isDark ? "bg-[#0a0d17]/40 border-slate-850" : "bg-white border-slate-150 shadow-xs"}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-450 dark:text-amber-400">
+                      <Users className="w-3.5 h-3.5" />
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider font-mono">
+                      Go-To-Market Rewards
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Access premium marketing support tools, templates, and performance incentives to reward and scale business success.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Split view Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
