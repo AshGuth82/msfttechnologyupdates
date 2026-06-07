@@ -257,88 +257,12 @@ const calculateReadTime = (article: Article): string => {
 
 const DEFAULT_PARTNERS: MicrosoftPartner[] = [
   {
-    id: "partner-1",
-    name: "Melbourne Cloud Scaling",
-    location: "Melbourne, VIC",
-    rating: 4.9,
-    ratingCount: 48,
-    promoted: true,
-    specialization: ["Cloud Migration", "Sovereign Identity", "M365 Optimisation"],
-    description: "The leading cloud agency specializing in APRA regulatory configurations and sovereign Azure structures.",
-    caseStudyTitle: "50,000-seat APRA-compliant Sovereign Migration",
-    caseStudyContext: "Negotiated complex sovereignty guarantees under security profiles while unlocking $450k in ECIF co-investment.",
-    contactEmail: "contact@melbcloudscaling.com.au",
-    websiteUrl: "https://www.microsoft.com/en-au",
-    reviews: [
-      {
-        id: "rev-1",
-        reviewer: "Ash Guthrie",
-        rating: 5,
-        comment: "Outstanding service. Structured our enterprise enrollment with full pricing exemptions.",
-        date: "2026-05-12"
-      },
-      {
-        id: "rev-2",
-        reviewer: "Samantha Miller",
-        rating: 4,
-        comment: "Excellent technical depth. Great compliance and identity integration.",
-        date: "2026-05-24"
-      }
-    ]
-  },
-  {
-    id: "partner-2",
-    name: "Sydney Unified Systems",
-    location: "Sydney, NSW",
-    rating: 4.8,
-    ratingCount: 32,
-    promoted: false,
-    specialization: ["Microsoft 365 Copilot", "Cybersecurity", "Team Automation"],
-    description: "Systems integration leaders focused on secure productivity structures and agentic AI pipelines.",
-    caseStudyTitle: "ASX 50 Team Productivity Enablement",
-    caseStudyContext: "Configured custom security labels and agent workspace structures to optimize workflow speed.",
-    contactEmail: "experts@sydneyunified.com.au",
-    websiteUrl: "https://www.microsoft.com/en-au",
-    reviews: [
-      {
-        id: "rev-3",
-        reviewer: "John Donnelly",
-        rating: 5,
-        comment: "Best Copilot deployment specialists in Australia.",
-        date: "2026-04-18"
-      }
-    ]
-  },
-  {
-    id: "partner-3",
-    name: "Auckland Sovereign AI",
-    location: "Auckland, NZ",
-    rating: 4.7,
-    ratingCount: 24,
-    promoted: false,
-    specialization: ["Azure Data Lakes", "Sovereign AI", "NZISM Compliance"],
-    description: "Specialized New Zealand consulting practice helping regional enterprises build customized secure Azure compute systems.",
-    caseStudyTitle: "Health Sector Localized Lakehouses",
-    caseStudyContext: "Deployed regional HIPAA and NZISM compliant hybrid databases for regional clinical services.",
-    contactEmail: "nzteam@aucklandsovereignai.co.nz",
-    websiteUrl: "https://www.microsoft.com/en-nz",
-    reviews: [
-      {
-        id: "rev-4",
-        reviewer: "Aroha Kerei",
-        rating: 5,
-        comment: "Crucial team for sovereign compliance and Azure tenant segregation.",
-        date: "2026-06-02"
-      }
-    ]
-  },
-  {
     id: "partner-insight-apac",
     name: "Insight APAC",
     location: "Sydney, NSW & Regional",
     rating: 4.9,
     ratingCount: 124,
-    promoted: false,
+    promoted: true,
     specialization: ["Licensing Optimization", "Azure Cloud Migration", "Copilot Transformation"],
     description: "A leading global systems integrator and Microsoft Solution Assessment partner specializing in software asset management, complex EA negotiations, and enterprise Azure workload transformation.",
     caseStudyTitle: "Federal Government Azure Multi-Tenant Transformation",
@@ -519,7 +443,19 @@ export default function App() {
   const [partners, setPartners] = useState<MicrosoftPartner[]>(() => {
     try {
       const stored = localStorage.getItem("microsoft_intel_partners");
-      return stored ? JSON.parse(stored) : DEFAULT_PARTNERS;
+      const parsed = stored ? JSON.parse(stored) : DEFAULT_PARTNERS;
+      const cleaned = parsed.filter((p: any) => p.name !== "Sydney Unified Systems" && p.name !== "Melbourne Cloud Scaling" && p.name !== "Auckland Sovereign AI");
+      
+      if (cleaned.length > 0 && !cleaned.some((p: any) => p.promoted)) {
+        const insight = cleaned.find((p: any) => p.id === "partner-insight-apac");
+        if (insight) {
+          insight.promoted = true;
+        } else {
+          cleaned[0].promoted = true;
+        }
+      }
+      localStorage.setItem("microsoft_intel_partners", JSON.stringify(cleaned));
+      return cleaned;
     } catch {
       return DEFAULT_PARTNERS;
     }
