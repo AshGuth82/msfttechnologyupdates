@@ -69,7 +69,8 @@ import {
   YAxis, 
   Tooltip, 
   Legend, 
-  CartesianGrid 
+  CartesianGrid,
+  ReferenceArea
 } from "recharts";
 
 const calculateReadTime = (article: Article): string => {
@@ -602,6 +603,16 @@ export default function App() {
   const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M">("1M");
   const [liveMsftPrice, setLiveMsftPrice] = useState<number>(422.86);
   const [showSentimentOverlay, setShowSentimentOverlay] = useState<boolean>(false);
+  const [zoomRefAreaLeft, setZoomRefAreaLeft] = useState<string | null>(null);
+  const [zoomRefAreaRight, setZoomRefAreaRight] = useState<string | null>(null);
+  const [zoomRange, setZoomRange] = useState<{ start: string; end: string } | null>(null);
+
+  const handleTimeframeChange = (val: "1D" | "1W" | "1M" | "3M") => {
+    setMsftTimeframe(val);
+    setZoomRange(null);
+    setZoomRefAreaLeft(null);
+    setZoomRefAreaRight(null);
+  };
 
   useEffect(() => {
     // Set up stock fluctuation
@@ -1537,6 +1548,57 @@ export default function App() {
     }
   };
 
+  const getDisplayedChartData = () => {
+    const mergedData = getMergedChartData() || [];
+    if (!zoomRange) return mergedData;
+
+    const startIdx = mergedData.findIndex(d => d.time === zoomRange.start);
+    const endIdx = mergedData.findIndex(d => d.time === zoomRange.end);
+
+    if (startIdx === -1 || endIdx === -1) return mergedData;
+
+    const minIdx = Math.min(startIdx, endIdx);
+    const maxIdx = Math.max(startIdx, endIdx);
+    return mergedData.slice(minIdx, maxIdx + 1);
+  };
+
+  const handleZoom = () => {
+    if (!zoomRefAreaLeft || !zoomRefAreaRight) {
+      setZoomRefAreaLeft(null);
+      setZoomRefAreaRight(null);
+      return;
+    }
+
+    let left = zoomRefAreaLeft;
+    let right = zoomRefAreaRight;
+
+    if (left === right) {
+      setZoomRefAreaLeft(null);
+      setZoomRefAreaRight(null);
+      return;
+    }
+
+    const currentData = getMergedChartData() || [];
+    const leftIdx = currentData.findIndex(d => d.time === left);
+    const rightIdx = currentData.findIndex(d => d.time === right);
+
+    if (leftIdx === -1 || rightIdx === -1) {
+      setZoomRefAreaLeft(null);
+      setZoomRefAreaRight(null);
+      return;
+    }
+
+    if (leftIdx > rightIdx) {
+      const temp = left;
+      left = right;
+      right = temp;
+    }
+
+    setZoomRange({ start: left, end: right });
+    setZoomRefAreaLeft(null);
+    setZoomRefAreaRight(null);
+  };
+
   const getSentiment30DayData = () => {
     const dataPoints = [];
     const baseDate = new Date("2026-06-04");
@@ -1935,15 +1997,18 @@ export default function App() {
                 default: return 417.62;
               }
             };
-            const startingPrice = getStartingPrice();
-            const deltaPrice = liveMsftPrice - startingPrice;
-            const percentChange = (deltaPrice / startingPrice) * 100;
-            const isPositiveChange = deltaPrice >= 0;
-
-            const activeDataset = getMsftChartData() || [];
+            const activeDataset = getDisplayedChartData() || [];
             const pricesInDataset = activeDataset.map(d => d.price);
             const periodHigh = pricesInDataset.length > 0 ? Math.max(...pricesInDataset) : liveMsftPrice;
             const periodLow = pricesInDataset.length > 0 ? Math.min(...pricesInDataset) : liveMsftPrice;
+
+            const baseStartingPrice = getStartingPrice();
+            const startingPrice = activeDataset.length > 0 ? activeDataset[0].price : baseStartingPrice;
+            const endPrice = activeDataset.length > 0 ? activeDataset[activeDataset.length - 1].price : liveMsftPrice;
+
+            const deltaPrice = endPrice - startingPrice;
+            const percentChange = (deltaPrice / (startingPrice || 1)) * 100;
+            const isPositiveChange = deltaPrice >= 0;
 
             const dayPrices = msftData1D.map(d => d.price);
             const dayHigh = Math.max(...dayPrices);
@@ -2010,17 +2075,38 @@ export default function App() {
                     </div>
 
                     {/* Meta Status Indicator matching live timezone bounds */}
-                    <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
-                      <span className="relative flex h-2 w-2 select-none">
-                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isPositiveChange ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                        <span className={`relative inline-flex rounded-full h-2 w-2 ${isPositiveChange ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2.5 text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                      <div className="flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2 select-none">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isPositiveChange ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                          <span className={`relative inline-flex rounded-full h-2 w-2 ${isPositiveChange ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                        </span>
+                        <span>Market Closed • Quote last updated Friday, Jun 5, 4:00 PM EDT • Disclaimer</span>
+                      </div>
+                      <span className="text-sky-500 dark:text-sky-400 font-medium">
+                        💡 Click & drag horizontally on the chart to zoom in
                       </span>
-                      <span>Market Closed • Quote last updated Friday, Jun 5, 4:00 PM EDT • Disclaimer</span>
                     </div>
                   </div>
 
                   {/* Interactive Control Deck */}
                   <div className="flex flex-wrap items-center gap-3.5">
+                    {/* Reset Zoom Button */}
+                    {zoomRange && (
+                      <button
+                        onClick={() => setZoomRange(null)}
+                        className={`px-3 py-1 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-all duration-250 cursor-pointer ${
+                          isDark 
+                            ? "bg-rose-500/10 text-rose-400 border-rose-500/25 hover:bg-rose-500/20" 
+                            : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100/70"
+                        }`}
+                        title="Reset stock chart zoom to full timeframe"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 animate-pulse" />
+                        <span>Reset Zoom</span>
+                      </button>
+                    )}
+
                     {/* Sentiment overlay legend shown when toggled */}
                     {showSentimentOverlay && (
                       <div className="flex items-center gap-2.5 text-[10px] font-mono font-bold tracking-wider">
@@ -2045,7 +2131,7 @@ export default function App() {
                       ] as const).map(({ label, val }) => (
                         <button
                           key={label}
-                          onClick={() => setMsftTimeframe(val)}
+                          onClick={() => handleTimeframeChange(val)}
                           className={`px-3 py-1 text-xs font-bold rounded-lg font-mono transition-all duration-150 cursor-pointer ${
                             msftTimeframe === val
                               ? isPositiveChange
@@ -2085,8 +2171,19 @@ export default function App() {
                     <div className="h-72 sm:h-80 w-full text-xs font-mono select-none relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
-                          data={getMergedChartData()}
+                          data={getDisplayedChartData()}
                           margin={{ top: 10, right: 10, left: -22, bottom: 5 }}
+                          onMouseDown={(e: any) => {
+                            if (e && e.activeLabel) {
+                              setZoomRefAreaLeft(e.activeLabel);
+                            }
+                          }}
+                          onMouseMove={(e: any) => {
+                            if (zoomRefAreaLeft && e && e.activeLabel) {
+                              setZoomRefAreaRight(e.activeLabel);
+                            }
+                          }}
+                          onMouseUp={handleZoom}
                         >
                           <defs>
                             <linearGradient id={trendGradientId} x1="0" y1="0" x2="0" y2="1">
@@ -2100,6 +2197,19 @@ export default function App() {
                             stroke={isDark ? "#1e293b" : "#cbd5e1"} 
                             opacity={isDark ? 0.08 : 0.12} 
                           />
+                          
+                          {/* Highlight Active Drag Selection Area */}
+                          {zoomRefAreaLeft && zoomRefAreaRight && (
+                            <ReferenceArea
+                              yAxisId="left"
+                              x1={zoomRefAreaLeft}
+                              x2={zoomRefAreaRight}
+                              {...({
+                                fill: trendStrokeColor,
+                                fillOpacity: 0.15
+                              } as any)}
+                            />
+                          )}
                           
                           <XAxis 
                             dataKey="time" 
