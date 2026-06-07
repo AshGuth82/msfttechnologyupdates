@@ -2155,19 +2155,19 @@ export default function App() {
                               isDark ? "bg-slate-900/60 hover:text-slate-200" : "bg-slate-50 hover:text-slate-800"
                             }`
                       }`}
-                      title="Toggle overlaying localized enterprise sentiment scores on secondary axis"
+                      title="Toggle overlaying stock sentiment volumes on secondary axis"
                     >
                       <BarChart3 className="w-3.5 h-3.5 text-sky-450" />
-                      <span>ANZ Sentiment Overlay</span>
+                      <span>Sentiment Overlay</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Primary Chart Visualization Stage */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="w-full">
                   
-                  {/* Google Finance Styled Interactive AreaChart (Full width / 9 cols) */}
-                  <div className="lg:col-span-9 w-full">
+                  {/* Google Finance Styled Interactive AreaChart */}
+                  <div className="w-full">
                     <div className="h-72 sm:h-80 w-full text-xs font-mono select-none relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
@@ -2362,76 +2362,6 @@ export default function App() {
                           <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-mono font-medium tracking-wider mb-1">Div Yield</div>
                           <div className={`text-sm font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>0.71%</div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sentiment Intelligence Side Panel (3 cols) */}
-                  <div className="lg:col-span-3 flex flex-col gap-4 font-mono text-xs">
-                    
-                    {/* Instability Index Panel */}
-                    <div className={`border rounded-xl p-4 transition duration-200 ${
-                      isDark ? "bg-[#0b0f19]/30 border-slate-800 hover:border-slate-700/60" : "bg-slate-50/50 border-slate-200 hover:border-slate-350"
-                    }`}>
-                      <div className="text-[10px] text-slate-450 dark:text-slate-500 uppercase font-bold tracking-wider mb-2.5">
-                        ANZ Instability index
-                      </div>
-                      {(() => {
-                        const totalPos = articles.filter(a => a.sentiment === "positive").length;
-                        const totalNeg = articles.filter(a => a.sentiment === "negative").length;
-                        const instabilityRatio = (totalNeg / Math.max(1, totalPos + totalNeg)) * 10;
-                        
-                        let label = "STABLE";
-                        let colorClass = isDark ? "text-emerald-400" : "text-emerald-600";
-                        if (instabilityRatio >= 6.5) {
-                          label = "SEVERELY UNSTABLE";
-                          colorClass = isDark ? "text-rose-500" : "text-rose-600 font-bold";
-                        } else if (instabilityRatio >= 4.0) {
-                          label = "MODERATE FRICTION";
-                          colorClass = isDark ? "text-amber-400" : "text-amber-600 font-bold";
-                        } else if (instabilityRatio >= 1.5) {
-                          label = "STABILIZING";
-                          colorClass = isDark ? "text-sky-400" : "text-sky-600 font-bold";
-                        }
-
-                        return (
-                          <div>
-                            <div className={`text-2xl font-extrabold ${colorClass}`}>{instabilityRatio.toFixed(1)} / 10</div>
-                            <div className="text-[9px] uppercase tracking-wider font-extrabold mt-1.5 opacity-90">{label}</div>
-                            <p className="text-[11px] font-sans text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                              Evaluated based on licensing disruptions, regional audits, and SLA disputes reported in the ANZ territory.
-                            </p>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Signal Co-alignment Expert Advisory Advisory */}
-                    <div className={`border rounded-xl p-4 flex-1 flex flex-col justify-between transition duration-200 ${
-                      isDark ? "bg-[#0b0f19]/30 border-slate-800 hover:border-slate-700/60" : "bg-slate-50/50 border-slate-200 hover:border-slate-350"
-                    }`}>
-                      <div>
-                        <div className="text-[10px] text-slate-450 dark:text-slate-500 uppercase font-bold tracking-wider mb-2.5">
-                          Signal Co-alignment Advisory
-                        </div>
-                        <p className={`text-[11px] font-sans leading-relaxed ${isDark ? "text-slate-300" : "text-slate-650"}`}>
-                          {(() => {
-                            const totalPos = articles.filter(a => a.sentiment === "positive").length;
-                            const totalNeg = articles.filter(a => a.sentiment === "negative").length;
-                            if (totalNeg > totalPos) {
-                              return "Intense territorial friction of pricing indices suggests persistent local operational strain co-aligned with MSFT valuation stability.";
-                            } else if (totalPos > totalNeg * 2) {
-                              return "Sovereign cloud expansion and localized ANZ commercial wins suggest dynamic underlying expansion signals supportive of price growth.";
-                            } else {
-                              return "Balanced local sentiment indexes with tight baseline valuation fluctuations registered in recent cycles.";
-                            }
-                          })()}
-                        </p>
-                      </div>
-                      
-                      <div className="text-[9px] text-slate-450 dark:text-slate-500 mt-4 border-t border-slate-250 dark:border-slate-800/40 pt-2 flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3 text-sky-400" />
-                        <span>Correlation Index Updated Hourly</span>
                       </div>
                     </div>
                   </div>
