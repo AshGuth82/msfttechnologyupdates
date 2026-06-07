@@ -605,6 +605,7 @@ export default function App() {
   const [zoomRefAreaLeft, setZoomRefAreaLeft] = useState<string | null>(null);
   const [zoomRefAreaRight, setZoomRefAreaRight] = useState<string | null>(null);
   const [zoomRange, setZoomRange] = useState<{ start: string; end: string } | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<{ price: number; time: string; chartX: number; chartY: number } | null>(null);
 
   const handleTimeframeChange = (val: "1D" | "1W" | "1M" | "3M") => {
     setMsftTimeframe(val);
@@ -2151,8 +2152,22 @@ export default function App() {
                             if (zoomRefAreaLeft && e && e.activeLabel) {
                               setZoomRefAreaRight(e.activeLabel);
                             }
+                            if (e && e.activePayload && e.activePayload.length) {
+                              const p = e.activePayload[0].payload;
+                              setHoveredPoint({
+                                price: p.price,
+                                time: p.time,
+                                chartX: e.chartX,
+                                chartY: e.chartY,
+                              });
+                            } else {
+                              setHoveredPoint(null);
+                            }
                           }}
                           onMouseUp={handleZoom}
+                          onMouseLeave={() => {
+                            setHoveredPoint(null);
+                          }}
                         >
                           <defs>
                             <linearGradient id={trendGradientId} x1="0" y1="0" x2="0" y2="1">
@@ -2202,33 +2217,8 @@ export default function App() {
                           />
                           
                           <Tooltip
-                            content={({ active, payload, label }) => {
-                              if (active && payload && payload.length) {
-                                return (
-                                  <div className={`p-3.5 border rounded-xl shadow-xl font-sans text-xs flex flex-col gap-1.5 ${
-                                    isDark ? "bg-[#0b0f19] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-800"
-                                  }`}>
-                                    <div className="font-mono text-[10px] text-slate-400 uppercase tracking-wider">{label}</div>
-                                    {payload.map((p: any) => {
-                                      const isPrice = p.name === "MSFT Price" || p.dataKey === "price";
-                                      const bulletColor = isPrice ? trendStrokeColor : p.color;
-                                      return (
-                                        <div key={p.name} className="flex items-center justify-between gap-6">
-                                          <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-                                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: bulletColor }}></span>
-                                            {p.name}:
-                                          </span>
-                                          <span className="font-bold font-mono">
-                                            {isPrice ? `$${parseFloat(p.value).toFixed(2)}` : p.value}
-                                          </span>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                );
-                              }
-                              return null;
-                            }}
+                            cursor={{ stroke: isDark ? "#475569" : "#cbd5e1", strokeWidth: 1.2, strokeDasharray: "3 3" }}
+                            content={() => null}
                           />
                           
                           {/* Stock Area Series - colored dynamic green/red based on period trend */}
@@ -2244,6 +2234,28 @@ export default function App() {
                           />
                         </ComposedChart>
                       </ResponsiveContainer>
+
+                      {/* Precise Floating Price Point Label that follows the cursor on hover */}
+                      {hoveredPoint && (
+                        <div 
+                          className="absolute pointer-events-none transition-all duration-75 ease-out select-none"
+                          style={{
+                            left: Math.max(40, Math.min(hoveredPoint.chartX - 60, 480)),
+                            top: Math.max(10, Math.min(hoveredPoint.chartY - 50, 240)),
+                            zIndex: 50
+                          }}
+                        >
+                          <div className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold border shadow-md flex items-center gap-1.5 whitespace-nowrap backdrop-blur-md ${
+                            isDark 
+                              ? "bg-slate-950/90 border-slate-800 text-slate-100 shadow-emerald-500/5" 
+                              : "bg-white/95 border-slate-250 text-slate-800 shadow-slate-350"
+                          }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${isPositiveChange ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                            <span>${hoveredPoint.price.toFixed(2)}</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">({hoveredPoint.time})</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Google Finance Inspired Key Information Grid (Bottom stats bar) */}

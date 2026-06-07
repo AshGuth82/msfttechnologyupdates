@@ -327,29 +327,40 @@ CRITICAL: Return ONLY the JSON. Do not include markdown headers like \`\`\`json 
 
 // 1. Get categorized news (cached for 15 minutes unless refreshed)
 app.get("/api/news", async (req, res) => {
-  const forceRefresh = req.query.refresh === "true";
-  const now = new Date();
+  try {
+    const forceRefresh = req.query.refresh === "true";
+    const now = new Date();
 
-  // Check if cache is valid (15 minutes limit)
-  const isCacheExpired = !newsCache || 
-    (now.getTime() - new Date(newsCache.lastUpdated).getTime() > 15 * 60 * 1000);
+    // Check if cache is valid (15 minutes limit)
+    const isCacheExpired = !newsCache || 
+      (now.getTime() - new Date(newsCache.lastUpdated).getTime() > 15 * 60 * 1000);
 
-  if (forceRefresh || isCacheExpired) {
-    console.log(`Cache missing, expired or refresh requested. Fetching fresh news (forceRefresh: ${forceRefresh})...`);
-    const result = await fetchNewsViaGemini();
-    newsCache = {
-      articles: result.articles,
-      lastUpdated: now.toISOString()
-    };
-    isCacheLive = result.isRealTime;
+    if (forceRefresh || isCacheExpired) {
+      console.log(`Cache missing, expired or refresh requested. Fetching fresh news (forceRefresh: ${forceRefresh})...`);
+      const result = await fetchNewsViaGemini();
+      newsCache = {
+        articles: result?.articles || FALLBACK_ARTICLES,
+        lastUpdated: now.toISOString()
+      };
+      isCacheLive = result?.isRealTime || false;
+    }
+
+    res.json({
+      articles: newsCache.articles || FALLBACK_ARTICLES,
+      lastUpdated: newsCache.lastUpdated || now.toISOString(),
+      isLive: isCacheLive,
+      hasApiKey: !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY"
+    });
+  } catch (error: any) {
+    console.error("Error in /api/news route handler, falling back to local seed data:", error);
+    const now = new Date();
+    res.json({
+      articles: FALLBACK_ARTICLES,
+      lastUpdated: now.toISOString(),
+      isLive: false,
+      hasApiKey: !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY"
+    });
   }
-
-  res.json({
-    articles: newsCache.articles,
-    lastUpdated: newsCache.lastUpdated,
-    isLive: isCacheLive,
-    hasApiKey: !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY"
-  });
 });
 
 // Helper to generate a high-quality static expert briefing when offline or key is restricted
