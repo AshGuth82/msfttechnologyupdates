@@ -56,7 +56,8 @@ import {
   ThumbsUp,
   MessageSquare,
   Building,
-  Table
+  Table,
+  Linkedin
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -705,6 +706,36 @@ export default function App() {
     });
   };
 
+  const generateLinkedInPost = (article: Article): string => {
+    const takeaways = article.keyTakeaways && article.keyTakeaways.length > 0
+      ? article.keyTakeaways.slice(0, 3).map(pt => `• ${pt}`).join("\n")
+      : "• High-impact Microsoft ecosystem briefing and intelligence analysis.";
+
+    const advice = article.anzActionableAdvice
+      ? `\n💡 ANZ Enterprise Guidance:\n${article.anzActionableAdvice}\n`
+      : "";
+
+    return `📢 ANZ Microsoft Partner Intelligence Briefing
+
+Title: ${article.title}
+
+Key Takeaways:
+${takeaways}
+${advice}
+🔗 Read full briefing here:
+👉 ${article.url || "https://www.microsoft.com/en-au"}
+
+#MicrosoftPartners #ANZBusiness #CloudMigration #EnterpriseAI`;
+  };
+
+  const handleShareToLinkedIn = (e: React.MouseEvent, article: Article) => {
+    e.stopPropagation();
+    const formattedText = generateLinkedInPost(article);
+    setLinkedInShareArticle(article);
+    setCustomLinkedInPostText(formattedText);
+    setCopiedLinkedInText(false);
+  };
+
   const handleNativeShare = async (e: React.MouseEvent, title: string, url: string, category: NewsCategory) => {
     e.stopPropagation();
     const shareUrl = url || window.location.href;
@@ -831,6 +862,11 @@ export default function App() {
   const [hoveredPoint, setHoveredPoint] = useState<{ price: number; comparePrice?: number; time: string; chartX: number; chartY: number } | null>(null);
   const [compareIndex, setCompareIndex] = useState<"none" | "nasdaq" | "sp500">("none");
   const [historicalDataExpanded, setHistoricalDataExpanded] = useState<boolean>(false);
+
+  // LinkedIn Share Dialog State
+  const [linkedInShareArticle, setLinkedInShareArticle] = useState<Article | null>(null);
+  const [customLinkedInPostText, setCustomLinkedInPostText] = useState<string>("");
+  const [copiedLinkedInText, setCopiedLinkedInText] = useState<boolean>(false);
 
   // Price Alert state management (Persisted in localStorage)
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(() => {
@@ -3817,6 +3853,14 @@ export default function App() {
                                   <span>Export PDF</span>
                                 </button>
                                 <button
+                                  onClick={(e) => handleShareToLinkedIn(e, article)}
+                                  className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-[#0a66c2] rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                  title="Format a LinkedIn post with key takeaways & CTA"
+                                >
+                                  <Linkedin className="w-3 h-3 text-[#0a66c2] fill-current" />
+                                  <span>LinkedIn</span>
+                                </button>
+                                <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     navigator.clipboard.writeText(article.url || window.location.href);
@@ -4215,6 +4259,14 @@ export default function App() {
                                           >
                                             <FileText className="w-3 h-3 text-amber-500" />
                                             <span>Export PDF</span>
+                                          </button>
+                                          <button
+                                            onClick={(e) => handleShareToLinkedIn(e, article)}
+                                            className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-[#0a66c2] rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                            title="Format a LinkedIn post with key takeaways & CTA"
+                                          >
+                                            <Linkedin className="w-3 h-3 text-[#0a66c2] fill-current" />
+                                            <span>LinkedIn</span>
                                           </button>
                                           <button
                                             onClick={(e) => {
@@ -5937,6 +5989,130 @@ export default function App() {
                 Cancel
               </button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* LinkedIn Share Dialog */}
+      <AnimatePresence>
+        {linkedInShareArticle && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 15, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-800 bg-[#0e1320] shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-950/40 px-6 py-4.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0a66c2]/10 text-[#0a66c2]">
+                    <Linkedin className="w-5 h-5 fill-current" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                      LinkedIn Publisher Assistant
+                    </h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Share professional-grade Microsoft partner insights with your network.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setLinkedInShareArticle(null)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-800/50 hover:text-white transition cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-sky-400 uppercase tracking-wider font-mono mb-2">
+                    Professional Post Format Preview & Customizer
+                  </label>
+                  <p className="text-xs text-slate-400 mb-2">
+                    Edit the draft text below directly to refine the voice before copying or sharing.
+                  </p>
+                  <textarea
+                    value={customLinkedInPostText}
+                    onChange={(e) => setCustomLinkedInPostText(e.target.value)}
+                    rows={10}
+                    className="w-full rounded-xl bg-[#05070c] border border-slate-800 p-4 text-xs text-slate-200 focus:border-sky-500/50 focus:outline-none focus:ring-1 focus:ring-sky-500/50 font-sans leading-relaxed custom-scrollbar"
+                    placeholder="Enter your custom post text..."
+                  />
+                </div>
+
+                <div className="bg-[#05070c]/50 rounded-xl border border-slate-800/60 p-4 flex items-start gap-3">
+                  <Info className="w-4 h-4 text-sky-500 shrink-0 mt-0.5 animate-pulse" />
+                  <div className="text-xs text-slate-400 leading-relaxed">
+                    <strong className="text-slate-300">How to share:</strong> Click <strong className="text-slate-200">"Copy & Go to LinkedIn"</strong> to automatically copy this text to your clipboard, and choose to paste it directly onto your homepage or direct feeds.
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-950/45 px-6 py-4 border-t border-slate-800/80">
+                <button
+                  onClick={() => {
+                    setLinkedInShareArticle(null);
+                  }}
+                  className="text-xs text-slate-400 hover:text-white font-mono px-4 py-2 hover:bg-slate-800/20 rounded transition cursor-pointer order-last sm:order-first text-center sm:text-left"
+                >
+                  Cancel
+                </button>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(customLinkedInPostText);
+                      setCopiedLinkedInText(true);
+                      addToast(
+                        linkedInShareArticle.category,
+                        "Post Copied",
+                        "LinkedIn professional post loaded to clipboard!"
+                      );
+                      setTimeout(() => setCopiedLinkedInText(false), 2000);
+                    }}
+                    className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded text-xs font-mono font-semibold transition border cursor-pointer ${
+                      copiedLinkedInText
+                        ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
+                        : "bg-[#0c101a] border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    {copiedLinkedInText ? <Check className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5 text-slate-500" />}
+                    <span>{copiedLinkedInText ? "Copied!" : "Copy Post Content"}</span>
+                  </button>
+
+                  <a
+                    href={`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(customLinkedInPostText)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(customLinkedInPostText);
+                      addToast(
+                        linkedInShareArticle.category,
+                        "Post Copied & Sharing",
+                        "Copied post contents to clipboard and opened LinkedIn feed!"
+                      );
+                      setLinkedInShareArticle(null);
+                    }}
+                    className="inline-flex items-center justify-center gap-2 bg-[#0a66c2] hover:bg-[#004182] text-white px-5 py-2 rounded text-xs font-mono font-bold shadow-[0_4px_12px_rgba(10,102,194,0.3)] transition cursor-pointer"
+                  >
+                    <Linkedin className="w-3.5 h-3.5 fill-current" />
+                    <span>Copy & Go to LinkedIn</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
