@@ -218,7 +218,10 @@ async function fetchNewsViaGemini(): Promise<{ articles: Article[]; isRealTime: 
     const prompt = `You are a professional corporate intelligence tool specialized in Microsoft cloud strategy and licensing for the Australia/New Zealand (ANZ) enterprise market.
 Search the web for recent high-quality news and articles from 2026 regarding the Microsoft Corporation, tailored to the regional ANZ procurement, finance, and IT leadership context.
 
-Specifically, search for and incorporate updates from the official Microsoft announcement at: https://www.microsoft.com/en-us/licensing/news/2026-m365-packaging-pricing-updates regarding global M365 commercial packaging and price changes taking effect on July 1, 2026.
+Specifically, you MUST search and incorporate updates from these official and primary source platforms:
+1. Microsoft's Official Source News hub: https://news.microsoft.com/source/view-all/
+2. GeekWire's Microsoft News archive: https://www.geekwire.com/microsoft/
+3. The official Microsoft licensing news center: https://www.microsoft.com/en-us/licensing/news/2026-m365-packaging-pricing-updates regarding global M365 commercial packaging and price changes taking effect on July 1, 2026.
 
 You must fetch several news updates, especially covering these four specific categories:
 1. 'technology_updates' (e.g., product updates, new technical capabilities, Copilot workspace agentic deployments, Microsoft workspace extensions)
@@ -431,10 +434,11 @@ Your expertise spans Enterprise Agreements (EA), Server and Cloud Enrollment (SC
 
 Guidelines for your response:
 1. Provide highly professional, action-oriented advice tailored for ANZ businesses, procurement professionals, CFOs, and CIOs.
-2. Incorporate structural recommendations (e.g., pre-renewal audit schedules, CSP vs. EA comparisons, and licensing compliance advice).
-3. Where suitable, explain how businesses can utilize Microsoft ECIF (End-customer Investment Fund) to subsidise engineering of their cloud or AI transformations.
-4. Keep the tone authoritative but accessible and helpful, avoiding self-praising marketing jargon. Highlight Microsoft regional co-investment programs and certified licensing diagnostic advisors as excellent resources for enterprise leadership.
-5. Format your response beautifully in clean Markdown with logical headings, bullet lists, and key items in bold.`;
+2. For real-time updates and corporate announcements, prioritize and refer to news from Microsoft's Official Source (https://news.microsoft.com/source/view-all/) and GeekWire (https://www.geekwire.com/microsoft/).
+3. Incorporate structural recommendations (e.g., pre-renewal audit schedules, CSP vs. EA comparisons, and licensing compliance advice).
+4. Where suitable, explain how businesses can utilize Microsoft ECIF (End-customer Investment Fund) to subsidise engineering of their cloud or AI transformations.
+5. Keep the tone authoritative but accessible and helpful, avoiding self-praising marketing jargon. Highlight Microsoft regional co-investment programs and certified licensing diagnostic advisors as excellent resources for enterprise leadership.
+6. Format your response beautifully in clean Markdown with logical headings, bullet lists, and key items in bold.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",

@@ -771,7 +771,8 @@ export default function App() {
   const [zoomRefAreaLeft, setZoomRefAreaLeft] = useState<string | null>(null);
   const [zoomRefAreaRight, setZoomRefAreaRight] = useState<string | null>(null);
   const [zoomRange, setZoomRange] = useState<{ start: string; end: string } | null>(null);
-  const [hoveredPoint, setHoveredPoint] = useState<{ price: number; time: string; chartX: number; chartY: number } | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<{ price: number; comparePrice?: number; time: string; chartX: number; chartY: number } | null>(null);
+  const [compareIndex, setCompareIndex] = useState<"none" | "nasdaq" | "sp500">("none");
 
   const handleTimeframeChange = (val: "1D" | "1W" | "1M" | "3M") => {
     setMsftTimeframe(val);
@@ -1682,6 +1683,28 @@ export default function App() {
     return `2026-${month}-${formattedDay}`;
   };
 
+  const getComparePrice = (idx: number, timeframe: string, indexType: "none" | "nasdaq" | "sp500"): number | undefined => {
+    if (indexType === "none") return undefined;
+    if (indexType === "nasdaq") {
+      const db: Record<string, number[]> = {
+        "1D": [16820.50, 16845.20, 16890.10, 16875.40, 16910.60, 16930.25, 16960.80, 17042.10],
+        "1W": [16730.20, 16920.50, 16828.10, 16857.30, 16960.40, 17042.10],
+        "1M": [16330.40, 16340.50, 16550.20, 16740.10, 16730.80, 16920.50, 17042.10],
+        "3M": [15930.10, 16100.80, 16250.30, 16150.90, 15880.40, 15920.20, 16330.40, 16550.20, 16730.80, 17042.10],
+      };
+      return db[timeframe]?.[idx];
+    } else if (indexType === "sp500") {
+      const db: Record<string, number[]> = {
+        "1D": [5295.10, 5312.40, 5328.60, 5320.30, 5338.90, 5345.20, 5352.10, 5360.70],
+        "1W": [5266.30, 5277.10, 5283.40, 5291.85, 5354.20, 5360.70],
+        "1M": [5180.20, 5210.50, 5300.10, 5270.30, 5304.60, 5277.15, 5360.70],
+        "3M": [5078.10, 5117.30, 5218.40, 5204.25, 5061.90, 5100.10, 5180.20, 5300.10, 5304.60, 5360.70],
+      };
+      return db[timeframe]?.[idx];
+    }
+    return undefined;
+  };
+
   const getMergedChartData = () => {
     const stockPoints = getMsftChartData() || [];
     
@@ -1699,13 +1722,14 @@ export default function App() {
         return {
           time: pt.time,
           price: pt.price,
+          comparePrice: getComparePrice(idx, "1D", compareIndex),
           "Positive Sentiment": positive,
           "Negative Sentiment": negative,
           "Sentiment Volume": positive + negative,
         };
       });
     } else {
-      return stockPoints.map((pt) => {
+      return stockPoints.map((pt, idx) => {
         const dateStr = parseDateLabel(pt.time);
         const targetTime = new Date(dateStr).getTime();
         const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;
@@ -1722,6 +1746,7 @@ export default function App() {
         return {
           time: pt.time,
           price: pt.price,
+          comparePrice: getComparePrice(idx, msftTimeframe, compareIndex),
           "Positive Sentiment": positive,
           "Negative Sentiment": negative,
           "Sentiment Volume": positive + negative,
@@ -2035,8 +2060,40 @@ export default function App() {
 
 
 
-        {/* Overview Statistics Dash Row */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Global Navigation Hub */}
+        <div className="flex bg-[#111827] border border-slate-800 p-1 rounded-xl font-sans max-w-sm sm:max-w-md md:max-w-xl mb-8 shadow-lg">
+          <button
+            id="global-nav-briefings"
+            onClick={() => setActiveMainView("briefings")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+              activeMainView === "briefings"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-705 font-bold"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <FileText className="w-4 h-4 text-inherit" />
+            <span>Executive Advisor Dashboard</span>
+          </button>
+          <button
+            id="global-nav-partners"
+            onClick={() => {
+              setActiveMainView("partners");
+              setActiveReviewId(null);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+              activeMainView === "partners"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-705 font-bold"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Users className="w-4 h-4 text-inherit" />
+            <span>ANZ Microsoft Partner Hub</span>
+          </button>
+        </div>
+
+        {activeMainView === "briefings" && (
+          <>
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden">
             <div className="text-xs text-slate-400 font-medium">Active Briefing Stream</div>
             <div className="text-2xl font-bold mt-1 text-white">{articles.length}</div>
@@ -2281,6 +2338,26 @@ export default function App() {
                       </button>
                     )}
 
+                    {/* Benchmark Index Comparison Menu */}
+                    <div className="flex items-center bg-slate-100/90 dark:bg-slate-950/60 border border-slate-205 dark:border-slate-800/80 p-1 px-2.5 rounded-xl gap-1.5">
+                      <span className={`text-[10px] md:text-xs font-mono font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                        Compare:
+                      </span>
+                      <select
+                        id="benchmark-compare"
+                        value={compareIndex}
+                        onChange={(e) => setCompareIndex(e.target.value as any)}
+                        className={`bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none pr-1 focus:ring-0 ring-0 border-0 ${
+                          isDark ? "text-slate-200" : "text-slate-700"
+                        }`}
+                        style={{ outline: "none", boxShadow: "none" }}
+                      >
+                        <option value="none" className="dark:bg-slate-950 text-slate-850 dark:text-slate-150">None</option>
+                        <option value="nasdaq" className="dark:bg-slate-950 text-slate-850 dark:text-slate-150">NASDAQ Composite</option>
+                        <option value="sp500" className="dark:bg-slate-950 text-slate-850 dark:text-slate-150">S&P 500</option>
+                      </select>
+                    </div>
+
                     {/* Google Finance Timeframe Selection strip */}
                     <div className="flex items-center bg-slate-100/90 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-1 rounded-xl">
                       {([
@@ -2316,7 +2393,7 @@ export default function App() {
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
                           data={getDisplayedChartData()}
-                          margin={{ top: 10, right: 10, left: -22, bottom: 5 }}
+                          margin={{ top: 10, right: compareIndex !== "none" ? 22 : 10, left: -22, bottom: 5 }}
                           onMouseDown={(e: any) => {
                             if (e && e.activeLabel) {
                               setZoomRefAreaLeft(e.activeLabel);
@@ -2330,6 +2407,7 @@ export default function App() {
                               const p = e.activePayload[0].payload;
                               setHoveredPoint({
                                 price: p.price,
+                                comparePrice: p.comparePrice,
                                 time: p.time,
                                 chartX: e.chartX,
                                 chartY: e.chartY,
@@ -2389,6 +2467,20 @@ export default function App() {
                             domain={["auto", "auto"]}
                             dx={-4}
                           />
+
+                          {/* Benchmark Comparison Price Y Axis (Right Side) */}
+                          {compareIndex !== "none" && (
+                            <YAxis 
+                              yAxisId="right"
+                              orientation="right"
+                              stroke={compareIndex === "nasdaq" ? "#38bdf8" : "#fb923c"} 
+                              fontSize={10} 
+                              tickLine={false} 
+                              axisLine={false}
+                              domain={["auto", "auto"]}
+                              dx={4}
+                            />
+                          )}
                           
                           <Tooltip
                             cursor={{ stroke: isDark ? "#475569" : "#cbd5e1", strokeWidth: 1.2, strokeDasharray: "3 3" }}
@@ -2406,31 +2498,66 @@ export default function App() {
                             fillOpacity={1} 
                             fill={`url(#${trendGradientId})`} 
                           />
+
+                          {/* Comparative Stock Benchmark Line Series overlay */}
+                          {compareIndex !== "none" && (
+                            <Line
+                              yAxisId="right"
+                              type="monotone"
+                              dataKey="comparePrice"
+                              name={compareIndex === "nasdaq" ? "NASDAQ Composite" : "S&P 500"}
+                              stroke={compareIndex === "nasdaq" ? "#38bdf8" : "#fb923c"}
+                              strokeWidth={2}
+                              dot={false}
+                              activeDot={{ r: 4 }}
+                            />
+                          )}
                         </ComposedChart>
                       </ResponsiveContainer>
-
-                      {/* Precise Floating Price Point Label that follows the cursor on hover */}
-                      {hoveredPoint && (
-                        <div 
-                          className="absolute pointer-events-none transition-all duration-75 ease-out select-none"
-                          style={{
-                            left: Math.max(40, Math.min(hoveredPoint.chartX - 60, 480)),
-                            top: Math.max(10, Math.min(hoveredPoint.chartY - 50, 240)),
-                            zIndex: 50
-                          }}
-                        >
-                          <div className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold border shadow-md flex items-center gap-1.5 whitespace-nowrap backdrop-blur-md ${
-                            isDark 
-                              ? "bg-slate-950/90 border-slate-800 text-slate-100 shadow-emerald-500/5" 
-                              : "bg-white/95 border-slate-250 text-slate-800 shadow-slate-350"
-                          }`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${isPositiveChange ? "bg-emerald-500" : "bg-rose-500"}`}></span>
-                            <span>${hoveredPoint.price.toFixed(2)}</span>
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">({hoveredPoint.time})</span>
+                    {/* Precise Floating Price Point Label that follows the cursor on hover */}
+                    {hoveredPoint && (
+                      <div 
+                        className="absolute pointer-events-none transition-all duration-75 ease-out select-none font-mono"
+                        style={{
+                          left: Math.max(40, Math.min(hoveredPoint.chartX - 60, 480)),
+                          top: Math.max(10, Math.min(hoveredPoint.chartY - 80, 240)),
+                          zIndex: 50
+                        }}
+                      >
+                        <div className={`px-3 py-2 rounded-xl text-xs border shadow-lg whitespace-nowrap backdrop-blur-md ${
+                          isDark 
+                            ? "bg-slate-950/95 border-slate-800 text-slate-100 shadow-emerald-500/5" 
+                            : "bg-white/98 border-slate-250 text-slate-800 shadow-slate-350"
+                        }`}>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`h-1.5 w-1.5 rounded-full ${isPositiveChange ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                                <span className="font-semibold text-[11px] text-slate-400">MSFT</span>
+                              </div>
+                              <span className="font-bold text-[11px]">${hoveredPoint.price.toFixed(2)}</span>
+                            </div>
+                            {compareIndex !== "none" && hoveredPoint.comparePrice !== undefined && (
+                              <div className="flex items-center justify-between gap-4 border-t border-slate-200/30 dark:border-slate-800/60 pt-1.5 mt-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`h-1.5 w-1.5 rounded-full ${compareIndex === "nasdaq" ? "bg-sky-400" : "bg-orange-400"}`}></span>
+                                  <span className="font-semibold text-[11px] text-slate-400">
+                                    {compareIndex === "nasdaq" ? "NASDAQ" : "S&P 500"}
+                                  </span>
+                                </div>
+                                <span className="font-bold text-[11px]">
+                                  ${hoveredPoint.comparePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              </div>
+                            )}
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-normal text-right mt-1.5 border-t border-slate-200/30 dark:border-slate-800/40 pt-1">
+                              {hoveredPoint.time}
+                            </div>
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                  </div>
 
                     {/* Google Finance Inspired Key Information Grid (Bottom stats bar) */}
                     <div className="mt-8">
@@ -2484,91 +2611,15 @@ export default function App() {
             );
           })()}
         </section>
+          </>
+        )}
 
         {/* Double-Pane Main Screen Workflow */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* LEFT COLUMN: News Explorer Grid (7 out of 12 columns) */}
-          <main className="lg:col-span-7 flex flex-col gap-6">
-
-            {/* Active Partner Spotlight Banner */}
-            {spotlightPartner && (
-              <div id="partner-spotlight-banner" className="bg-gradient-to-r from-sky-950/40 via-[#0b0f19] to-indigo-950/40 border border-sky-500/20 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-lg relative overflow-hidden backdrop-blur-sm font-sans">
-                <div className="absolute top-0 right-0 h-24 w-24 bg-sky-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 h-16 w-16 bg-indigo-500/10 rounded-full blur-xl pointer-events-none"></div>
-                
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="bg-sky-500/15 p-2 rounded-lg border border-sky-500/30 text-sky-400 shrink-0">
-                    <Award className="w-5 h-5 text-sky-400 animate-pulse" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[9px] uppercase font-bold tracking-wider font-mono text-sky-450 bg-sky-500/10 px-1.5 py-0.5 rounded">
-                        Partner Spotlight
-                      </span>
-                      <span className="text-[9px] uppercase font-bold tracking-wider font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                        Gold {spotlightPartner.location}
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-semibold text-slate-100 font-sans mt-1">
-                      {spotlightPartner.name}
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5 max-w-md line-clamp-1">
-                      {spotlightPartner.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => {
-                      setActiveMainView("partners");
-                      setActiveReviewId(spotlightPartner.id);
-                      document.getElementById(`partner-card-${spotlightPartner.id}`)?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-705 text-slate-300 hover:text-white transition rounded-lg text-xs font-semibold cursor-pointer"
-                  >
-                    Reviews
-                  </button>
-                  <a
-                    href={`mailto:${spotlightPartner.contactEmail}`}
-                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg text-xs font-bold hover:scale-[1.02] transition cursor-pointer"
-                  >
-                    Contact Partner
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {/* Main Segmented Toggle */}
-            <div className="flex bg-[#111827] border border-slate-800 p-1.5 rounded-xl font-sans shrink-0 shadow-md">
-              <button
-                id="main-tab-briefings"
-                onClick={() => setActiveMainView("briefings")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
-                  activeMainView === "briefings"
-                    ? "bg-slate-800 text-white shadow-sm border border-slate-700"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span>Intelligence Briefings ({filteredArticles.length})</span>
-              </button>
-              <button
-                id="main-tab-partners"
-                onClick={() => setActiveMainView("partners")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer ${
-                  activeMainView === "partners"
-                    ? "bg-slate-800 text-white shadow-sm border border-slate-700"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                <span>Microsoft Partner Directory ({partners.length})</span>
-              </button>
-            </div>
-
-            {activeMainView === "briefings" ? (
+        {activeMainView === "briefings" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* LEFT COLUMN: News Explorer Grid (7 out of 12 columns) */}
+            <main className="lg:col-span-7 flex flex-col gap-6">
               <>
                 {/* Interactive Filters Area */}
             <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4">
@@ -3611,9 +3662,18 @@ export default function App() {
                         onChange={(e) => setSubRole(e.target.value)}
                         className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-sky-500/50 transition"
                       >
+                        <option value="Business Owner">Business Owner</option>
+                        <option value="CEO">Chief Executive Officer (CEO)</option>
+                        <option value="CFO">Chief Financial Officer (CFO)</option>
+                        <option value="COO">Chief Operating Officer (COO)</option>
+                        <option value="CIO">Chief Information Officer (CIO)</option>
+                        <option value="CTO">Chief Technology Officer (CTO)</option>
+                        <option value="CISO">Chief Information Security Officer (CISO)</option>
+                        <option value="CMO">Chief Marketing Officer (CMO)</option>
+                        <option value="CRO">Chief Revenue Officer (CRO)</option>
+                        <option value="CPO">Chief Product Officer (CPO)</option>
                         <option value="IT Leader">IT Leader / Director</option>
                         <option value="Procurement Director">Procurement / EA Strategist</option>
-                        <option value="Corporate CIO">Corporate CIO / CTO</option>
                         <option value="Lead Advisor">Cloud Consultant & Advisor</option>
                         <option value="Strategy Specialist">Other Specialist</option>
                       </select>
@@ -3761,442 +3821,7 @@ export default function App() {
                 </div>
               )}
             </div>
-              </>
-            ) : (
-              <div className="flex flex-col gap-6">
-                {/* ECIF Program Co-Investment Guide */}
-                <div className="bg-gradient-to-br from-[#121b2e] via-[#0f1524] to-[#121625] border border-sky-500/25 rounded-xl p-5 shadow-xl relative overflow-hidden font-sans">
-                  <div className="absolute top-0 right-0 h-28 w-28 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                  <div className="absolute bottom-0 left-0 h-20 w-20 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                  
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-800/85 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 p-2 rounded-xl border border-sky-500/30 text-sky-400">
-                        <Coins className="w-5 h-5 text-sky-450 animate-pulse" />
-                      </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-bold text-white tracking-tight">
-                            Microsoft End Customer Investment Fund (ECIF)
-                          </h3>
-                          <span className="text-[9px] uppercase font-bold tracking-widest font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
-                            Active ANZ Co-Investment
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 mt-1">
-                          Unlocking subsidized deep cloud engineering & certified professional advisory across Australia & New Zealand.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* For Partners Block */}
-                    <div className="bg-slate-950/45 border border-slate-800/80 hover:border-slate-700/50 transition duration-200 rounded-xl p-4 flex flex-col gap-3 relative">
-                      <div className="absolute top-3 right-3 text-emerald-450 bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10 text-[9px] font-mono font-bold tracking-wider uppercase">
-                        Marginal Protection
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-emerald-500/10 p-1.5 rounded-lg border border-emerald-500/20 text-emerald-400 shrink-0">
-                          <Briefcase className="w-4 h-4 text-emerald-400" />
-                        </div>
-                        <strong className="text-xs uppercase font-mono tracking-wider text-emerald-400">
-                          💼 For Partners (Supercharging Profitability)
-                        </strong>
-                      </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        Rather than discounting pre-sales engineering or proof-of-concepts to secure deals, certified partners can leverage ECIF to deliver fully funded assessments. This protects valuable professional services margins, improves resource utilization, and builds deep co-sell alignment with local Microsoft account teams while paving the way for multi-tier downstream deployments.
-                      </p>
-                    </div>
-
-                    {/* For End Users Block */}
-                    <div className="bg-slate-950/45 border border-slate-800/80 hover:border-slate-700/50 transition duration-200 rounded-xl p-4 flex flex-col gap-3 relative">
-                      <div className="absolute top-3 right-3 text-sky-400 bg-sky-500/5 px-2 py-0.5 rounded border border-sky-500/10 text-[9px] font-mono font-bold tracking-wider uppercase">
-                        Zero Upfront Cost
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="bg-sky-500/10 p-1.5 rounded-lg border border-sky-500/20 text-sky-400 shrink-0">
-                          <ShieldCheck className="w-4 h-4 text-sky-400" />
-                        </div>
-                        <strong className="text-xs uppercase font-mono tracking-wider text-sky-400">
-                          🏢 For End Users (De-risking Cloud Innovation)
-                        </strong>
-                      </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        Organizations look for high speed-to-value while navigating tight budgets and strict regional regulations (such as APRA or ASD guidelines). ECIF-backed engagements allow technology leaders to access elite, specialized consulting partners, validate complex cloud architectures, and run pilots of advanced agentic AI networks—at zero or minimal upfront cost.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Collapsible Add Partner Form */}
-                <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 shadow-lg relative overflow-hidden font-sans">
-                  <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl pointer-events-none"></div>
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-sky-500/10 p-1.5 rounded-lg border border-sky-500/20">
-                        <Building className="w-4 h-4 text-sky-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
-                          Microsoft Partner Center
-                        </h3>
-                        <p className="text-[10px] text-slate-400 font-mono">ANZ Specialist Directory</p>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={() => setShowAddPartnerForm(!showAddPartnerForm)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-405 border border-sky-500/20 hover:border-sky-500/30 text-xs font-mono rounded-lg transition cursor-pointer"
-                    >
-                      {showAddPartnerForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-                      <span>{showAddPartnerForm ? "Cancel Form" : "Register Custom Partner"}</span>
-                    </button>
-                  </div>
-
-                  <AnimatePresence>
-                    {showAddPartnerForm && (
-                      <motion.form 
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        onSubmit={handleCreatePartner}
-                        className="space-y-4 pt-3 border-t border-slate-800/80 overflow-hidden font-sans"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
-                              Partner Name *
-                            </label>
-                            <input 
-                              type="text"
-                              required
-                              placeholder="e.g. Melbourne Cloud Scaling"
-                              value={newPartnerName}
-                              onChange={(e) => setNewPartnerName(e.target.value)}
-                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
-                              Primary Location / Region
-                            </label>
-                            <input 
-                              type="text"
-                              placeholder="e.g. Brisbane, QLD"
-                              value={newPartnerLocation}
-                              onChange={(e) => setNewPartnerLocation(e.target.value)}
-                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
-                            Expert Specializations (comma separated)
-                          </label>
-                          <input 
-                            type="text"
-                            placeholder="e.g. Cloud Migration, M365 Optimisation, AI Data Modeling"
-                            value={newPartnerSpecialization}
-                            onChange={(e) => setNewPartnerSpecialization(e.target.value)}
-                            className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
-                            Executive Overview / Mission Description *
-                          </label>
-                          <textarea 
-                            required
-                            rows={3}
-                            placeholder="Detail regional cloud reach, custom audit specialties or systems configuration services..."
-                            value={newPartnerDescription}
-                            onChange={(e) => setNewPartnerDescription(e.target.value)}
-                            className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition resize-none"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
-                              Procurement / Contact Email *
-                            </label>
-                            <input 
-                              type="email"
-                              required
-                              placeholder="procure@agency.com.au"
-                              value={newPartnerEmail}
-                              onChange={(e) => setNewPartnerEmail(e.target.value)}
-                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 focus:outline-none focus:border-sky-500/55 transition"
-                            />
-                          </div>
-                          
-                          <div>
-                            <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
-                              Recent Case Study Title
-                            </label>
-                            <input 
-                              type="text"
-                              placeholder="e.g. APRA-compliant Sovereign Migration"
-                              value={newPartnerCaseStudyTitle}
-                              onChange={(e) => setNewPartnerCaseStudyTitle(e.target.value)}
-                              className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 placeholder-slate-600 focus:outline-none focus:border-sky-500/55 transition"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block mb-1">
-                            Case Study Achievements & Metrics Summary
-                          </label>
-                          <textarea 
-                            rows={2}
-                            placeholder="Detail high-priority customer deliverables, pricing savings list, etc..."
-                            value={newPartnerCaseStudyContext}
-                            onChange={(e) => setNewPartnerCaseStudyContext(e.target.value)}
-                            className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 focus:outline-none focus:border-sky-500/55 transition resize-none"
-                          />
-                        </div>
-
-                        <div className="flex justify-end pt-2">
-                          <button
-                            type="submit"
-                            className="w-full sm:w-auto px-5 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg transition cursor-pointer"
-                          >
-                            Save & Register Partner
-                          </button>
-                        </div>
-                      </motion.form>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Partners Directory Grid */}
-                <div className="space-y-4 font-sans">
-                  {partners.map((partner) => {
-                    const showReviews = activeReviewId === partner.id;
-                    
-                    return (
-                      <div 
-                        key={partner.id}
-                        id={`partner-card-${partner.id}`}
-                        className={`bg-[#111827] border rounded-xl p-5 transition duration-200 relative ${
-                          partner.promoted 
-                            ? "border-sky-500/30 bg-gradient-to-br from-[#111827] to-sky-950/10 shadow-lg" 
-                            : "border-slate-800/80"
-                        }`}
-                      >
-                        <div className="absolute top-4 right-4 flex items-center gap-2">
-                          {partner.promoted ? (
-                            <span className="flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold font-mono text-sky-450 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
-                              <Award className="w-3 h-3 text-sky-400 animate-pulse" />
-                              <span>Active Spotlight</span>
-                            </span>
-                          ) : (
-                            <button
-                              id={`promote-btn-${partner.id}`}
-                              onClick={() => handlePromotePartner(partner.id)}
-                              className="text-[9px] uppercase tracking-wider font-bold font-mono bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white px-2 py-0.5 rounded transition cursor-pointer"
-                              title="Promote this partner to spotlight across the site"
-                            >
-                              Promote
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                          <div>
-                            <h4 className="text-base font-bold text-slate-100 flex items-center gap-2 pr-24">
-                              <span>{partner.name}</span>
-                              <span className="text-slate-500 text-xs font-normal">({partner.location})</span>
-                            </h4>
-                            
-                            {/* Rating score */}
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className="flex items-center text-amber-400">
-                                {Array.from({ length: 5 }).map((_, idx) => (
-                                  <Star 
-                                    key={idx}
-                                    className={`w-3.5 h-3.5 ${idx < Math.round(partner.rating) ? "fill-amber-400 text-amber-500" : "text-slate-750"}`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-xs font-mono font-bold text-amber-450">{partner.rating}</span>
-                              <span className="text-slate-500 text-[10px] font-mono">({partner.ratingCount} evaluations)</span>
-                            </div>
-                          </div>
-
-                          <p className="text-xs text-slate-300 leading-relaxed mt-0.5 pr-2">
-                            {partner.description}
-                          </p>
-
-                          {/* Specializations tag list */}
-                          <div className="flex flex-wrap gap-1.5">
-                            {partner.specialization.map((spec) => (
-                              <span 
-                                key={spec}
-                                className="text-[9px] uppercase font-bold tracking-wider font-mono bg-[#0b0f19] border border-slate-800 text-slate-450 px-2.5 py-0.5 rounded-md"
-                              >
-                                {spec}
-                              </span>
-                            ))}
-                          </div>
-
-                          {/* Case Study Block */}
-                          {partner.caseStudyTitle && (
-                            <div className="bg-[#0b0f19]/80 border border-slate-850 rounded-lg p-3.5 mt-1 font-mono text-xs text-slate-400 animate-fade-in">
-                              <div className="flex items-center gap-1.5 text-sky-455 font-bold mb-1.5">
-                                <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-                                <span className="text-[9px] uppercase tracking-wider">ANZ Case Study Highlight:</span>
-                              </div>
-                              <strong className="text-slate-200 text-xs font-sans font-semibold block">{partner.caseStudyTitle}</strong>
-                              <p className="text-[11px] text-slate-400 mt-1 font-sans leading-relaxed">
-                                {partner.caseStudyContext}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Contact and reviews button */}
-                          <div className="flex flex-wrap items-center justify-between gap-4 mt-1.5 pt-3 border-t border-slate-850/60">
-                            <a 
-                              href={`mailto:${partner.contactEmail}`}
-                              className="text-xs font-mono text-sky-400 hover:text-sky-355 transition flex items-center gap-1.5 cursor-pointer"
-                            >
-                              <Mail className="w-3.5 h-3.5 text-sky-450" />
-                              <span>{partner.contactEmail}</span>
-                            </a>
-                            
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => setActiveReviewId(showReviews ? null : partner.id)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-mono rounded-lg transition shrink-0 cursor-pointer"
-                              >
-                                <MessageSquare className="w-3.5 h-3.5" />
-                                <span>Customer Reviews ({partner.reviews.length})</span>
-                                <ChevronDown className={`w-3.5 h-3.5 transform transition ${showReviews ? "rotate-180" : ""}`} />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Collapsible reviews and review compose block */}
-                          <AnimatePresence>
-                            {showReviews && (
-                              <motion.div 
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="mt-4 pt-4 border-t border-slate-800/80 space-y-4 overflow-hidden"
-                              >
-                                {/* Reviews feed/list */}
-                                <div className="space-y-3">
-                                  <h5 className="text-[10px] uppercase font-bold tracking-wider font-mono text-slate-505">
-                                    Direct Customer Evaluations
-                                  </h5>
-                                  {partner.reviews.length === 0 ? (
-                                    <p className="text-xs text-slate-500 italic block">No reviews registered for this partner yet.</p>
-                                  ) : (
-                                    partner.reviews.map((rev) => (
-                                      <div key={rev.id} className="bg-slate-950/20 border border-slate-850 p-3 rounded-lg font-sans">
-                                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                                          <span className="text-xs font-semibold text-slate-200">{rev.reviewer}</span>
-                                          <span className="text-[9px] font-mono text-slate-500">{rev.date}</span>
-                                        </div>
-                                        <div className="flex items-center text-amber-400 mb-2">
-                                          {Array.from({ length: 5 }).map((_, i) => (
-                                            <Star 
-                                              key={i} 
-                                              className={`w-2.5 h-2.5 ${i < rev.rating ? "fill-amber-400 text-amber-500" : "text-slate-800"}`}
-                                            />
-                                          ))}
-                                        </div>
-                                        <p className="text-xs text-slate-350 leading-relaxed italic pr-1">
-                                          "{rev.comment}"
-                                        </p>
-                                      </div>
-                                    ))
-                                  )}
-                                </div>
-
-                                {/* Write review form */}
-                                <div className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl space-y-3.5">
-                                  <h5 className="text-xs font-bold text-slate-205 font-sans flex items-center gap-1.5">
-                                    <ThumbsUp className="w-3.5 h-3.5 text-sky-400" />
-                                    <span>Submit Real-Time Assessment</span>
-                                  </h5>
-                                  
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1">
-                                    <div>
-                                      <label className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono block mb-1">
-                                        Your Full Name
-                                      </label>
-                                      <input 
-                                        type="text"
-                                        required
-                                        placeholder="e.g. Liam Reynolds, CTO"
-                                        value={partnerReviewer}
-                                        onChange={(e) => setPartnerReviewer(e.target.value)}
-                                        className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500/50 transition"
-                                      />
-                                    </div>
-                                    
-                                    <div>
-                                      <label className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono block mb-1">
-                                        Give Star Rating
-                                      </label>
-                                      <select 
-                                        value={partnerRating}
-                                        onChange={(e) => setPartnerRating(parseInt(e.target.value))}
-                                        className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500/50 transition"
-                                      >
-                                        <option value={5}>⭐⭐⭐⭐⭐ (Excellent Performance)</option>
-                                        <option value={4}>⭐⭐⭐⭐ (Very Good Results)</option>
-                                        <option value={3}>⭐⭐⭐ (Meets Baseline/Standards)</option>
-                                        <option value={2}>⭐⭐ (Below Expected Deliverables)</option>
-                                        <option value={1}>⭐ (Poor Integration Delivery)</option>
-                                      </select>
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono block mb-1">
-                                      Detailed Evaluation Comments
-                                    </label>
-                                    <textarea 
-                                      required
-                                      rows={2}
-                                      placeholder="Comment on licensing advisory capabilities, EA structure audits, or sovereign identity configurations..."
-                                      value={partnerComment}
-                                      onChange={(e) => setPartnerComment(e.target.value)}
-                                      className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-250 focus:outline-none focus:border-sky-500/50 transition resize-none"
-                                    />
-                                  </div>
-
-                                  <div className="flex justify-end pt-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleAddReview(partner.id)}
-                                      className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-lg transition cursor-pointer"
-                                    >
-                                      Submit Evaluation
-                                    </button>
-                                  </div>
-                                </div>
-
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            </>
           </main>
 
           {/* RIGHT COLUMN: Scrape Intelligence & Grounded Query Copilot (5 out of 12 columns) */}
@@ -4352,6 +3977,79 @@ export default function App() {
                   </div>
                 )}
 
+              </div>
+            </div>
+
+            {/* Grounded Source Indexes Card */}
+            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
+              
+              <div className="flex items-center gap-2 mb-3.5">
+                <div className="bg-sky-500/10 p-1.5 rounded-lg border border-sky-500/20">
+                  <Globe className="w-4 h-4 text-sky-450" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
+                    Grounded Feed Indexes
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-mono">Official crawl & scrape sources</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                The intelligence system is explicitly configured to scrape, prioritize, and ground all strategic advisory insights utilizing these primary source platforms:
+              </p>
+
+              <div className="space-y-2.5">
+                {/* Source 1 */}
+                <a 
+                  href="https://news.microsoft.com/source/view-all/" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Official Microsoft Source news briefing list"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Microsoft News Official Source
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      news.microsoft.com/source/view-all/
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* Source 2 */}
+                <a 
+                  href="https://www.geekwire.com/microsoft/" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit GeekWire Microsoft News segment index"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      GeekWire MSFT Tech Index
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      geekwire.com/microsoft/
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
               </div>
             </div>
 
@@ -4658,6 +4356,7 @@ export default function App() {
           </section>
 
         </div>
+        )}
 
       </div>
 
