@@ -1370,8 +1370,9 @@ export default function App() {
     );
   };
 
-  const exportToPDF = () => {
-    if (filteredArticles.length === 0) return;
+  const exportToPDF = (singleArticle?: Article) => {
+    const listToExport = singleArticle ? [singleArticle] : filteredArticles;
+    if (listToExport.length === 0) return;
     
     const doc = new jsPDF();
     let y = 15;
@@ -1400,7 +1401,7 @@ export default function App() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(147, 197, 253); // sky-300 (light blue)
-    doc.text("EXECUTIVE INTELLIGENCE BRIEFINGS REPORT", 20, y + 16);
+    doc.text(singleArticle ? "SINGLE EXECUTIVE BRIEF EXTRACT" : "EXECUTIVE INTELLIGENCE BRIEFINGS REPORT", 20, y + 16);
     y += 28;
     
     // Meta Details
@@ -1414,99 +1415,108 @@ export default function App() {
     doc.setFontSize(8);
     doc.setTextColor(100, 116, 139); // slate-500
     
-    const categoryStr = selectedCategory === "all" ? "All Categories" : selectedCategory.toUpperCase().replace('_', ' ');
-    const filterStr = searchQuery ? `"${searchQuery}"` : "None";
+    const categoryStr = singleArticle 
+      ? singleArticle.category.toUpperCase().replace('_', ' ')
+      : (selectedCategory === "all" ? "All Categories" : selectedCategory.toUpperCase().replace('_', ' '));
+    const filterStr = singleArticle ? "N/A - Single Extraction" : (searchQuery ? `"${searchQuery}"` : "None");
     const pdfGenTimeStr = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
     
     doc.text(`Generated: ${pdfGenTimeStr}`, 14, y);
-    doc.text(`Category Filter: ${categoryStr}`, 80, y);
-    doc.text(`Search Query: ${filterStr}`, 140, y);
+    doc.text(`Category: ${categoryStr}`, 80, y);
+    doc.text(`Search & Filters: ${filterStr}`, 140, y);
     y += 5;
     
-    doc.text(`Total Bulletins: ${filteredArticles.length}`, 14, y);
-    const avgImpact = (filteredArticles.reduce((acc, current) => acc + current.impactScore, 0) / filteredArticles.length).toFixed(1);
-    doc.text(`Average Regional Impact Score: ${avgImpact}/10`, 80, y);
-    y += 10;
-    
-    // --- SUMMARY TABLE ---
-    doc.setTextColor(30, 41, 59); // slate-800
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text("BRIEFINGS SUMMARY TABLE", 14, y);
-    y += 5;
-    
-    // Table Header
-    doc.setFillColor(30, 41, 59);
-    doc.rect(14, y, pageWidth - 28, 8, "F");
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.text("ID", 17, y + 5.5);
-    doc.text("DATE", 35, y + 5.5);
-    doc.text("BRIEF TITLE", 65, y + 5.5);
-    doc.text("CATEGORY", 140, y + 5.5);
-    doc.text("IMPACT", 180, y + 5.5);
-    y += 8;
-    
-    // Table Rows
-    filteredArticles.forEach((art, idx) => {
-      checkPageBreak(8);
+    if (singleArticle) {
+      doc.text(`Target Bulletin ID: ${singleArticle.id.toUpperCase()}`, 14, y);
+      doc.text(`Source Publisher: ${singleArticle.source.toUpperCase()}`, 80, y);
+      doc.text(`Impact Score: ${singleArticle.impactScore}/10`, 140, y);
+      y += 12;
+    } else {
+      doc.text(`Total Bulletins: ${filteredArticles.length}`, 14, y);
+      const avgImpact = (filteredArticles.reduce((acc, current) => acc + current.impactScore, 0) / filteredArticles.length).toFixed(1);
+      doc.text(`Average Regional Impact Score: ${avgImpact}/10`, 80, y);
+      y += 10;
       
-      // Alt row background
-      if (idx % 2 === 1) {
-        doc.setFillColor(248, 250, 252);
-        doc.rect(14, y, pageWidth - 28, 7, "F");
-      }
-      
-      doc.setTextColor(100, 116, 139);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6.5);
-      doc.text(art.id.replace("bulletin-", "B-").substring(0, 10).toUpperCase(), 17, y + 4.5);
-      
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.text(art.publishedDate, 35, y + 4.5);
-      
-      // Truncate title if it exceeds columns width
-      const titleText = art.title.length > 52 ? art.title.substring(0, 50) + "..." : art.title;
-      doc.setTextColor(30, 41, 59);
+      // --- SUMMARY TABLE ---
+      doc.setTextColor(30, 41, 59); // slate-800
       doc.setFont("helvetica", "bold");
-      doc.text(titleText, 65, y + 4.5);
+      doc.setFontSize(10);
+      doc.text("BRIEFINGS SUMMARY TABLE", 14, y);
+      y += 5;
       
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(71, 85, 105);
-      const catLabel = art.category.toUpperCase().replace('_', ' ');
-      doc.text(catLabel.length > 20 ? catLabel.substring(0, 18) + ".." : catLabel, 140, y + 4.5);
+      // Table Header
+      doc.setFillColor(30, 41, 59);
+      doc.rect(14, y, pageWidth - 28, 8, "F");
       
-      // Impact score with nice visual
-      const impactColor = art.impactScore >= 8 ? [225, 29, 72] : art.impactScore >= 5 ? [217, 119, 6] : [5, 150, 105];
-      doc.setTextColor(impactColor[0], impactColor[1], impactColor[2]);
+      doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      doc.text(`${art.impactScore}/10`, 180, y + 4.5);
+      doc.setFontSize(7.5);
+      doc.text("ID", 17, y + 5.5);
+      doc.text("DATE", 35, y + 5.5);
+      doc.text("BRIEF TITLE", 65, y + 5.5);
+      doc.text("CATEGORY", 140, y + 5.5);
+      doc.text("IMPACT", 180, y + 5.5);
+      y += 8;
       
-      // Bottom border gridline
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.1);
-      doc.line(14, y + 7, pageWidth - 14, y + 7);
+      // Table Rows
+      filteredArticles.forEach((art, idx) => {
+        checkPageBreak(8);
+        
+        // Alt row background
+        if (idx % 2 === 1) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(14, y, pageWidth - 28, 7, "F");
+        }
+        
+        doc.setTextColor(100, 116, 139);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        doc.text(art.id.replace("bulletin-", "B-").substring(0, 10).toUpperCase(), 17, y + 4.5);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.text(art.publishedDate, 35, y + 4.5);
+        
+        // Truncate title if it exceeds columns width
+        const titleText = art.title.length > 52 ? art.title.substring(0, 50) + "..." : art.title;
+        doc.setTextColor(30, 41, 59);
+        doc.setFont("helvetica", "bold");
+        doc.text(titleText, 65, y + 4.5);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(71, 85, 105);
+        const catLabel = art.category.toUpperCase().replace('_', ' ');
+        doc.text(catLabel.length > 20 ? catLabel.substring(0, 18) + ".." : catLabel, 140, y + 4.5);
+        
+        // Impact score with nice visual
+        const impactColor = art.impactScore >= 8 ? [225, 29, 72] : art.impactScore >= 5 ? [217, 119, 6] : [5, 150, 105];
+        doc.setTextColor(impactColor[0], impactColor[1], impactColor[2]);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${art.impactScore}/10`, 180, y + 4.5);
+        
+        // Bottom border gridline
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.1);
+        doc.line(14, y + 7, pageWidth - 14, y + 7);
+        
+        y += 7;
+      });
       
-      y += 7;
-    });
-    
-    y += 10; // spacing before detail section
+      y += 10; // spacing before detail section
+    }
     
     // --- DETAIL SECTIONS ---
     checkPageBreak(30);
     doc.setTextColor(15, 23, 42); // slate-900
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text("DETAILED INTELLIGENCE BRIEFINGS DEEP-DIVE", 14, y);
+    doc.text(singleArticle ? "DETAILED EXECUTIVE BRIEFING EXTRACT" : "DETAILED INTELLIGENCE BRIEFINGS DEEP-DIVE", 14, y);
     doc.setDrawColor(15, 23, 42);
     doc.setLineWidth(0.3);
     doc.line(14, y + 2, pageWidth - 14, y + 2);
     y += 8;
     
-    filteredArticles.forEach((art) => {
+    listToExport.forEach((art) => {
       // Check if we need page break for start of bulletin
       checkPageBreak(35);
       
@@ -1635,12 +1645,17 @@ export default function App() {
     
     // Save Document
     const pdfFileNameDateStr = new Date().toISOString().split('T')[0];
-    doc.save(`ANZ_Microsoft_Briefings_Report_${pdfFileNameDateStr}.pdf`);
+    const fileName = singleArticle 
+      ? `ANZ_Microsoft_Briefing_${singleArticle.id.replace("bulletin-", "B-").toUpperCase()}_${pdfFileNameDateStr}.pdf`
+      : `ANZ_Microsoft_Briefings_Report_${pdfFileNameDateStr}.pdf`;
+    doc.save(fileName);
     
     addToast(
       "anz_strategy",
       "Export PDF Successful",
-      `Successfully generated professional PDF Executive Report containing ${filteredArticles.length} active briefing documents.`
+      singleArticle 
+        ? `Successfully generated professional PDF Executive Report for: ${singleArticle.title}`
+        : `Successfully generated professional PDF Executive Report containing ${filteredArticles.length} active briefing documents.`
     );
   };
 
@@ -3750,6 +3765,17 @@ export default function App() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    exportToPDF(article);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-white rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                  title="Export individual briefing to a professional Executive PDF Document"
+                                >
+                                  <FileText className="w-3 h-3 text-amber-500" />
+                                  <span>Export PDF</span>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     navigator.clipboard.writeText(article.url || window.location.href);
                                     addToast(
                                       article.category,
@@ -4135,6 +4161,17 @@ export default function App() {
                                           >
                                             <Bookmark className={`w-3 h-3 ${bookmarkedIds.includes(article.id) ? "fill-amber-400 text-amber-400" : "text-slate-500"}`} />
                                             <span>{bookmarkedIds.includes(article.id) ? "Saved" : "Save"}</span>
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              exportToPDF(article);
+                                            }}
+                                            className="inline-flex items-center gap-1.5 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-white rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                                            title="Export individual briefing to a professional Executive PDF Document"
+                                          >
+                                            <FileText className="w-3 h-3 text-amber-500" />
+                                            <span>Export PDF</span>
                                           </button>
                                           <button
                                             onClick={(e) => {
