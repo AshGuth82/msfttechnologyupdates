@@ -58,6 +58,7 @@ import {
   Building
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
+import { jsPDF } from "jspdf";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ResponsiveContainer, 
@@ -1366,6 +1367,280 @@ export default function App() {
       "licensing_pricing",
       "Export JSON Successful",
       `Successfully generated JSON file containing ${filteredArticles.length} filtered bulletins.`
+    );
+  };
+
+  const exportToPDF = () => {
+    if (filteredArticles.length === 0) return;
+    
+    const doc = new jsPDF();
+    let y = 15;
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Helper to check and add new page
+    const checkPageBreak = (neededHeight: number) => {
+      if (y + neededHeight > pageHeight - 15) {
+        doc.addPage();
+        y = 15;
+        return true;
+      }
+      return false;
+    };
+    
+    // Header Banner
+    doc.setFillColor(15, 23, 42); // slate-900 (deep charcoal)
+    doc.rect(14, y, pageWidth - 28, 20, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("ANZ MICROSOFT PARTNER HUB", 20, y + 12);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(147, 197, 253); // sky-300 (light blue)
+    doc.text("EXECUTIVE INTELLIGENCE BRIEFINGS REPORT", 20, y + 16);
+    y += 28;
+    
+    // Meta Details
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("REPORT METADATA", 14, y);
+    y += 5;
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139); // slate-500
+    
+    const categoryStr = selectedCategory === "all" ? "All Categories" : selectedCategory.toUpperCase().replace('_', ' ');
+    const filterStr = searchQuery ? `"${searchQuery}"` : "None";
+    const pdfGenTimeStr = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+    
+    doc.text(`Generated: ${pdfGenTimeStr}`, 14, y);
+    doc.text(`Category Filter: ${categoryStr}`, 80, y);
+    doc.text(`Search Query: ${filterStr}`, 140, y);
+    y += 5;
+    
+    doc.text(`Total Bulletins: ${filteredArticles.length}`, 14, y);
+    const avgImpact = (filteredArticles.reduce((acc, current) => acc + current.impactScore, 0) / filteredArticles.length).toFixed(1);
+    doc.text(`Average Regional Impact Score: ${avgImpact}/10`, 80, y);
+    y += 10;
+    
+    // --- SUMMARY TABLE ---
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("BRIEFINGS SUMMARY TABLE", 14, y);
+    y += 5;
+    
+    // Table Header
+    doc.setFillColor(30, 41, 59);
+    doc.rect(14, y, pageWidth - 28, 8, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.text("ID", 17, y + 5.5);
+    doc.text("DATE", 35, y + 5.5);
+    doc.text("BRIEF TITLE", 65, y + 5.5);
+    doc.text("CATEGORY", 140, y + 5.5);
+    doc.text("IMPACT", 180, y + 5.5);
+    y += 8;
+    
+    // Table Rows
+    filteredArticles.forEach((art, idx) => {
+      checkPageBreak(8);
+      
+      // Alt row background
+      if (idx % 2 === 1) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(14, y, pageWidth - 28, 7, "F");
+      }
+      
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.text(art.id.replace("bulletin-", "B-").substring(0, 10).toUpperCase(), 17, y + 4.5);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.text(art.publishedDate, 35, y + 4.5);
+      
+      // Truncate title if it exceeds columns width
+      const titleText = art.title.length > 52 ? art.title.substring(0, 50) + "..." : art.title;
+      doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "bold");
+      doc.text(titleText, 65, y + 4.5);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      const catLabel = art.category.toUpperCase().replace('_', ' ');
+      doc.text(catLabel.length > 20 ? catLabel.substring(0, 18) + ".." : catLabel, 140, y + 4.5);
+      
+      // Impact score with nice visual
+      const impactColor = art.impactScore >= 8 ? [225, 29, 72] : art.impactScore >= 5 ? [217, 119, 6] : [5, 150, 105];
+      doc.setTextColor(impactColor[0], impactColor[1], impactColor[2]);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${art.impactScore}/10`, 180, y + 4.5);
+      
+      // Bottom border gridline
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.1);
+      doc.line(14, y + 7, pageWidth - 14, y + 7);
+      
+      y += 7;
+    });
+    
+    y += 10; // spacing before detail section
+    
+    // --- DETAIL SECTIONS ---
+    checkPageBreak(30);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("DETAILED INTELLIGENCE BRIEFINGS DEEP-DIVE", 14, y);
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(0.3);
+    doc.line(14, y + 2, pageWidth - 14, y + 2);
+    y += 8;
+    
+    filteredArticles.forEach((art) => {
+      // Check if we need page break for start of bulletin
+      checkPageBreak(35);
+      
+      // Category Banner
+      doc.setFillColor(241, 245, 249);
+      doc.rect(14, y, pageWidth - 28, 6, "F");
+      
+      doc.setTextColor(71, 85, 105);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.text(`CATEGORY: ${art.category.toUpperCase().replace('_', ' ')}  |  SOURCE: ${art.source.toUpperCase()}  |  DATE: ${art.publishedDate}`, 18, y + 4);
+      y += 10;
+      
+      // Title
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      const titleLines: string[] = doc.splitTextToSize(art.title, pageWidth - 32);
+      doc.text(titleLines, 16, y);
+      y += (titleLines.length * 4.5) + 1;
+      
+      // Sentiment & Impact info
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.text(`Primary Sentiment: `, 16, y);
+      
+      const sentimentColor = art.sentiment === "positive" ? [5, 150, 105] : art.sentiment === "negative" ? [225, 29, 72] : [100, 116, 139];
+      doc.setTextColor(sentimentColor[0], sentimentColor[1], sentimentColor[2]);
+      doc.setFont("helvetica", "bold");
+      doc.text(art.sentiment.toUpperCase(), 40, y);
+      
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "normal");
+      doc.text(` | Regional Impact Score: `, 55, y);
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${art.impactScore}/10`, 88, y);
+      
+      if (art.ecifFundingEligible) {
+        doc.setTextColor(16, 185, 129); // emerald-500
+        doc.setFont("helvetica", "bold");
+        doc.text(" |  [ECIF FUNDING ELIGIBLE]", 100, y);
+      }
+      y += 5;
+      
+      // Brief Summary
+      doc.setTextColor(51, 65, 85); // slate-700
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      const summaryLines: string[] = doc.splitTextToSize(art.summary, pageWidth - 32);
+      checkPageBreak(summaryLines.length * 4);
+      doc.text(summaryLines, 16, y);
+      y += (summaryLines.length * 4) + 4;
+      
+      // Key Takeaways List
+      checkPageBreak(20);
+      doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.text("Key Strategic Takeaways:", 16, y);
+      y += 4;
+      
+      doc.setFont("helvetica", "normal");
+      art.keyTakeaways.forEach((takeaway) => {
+        const takeLines: string[] = doc.splitTextToSize(`•  ${takeaway}`, pageWidth - 36);
+        checkPageBreak(takeLines.length * 3.8);
+        doc.text(takeLines, 18, y);
+        y += (takeLines.length * 3.8);
+      });
+      y += 3;
+      
+      // ANZ Actionable Advice Block
+      if (art.anzActionableAdvice) {
+        const adviceText = art.anzActionableAdvice;
+        const adviceLines: string[] = doc.splitTextToSize(adviceText, pageWidth - 38);
+        const boxHeight = (adviceLines.length * 3.8) + 6;
+        
+        checkPageBreak(boxHeight + 4);
+        
+        // Draw highlighted accent container
+        doc.setFillColor(240, 249, 255); // light blue bg
+        doc.rect(16, y, pageWidth - 32, boxHeight, "F");
+        
+        // Draw left solid border line
+        doc.setFillColor(14, 165, 233); // sky-500
+        doc.rect(16, y, 1.5, boxHeight, "F");
+        
+        doc.setTextColor(3, 105, 161); // deep sky-700
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text("ANZ REGIONAL EXECUTIVE ADVICE", 20, y + 4.5);
+        
+        doc.setTextColor(30, 41, 59);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.text(adviceLines, 20, y + 8.5);
+        
+        y += boxHeight + 6;
+      }
+      
+      // Draw separator line between bulletins
+      checkPageBreak(3);
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.5);
+      doc.line(14, y, pageWidth - 14, y);
+      y += 8;
+    });
+    
+    // Footer on each page helper:
+    const pageCount = doc.internal.pages.length - 1;
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184); // slate-400
+      
+      // Bottom thin line grid
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.2);
+      doc.line(14, pageHeight - 12, pageWidth - 14, pageHeight - 12);
+      
+      doc.text("ANZ MICROSOFT PARTNER HUB — CONFIDENTIAL BUSINESS INTELLIGENCE DIRECTORY", 14, pageHeight - 8);
+      doc.text(`Page ${i} of ${pageCount}`, pageWidth - 28, pageHeight - 8);
+    }
+    
+    // Save Document
+    const pdfFileNameDateStr = new Date().toISOString().split('T')[0];
+    doc.save(`ANZ_Microsoft_Briefings_Report_${pdfFileNameDateStr}.pdf`);
+    
+    addToast(
+      "anz_strategy",
+      "Export PDF Successful",
+      `Successfully generated professional PDF Executive Report containing ${filteredArticles.length} active briefing documents.`
     );
   };
 
@@ -3226,6 +3501,14 @@ export default function App() {
                       >
                         <Download className="w-3 h-3 text-emerald-400" />
                         <span>JSON</span>
+                      </button>
+                      <button
+                        onClick={exportToPDF}
+                        className="inline-flex items-center gap-1 bg-[#0c101a] hover:bg-slate-900 border border-slate-800 hover:border-slate-700 hover:text-white rounded px-2.5 py-1 text-[11px] font-mono text-slate-400 transition cursor-pointer"
+                        title="Export current filtered list to an Executive PDF Document"
+                      >
+                        <FileText className="w-3 h-3 text-amber-500" />
+                        <span>PDF Report</span>
                       </button>
                     </div>
                   )}
