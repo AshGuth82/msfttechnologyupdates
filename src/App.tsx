@@ -602,7 +602,6 @@ export default function App() {
   const [expandedSavedId, setExpandedSavedId] = useState<string | null>(null);
   const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M">("1M");
   const [liveMsftPrice, setLiveMsftPrice] = useState<number>(422.86);
-  const [showSentimentOverlay, setShowSentimentOverlay] = useState<boolean>(false);
   const [zoomRefAreaLeft, setZoomRefAreaLeft] = useState<string | null>(null);
   const [zoomRefAreaRight, setZoomRefAreaRight] = useState<string | null>(null);
   const [zoomRange, setZoomRange] = useState<{ start: string; end: string } | null>(null);
@@ -2107,20 +2106,6 @@ export default function App() {
                       </button>
                     )}
 
-                    {/* Sentiment overlay legend shown when toggled */}
-                    {showSentimentOverlay && (
-                      <div className="flex items-center gap-2.5 text-[10px] font-mono font-bold tracking-wider">
-                        <div className="flex items-center gap-1">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                          <span className="text-emerald-500">Positive sentiment Volume</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-                          <span className="text-rose-455">Negative sentiment Volume</span>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Google Finance Timeframe Selection strip */}
                     <div className="flex items-center bg-slate-100/90 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-1 rounded-xl">
                       {([
@@ -2144,22 +2129,6 @@ export default function App() {
                         </button>
                       ))}
                     </div>
-
-                    {/* Interactive Sentiment Overlay Switch */}
-                    <button
-                      onClick={() => setShowSentimentOverlay(!showSentimentOverlay)}
-                      className={`px-3.5 py-1 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-all duration-200 cursor-pointer ${
-                        showSentimentOverlay
-                          ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25 font-semibold"
-                          : `border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 ${
-                              isDark ? "bg-slate-900/60 hover:text-slate-200" : "bg-slate-50 hover:text-slate-800"
-                            }`
-                      }`}
-                      title="Toggle overlaying stock sentiment volumes on secondary axis"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5 text-sky-450" />
-                      <span>Sentiment Overlay</span>
-                    </button>
                   </div>
                 </div>
 
@@ -2232,20 +2201,6 @@ export default function App() {
                             dx={-4}
                           />
                           
-                          {/* Sentiment Intensity Y Axis (Right Side) - rendered only if active */}
-                          {showSentimentOverlay && (
-                            <YAxis 
-                              yAxisId="right"
-                              orientation="right"
-                              stroke="#0284c7" 
-                              fontSize={10} 
-                              tickLine={false} 
-                              axisLine={false}
-                              allowDecimals={false}
-                              dx={4}
-                            />
-                          )}
-                          
                           <Tooltip
                             content={({ active, payload, label }) => {
                               if (active && payload && payload.length) {
@@ -2287,33 +2242,6 @@ export default function App() {
                             fillOpacity={1} 
                             fill={`url(#${trendGradientId})`} 
                           />
-                          
-                          {/* Sentiment Volume Overlay Lines - shown only when toggle enabled */}
-                          {showSentimentOverlay && (
-                            <Line 
-                              yAxisId="right"
-                              type="monotone" 
-                              dataKey="Positive Sentiment" 
-                              name="Pos Sentiment Volume"
-                              stroke="#10b981" 
-                              strokeWidth={1.8}
-                              dot={{ r: 1 }}
-                              activeDot={{ r: 3 }}
-                            />
-                          )}
-                          
-                          {showSentimentOverlay && (
-                            <Line 
-                              yAxisId="right"
-                              type="monotone" 
-                              dataKey="Negative Sentiment" 
-                              name="Neg Sentiment Volume"
-                              stroke="#f43f5e" 
-                              strokeWidth={1.8}
-                              dot={{ r: 1 }}
-                              activeDot={{ r: 3 }}
-                            />
-                          )}
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
