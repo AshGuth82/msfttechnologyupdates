@@ -26,6 +26,7 @@ export interface MicrosoftPartner {
   caseStudyContext: string;
   contactEmail: string;
   reviews: PartnerReview[];
+  websiteUrl?: string;
 }
 
 export interface Article {
@@ -51,4 +52,14 @@ export interface CachedNews {
 export interface CustomQueryResponse {
   answer: string;
   sources: { title: string; url: string }[];
+}
+
+export interface PriceAlert {
+  id: string;
+  targetPrice: number;
+  condition: "above" | "below";
+  createdAt: string;
+  isTriggered: boolean;
+  triggeredAt?: string;
+  triggeredPrice?: number;
 }

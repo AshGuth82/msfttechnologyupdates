@@ -41,6 +41,9 @@ import {
   Clock,
   Sun,
   Moon,
+  Laptop,
+  Sunrise,
+  Sunset,
   GripVertical,
   Pin,
   Trash2,
@@ -54,7 +57,7 @@ import {
   MessageSquare,
   Building
 } from "lucide-react";
-import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview } from "./types";
+import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ResponsiveContainer, 
@@ -70,7 +73,8 @@ import {
   Tooltip, 
   Legend, 
   CartesianGrid,
-  ReferenceArea
+  ReferenceArea,
+  ReferenceLine
 } from "recharts";
 
 const LOCAL_FALLBACK_ARTICLES: Article[] = [
@@ -263,6 +267,7 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
     caseStudyTitle: "50,000-seat APRA-compliant Sovereign Migration",
     caseStudyContext: "Negotiated complex sovereignty guarantees under security profiles while unlocking $450k in ECIF co-investment.",
     contactEmail: "contact@melbcloudscaling.com.au",
+    websiteUrl: "https://www.microsoft.com/en-au",
     reviews: [
       {
         id: "rev-1",
@@ -292,6 +297,7 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
     caseStudyTitle: "ASX 50 Team Productivity Enablement",
     caseStudyContext: "Configured custom security labels and agent workspace structures to optimize workflow speed.",
     contactEmail: "experts@sydneyunified.com.au",
+    websiteUrl: "https://www.microsoft.com/en-au",
     reviews: [
       {
         id: "rev-3",
@@ -314,6 +320,7 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
     caseStudyTitle: "Health Sector Localized Lakehouses",
     caseStudyContext: "Deployed regional HIPAA and NZISM compliant hybrid databases for regional clinical services.",
     contactEmail: "nzteam@aucklandsovereignai.co.nz",
+    websiteUrl: "https://www.microsoft.com/en-nz",
     reviews: [
       {
         id: "rev-4",
@@ -323,27 +330,138 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
         date: "2026-06-02"
       }
     ]
+  },
+  {
+    id: "partner-insight-apac",
+    name: "Insight APAC",
+    location: "Sydney, NSW & Regional",
+    rating: 4.9,
+    ratingCount: 124,
+    promoted: false,
+    specialization: ["Licensing Optimization", "Azure Cloud Migration", "Copilot Transformation"],
+    description: "A leading global systems integrator and Microsoft Solution Assessment partner specializing in software asset management, complex EA negotiations, and enterprise Azure workload transformation.",
+    caseStudyTitle: "Federal Government Azure Multi-Tenant Transformation",
+    caseStudyContext: "Architected high-throughput secure tenants under strict IRAP boundaries while yielding $1.2M in annual software licensing optimization savings.",
+    contactEmail: "microsoft-licensing@insight.com",
+    websiteUrl: "https://au.insight.com",
+    reviews: [
+      {
+        id: "rev-insight-1",
+        reviewer: "David Harrison",
+        rating: 5,
+        comment: "Incredible licensing advisory work. Reduced our EA commitments with clear options.",
+        date: "2026-04-10"
+      }
+    ]
+  },
+  {
+    id: "partner-crayon",
+    name: "Crayon Australia",
+    location: "Melbourne, VIC",
+    rating: 4.8,
+    ratingCount: 82,
+    promoted: false,
+    specialization: ["Software Asset Management (SAM)", "Cloud Economics", "Microsoft CSP Program"],
+    description: "A globally recognized expert in IT optimization and software asset management. Crayon leverages proprietary methodologies to optimize software estates and cloud consumption models.",
+    caseStudyTitle: "Financial Sector Cloud Economics Audit",
+    caseStudyContext: "Audited 8,000 M365 and Server licenses, converting idle enterprise enrollment seats to a hybrid CSP model and lowering monthly spend by 28%.",
+    contactEmail: "info.au@crayon.com",
+    websiteUrl: "https://www.crayon.com/au",
+    reviews: [
+      {
+        id: "rev-crayon-1",
+        reviewer: "Mitchell Vance",
+        rating: 5,
+        comment: "Unbeatable technical precision in software asset compliance and optimization.",
+        date: "2026-05-15"
+      }
+    ]
+  },
+  {
+    id: "partner-softwareone",
+    name: "SoftwareOne Australia",
+    location: "Sydney, NSW",
+    rating: 4.7,
+    ratingCount: 95,
+    promoted: false,
+    specialization: ["Enterprise Software Advisor", "Azure FinOps", "Application Modernization"],
+    description: "A leading global provider of end-to-end software and cloud technology solutions. Specializes in managing software portfolios and guiding businesses through efficient multi-year cloud agreements.",
+    caseStudyTitle: "Multi-Entity Corporate Consolidation Alignment",
+    caseStudyContext: "Consolidated separate enterprise agreements (EAs) across six merged entities into a unified single tenant, conserving $1.8M in standard operational credits.",
+    contactEmail: "info.au@softwareone.com",
+    websiteUrl: "https://www.softwareone.com/en-au",
+    reviews: [
+      {
+        id: "rev-sone-1",
+        reviewer: "Claire Henderson",
+        rating: 5,
+        comment: "Superb alignment support throughout our enterprise agreement consolidation process.",
+        date: "2026-05-02"
+      }
+    ]
   }
 ];
 
 export default function App() {
-  // Theme Select Configuration (High Contrast, Accessible Microsoft Corporate Aesthetic)
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
+  // Theme Select Configuration (High Contrast, Accessible Microsoft Corporate Aesthetic with Solar & System Auto Sync)
+  const [themeMode, setThemeMode] = useState<"dark" | "light" | "system" | "solar">(() => {
     try {
-      const stored = localStorage.getItem("microsoft_intel_theme");
-      return (stored === "light" || stored === "dark") ? stored : "dark";
+      const stored = localStorage.getItem("microsoft_intel_theme_mode");
+      if (stored === "light" || stored === "dark" || stored === "system" || stored === "solar") {
+        return stored;
+      }
+      const prevTheme = localStorage.getItem("microsoft_intel_theme");
+      if (prevTheme === "light" || prevTheme === "dark") {
+        return prevTheme;
+      }
+      return "solar"; // Default to Solar (sunrise/sunset) auto-toggle
     } catch {
-      return "dark";
+      return "solar";
     }
   });
 
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  const isTimeDaylight = () => {
+    const hours = new Date().getHours();
+    return hours >= 6 && hours < 18; // Sunrise at 6:00 AM, Sunset at 6:00 PM
+  };
+
   useEffect(() => {
     try {
-      localStorage.setItem("microsoft_intel_theme", theme);
+      localStorage.setItem("microsoft_intel_theme_mode", themeMode);
     } catch (e) {
       console.warn("localStorage write blocked:", e);
     }
-  }, [theme]);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (themeMode === "solar") {
+      const updateThemeSolar = () => {
+        const isDay = isTimeDaylight();
+        setTheme(isDay ? "light" : "dark");
+      };
+      updateThemeSolar();
+      const interval = setInterval(updateThemeSolar, 15000); 
+      return () => clearInterval(interval);
+    } else if (themeMode === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleSystemThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+        setTheme(e.matches ? "dark" : "light");
+      };
+      handleSystemThemeChange(mediaQuery);
+      
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener("change", handleSystemThemeChange);
+        return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
+      } else {
+        mediaQuery.addListener(handleSystemThemeChange);
+        return () => mediaQuery.removeListener(handleSystemThemeChange);
+      }
+    } else {
+      setTheme(themeMode);
+    }
+  }, [themeMode]);
 
   useEffect(() => {
     if (theme === "light") {
@@ -422,6 +540,7 @@ export default function App() {
   const [newPartnerCaseStudyTitle, setNewPartnerCaseStudyTitle] = useState("");
   const [newPartnerCaseStudyContext, setNewPartnerCaseStudyContext] = useState("");
   const [newPartnerEmail, setNewPartnerEmail] = useState("");
+  const [newPartnerWebsite, setNewPartnerWebsite] = useState("");
 
   const handlePromotePartner = (id: string) => {
     setPartners(current => {
@@ -773,6 +892,65 @@ export default function App() {
   const [zoomRange, setZoomRange] = useState<{ start: string; end: string } | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<{ price: number; comparePrice?: number; time: string; chartX: number; chartY: number } | null>(null);
   const [compareIndex, setCompareIndex] = useState<"none" | "nasdaq" | "sp500">("none");
+
+  // Price Alert state management (Persisted in localStorage)
+  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_price_alerts");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [newTargetPrice, setNewTargetPrice] = useState<string>("");
+  const [alertCondition, setAlertCondition] = useState<"above" | "below">("above");
+
+  // Price alert state persistence
+  useEffect(() => {
+    try {
+      localStorage.setItem("microsoft_intel_price_alerts", JSON.stringify(priceAlerts));
+    } catch (e) {
+      console.warn("localStorage write blocked:", e);
+    }
+  }, [priceAlerts]);
+
+  // Monitor stock fluctuations and trigger price alerts
+  useEffect(() => {
+    setPriceAlerts(prev => {
+      let changed = false;
+      const nextAlerts = prev.map(alert => {
+        if (alert.isTriggered) return alert;
+
+        const meetsAbove = alert.condition === "above" && liveMsftPrice >= alert.targetPrice;
+        const meetsBelow = alert.condition === "below" && liveMsftPrice <= alert.targetPrice;
+
+        if (meetsAbove || meetsBelow) {
+          changed = true;
+          const triggeredTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+          
+          // Trigger instant toast notification using the app's existing addToast subsystem
+          setTimeout(() => {
+            addToast(
+              "technology_updates",
+              "🚨 Price Alert Triggered!",
+              `MSFT stock reached $${liveMsftPrice.toFixed(2)}, crossed your target threshold of $${alert.targetPrice.toFixed(2)} (${alert.condition === "above" ? "above" : "below"}).`
+            );
+          }, 10);
+
+          return {
+            ...alert,
+            isTriggered: true,
+            triggeredAt: triggeredTime,
+            triggeredPrice: liveMsftPrice
+          };
+        }
+        return alert;
+      });
+
+      return changed ? nextAlerts : prev;
+    });
+  }, [liveMsftPrice]);
 
   const handleTimeframeChange = (val: "1D" | "1W" | "1M" | "3M") => {
     setMsftTimeframe(val);
@@ -2031,30 +2209,46 @@ export default function App() {
               <span>{refreshing ? "Scraping..." : "Re-Scrape Web"}</span>
             </button>
 
-            {/* Accessible Theme Changer Toggle */}
-            <button
-              id="theme-toggle"
-              onClick={() => setTheme(current => current === "dark" ? "light" : "dark")}
-              type="button"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition duration-150 cursor-pointer text-xs font-semibold select-none ${
+            {/* Theme Preference Selection dropdown */}
+            <div 
+              id="theme-select-container"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition duration-150 select-none ${
                 isDark 
-                  ? "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200 hover:text-white" 
-                  : "bg-white hover:bg-slate-100 border-slate-300 text-slate-700 hover:text-slate-900 shadow-sm"
+                  ? "bg-slate-850 border-slate-700 text-slate-200" 
+                  : "bg-white border-slate-300 text-slate-700 shadow-sm"
               }`}
-              title={isDark ? "Switch to High-Contrast Light Theme" : "Switch to Microsoft Slate Dark Theme"}
             >
-              {isDark ? (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Light Mode</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-sky-700" />
-                  <span>Dark Mode</span>
-                </>
-              )}
-            </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {themeMode === "light" && <Sun className="w-3.5 h-3.5 text-amber-500" />}
+                {themeMode === "dark" && <Moon className="w-3.5 h-3.5 text-sky-450" />}
+                {themeMode === "system" && <Laptop className="w-3.5 h-3.5 text-indigo-400" />}
+                {themeMode === "solar" && (
+                  isTimeDaylight() 
+                    ? <Sunrise className="w-3.5 h-3.5 text-amber-400 animate-pulse" title="Solar Sync: Daylight" />
+                    : <Sunset className="w-3.5 h-3.5 text-orange-400 animate-pulse" title="Solar Sync: Night" />
+                )}
+              </div>
+              
+              <span className={`text-[10px] uppercase tracking-wider font-bold font-mono opacity-60 shrink-0 ${
+                isDark ? "text-slate-400" : "text-slate-500"
+              }`}>
+                {themeMode === "solar" ? (isTimeDaylight() ? "Solar Day" : "Solar Night") : "Theme"}
+              </span>
+
+              <select
+                id="theme-select"
+                value={themeMode}
+                onChange={(e) => setThemeMode(e.target.value as any)}
+                className={`bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none border-none py-0 pl-1 pr-6 ring-0 focus:ring-0`}
+                style={{ outline: "none", boxShadow: "none" }}
+                title="Select Theme Mode: Solar Synced Sunrise/Sunset, System OS preference, or Manual"
+              >
+                <option value="solar" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Solar Auto (Sunrise/Sunset)</option>
+                <option value="system" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">System (OS Prefs)</option>
+                <option value="light" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Light</option>
+                <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark</option>
+              </select>
+            </div>
           </div>
         </header>
 
@@ -2385,10 +2579,10 @@ export default function App() {
                 </div>
 
                 {/* Primary Chart Visualization Stage */}
-                <div className="w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-6 w-full justify-between">
                   
                   {/* Google Finance Styled Interactive AreaChart */}
-                  <div className="w-full">
+                  <div className="lg:col-span-8 w-full">
                     <div className="h-72 sm:h-80 w-full text-xs font-mono select-none relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
@@ -2512,6 +2706,27 @@ export default function App() {
                               activeDot={{ r: 4 }}
                             />
                           )}
+
+                          {/* Active Price Alert Threshold Reference Lines */}
+                          {priceAlerts.filter(alert => !alert.isTriggered).map(alert => (
+                            <ReferenceLine
+                              key={alert.id}
+                              yAxisId="left"
+                              y={alert.targetPrice}
+                              stroke={alert.condition === "above" ? "#f43f5e" : "#38bdf8"}
+                              strokeDasharray="4 4"
+                              strokeWidth={1.5}
+                              label={{
+                                value: `Alert: $${alert.targetPrice.toFixed(2)}`,
+                                position: "left",
+                                fill: alert.condition === "above" ? "#f43f5e" : "#38bdf8",
+                                fontSize: 9,
+                                fontWeight: "bold",
+                                fontFamily: "monospace",
+                                dy: -6
+                              }}
+                            />
+                          ))}
                         </ComposedChart>
                       </ResponsiveContainer>
                     {/* Precise Floating Price Point Label that follows the cursor on hover */}
@@ -2559,8 +2774,261 @@ export default function App() {
                     )}
                   </div>
 
-                    {/* Google Finance Inspired Key Information Grid (Bottom stats bar) */}
-                    <div className="mt-8">
+                  {/* Real-Time Price Alerts Dashboard (4 of 12 cols) */}
+                  <div className="lg:col-span-4 w-full flex flex-col gap-4">
+                    <div className={`p-4.5 rounded-xl border font-sans ${
+                      isDark 
+                        ? "bg-[#0b0f19]/45 border-slate-800" 
+                        : "bg-slate-50/50 border-slate-200 shadow-sm"
+                    }`}>
+                      {/* Panel Title */}
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/50 dark:border-slate-800/60 w-full">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 px-1.5 bg-rose-500/10 text-rose-500 rounded border border-rose-500/25 shrink-0">
+                            <span className="text-xs">🚨</span>
+                          </div>
+                          <div>
+                            <h4 className={`text-xs font-bold uppercase tracking-wider font-mono leading-none ${
+                              isDark ? "text-slate-300" : "text-slate-800"
+                            }`}>
+                              Price Alerts
+                            </h4>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">MSFT Stock thresholds</p>
+                          </div>
+                        </div>
+
+                        {/* Status Pulse */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono opacity-60 font-bold uppercase tracking-widest text-emerald-400">Live</span>
+                          <span className="flex h-1.5 w-1.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Set Alert Form */}
+                      <form 
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const targetNum = parseFloat(newTargetPrice);
+                          if (isNaN(targetNum) || targetNum <= 0) {
+                            addToast("technology_updates", "Invalid target price", "Please enter a valid positive numeric target price.");
+                            return;
+                          }
+                          const newAlert: PriceAlert = {
+                            id: Math.random().toString(36).substring(2, 9),
+                            targetPrice: parseFloat(targetNum.toFixed(2)),
+                            condition: alertCondition,
+                            createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                            isTriggered: false
+                          };
+                          setPriceAlerts(prev => [newAlert, ...prev]);
+                          setNewTargetPrice("");
+                          addToast("technology_updates", "Alert successfully set", `You will be notified when MSFT goes ${alertCondition} $${newAlert.targetPrice.toFixed(2)}.`);
+                        }}
+                        className="space-y-3.5"
+                      >
+                        <div>
+                          <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+                            Condition
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setAlertCondition("above")}
+                              className={`py-1.5 px-2 text-xs font-bold rounded-lg border transition-all duration-150 flex items-center justify-center gap-1 cursor-pointer ${
+                                alertCondition === "above"
+                                  ? "bg-rose-500/10 text-rose-500 border-rose-500/30"
+                                  : isDark 
+                                    ? "bg-slate-900 border-slate-800 text-slate-405 hover:bg-slate-800" 
+                                    : "bg-white border-slate-250 text-slate-600 hover:bg-slate-50 hover:border-slate-350 shadow-sm"
+                              }`}
+                            >
+                              <span>Goes Above</span>
+                              <ChevronUp className="w-3 h-3 text-rose-500 shrink-0" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAlertCondition("below")}
+                              className={`py-1.5 px-2 text-xs font-bold rounded-lg border transition-all duration-150 flex items-center justify-center gap-1 cursor-pointer ${
+                                alertCondition === "below"
+                                  ? "bg-sky-500/10 text-sky-500 border-sky-500/30"
+                                  : isDark 
+                                    ? "bg-slate-900 border-slate-800 text-slate-405 hover:bg-slate-800" 
+                                    : "bg-white border-slate-250 text-slate-600 hover:bg-slate-50 hover:border-slate-350 shadow-sm"
+                              }`}
+                            >
+                              <span>Goes Below</span>
+                              <ChevronDown className="w-3 h-3 text-sky-500 shrink-0" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-slate-400">
+                              Target Price (USD)
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setNewTargetPrice(liveMsftPrice.toFixed(2))}
+                              className="text-[10px] text-sky-500 hover:text-sky-400 font-bold hover:underline cursor-pointer"
+                              title="Use current live MSFT share quote price"
+                            >
+                              Use Live Price ({liveMsftPrice.toFixed(2)})
+                            </button>
+                          </div>
+                          
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm select-none">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder={liveMsftPrice.toFixed(2)}
+                              value={newTargetPrice}
+                              onChange={(e) => setNewTargetPrice(e.target.value)}
+                              className={`w-full py-1.5 pl-6 pr-3 text-xs font-bold font-mono rounded-lg border focus:outline-none transition ${
+                                isDark 
+                                  ? "bg-slate-950 border-slate-800 text-white focus:border-slate-700 focus:ring-0" 
+                                  : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-inner"
+                              }`}
+                              style={{ outline: "none", boxShadow: "none" }}
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="w-full py-2 px-4 rounded-lg bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold text-xs shadow transition duration-150 cursor-pointer text-center"
+                        >
+                          Set Price Alert
+                        </button>
+                      </form>
+
+                      {/* Active & Triggered Alert Feeds */}
+                      <div className="mt-5 space-y-4">
+                        {/* Active Alerts List */}
+                        <div>
+                          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 font-mono flex items-center justify-between">
+                            <span>Active Metrics ({priceAlerts.filter(a => !a.isTriggered).length})</span>
+                            <span className="text-[8px] animate-pulse bg-sky-500/10 text-sky-450 px-1 py-0.5 rounded border border-sky-500/20 uppercase tracking-widest font-bold">
+                              Monitoring
+                            </span>
+                          </h5>
+
+                          {priceAlerts.filter(a => !a.isTriggered).length === 0 ? (
+                            <div className={`p-3 text-center rounded-lg border text-xs leading-relaxed text-slate-500 ${
+                              isDark ? "bg-[#0b0f19]/25 border-slate-900" : "bg-slate-100/30 border-slate-250 shadow-sm"
+                            }`}>
+                              No active price alerts set.
+                            </div>
+                          ) : (
+                            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5 custom-scrollbar">
+                              {priceAlerts.filter(a => !a.isTriggered).map(alert => (
+                                <div 
+                                  key={alert.id}
+                                  className={`flex items-center justify-between p-2 rounded-lg border text-xs transition duration-150 ${
+                                    isDark 
+                                      ? "bg-slate-950/70 border-slate-900 hover:border-slate-800" 
+                                      : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`inline-flex items-center px-1 text-[8px] font-bold font-mono uppercase tracking-wider rounded ${
+                                        alert.condition === "above" 
+                                          ? "bg-rose-500/10 text-rose-400 text-[8px] border border-rose-505/10" 
+                                          : "bg-sky-500/10 text-sky-400 text-[8px] border border-sky-505/10"
+                                      }`}>
+                                        {alert.condition === "above" ? "Above" : "Below"}
+                                      </span>
+                                      <span className={`font-bold font-mono ${isDark ? "text-slate-200" : "text-slate-800"}`}>
+                                        ${alert.targetPrice.toFixed(2)}
+                                      </span>
+                                    </div>
+                                    <span className="text-[9px] text-slate-500 font-mono block mt-0.5">
+                                      Created at {alert.createdAt}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPriceAlerts(prev => prev.filter(p => p.id !== alert.id));
+                                      addToast("technology_updates", "Alert Deleted", `Alert for $${alert.targetPrice.toFixed(2)} deleted.`);
+                                    }}
+                                    className="p-1 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded transition cursor-pointer text-slate-400 hover:text-rose-500"
+                                    title="Delete active price alert"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Triggered History List */}
+                        {priceAlerts.filter(a => a.isTriggered).length > 0 && (
+                          <div className="border-t border-slate-200/50 dark:border-slate-800/60 pt-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
+                                Triggered History ({priceAlerts.filter(a => a.isTriggered).length})
+                              </h5>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPriceAlerts(prev => prev.filter(p => !p.isTriggered));
+                                  addToast("technology_updates", "History Cleared", "Triggered price alerts database cleared.");
+                                }}
+                                className="text-[9px] text-rose-500 hover:text-rose-400 font-bold hover:underline cursor-pointer"
+                              >
+                                Clear All
+                              </button>
+                            </div>
+
+                            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-0.5 custom-scrollbar">
+                              {priceAlerts.filter(a => a.isTriggered).map(alert => (
+                                <div 
+                                  key={alert.id}
+                                  className={`p-2 rounded-lg border text-[11px] flex justify-between items-center ${
+                                    isDark 
+                                      ? "bg-slate-900/40 border-slate-950 text-slate-400" 
+                                      : "bg-slate-100/50 border-slate-150 text-slate-600 shadow-sm"
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`font-bold font-mono ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                                        ${alert.targetPrice.toFixed(2)}
+                                      </span>
+                                      <span className="text-[9px] font-mono text-emerald-500 font-bold">
+                                        (Hit @ ${alert.triggeredPrice?.toFixed(2)})
+                                      </span>
+                                    </div>
+                                    <span className="text-[9px] text-slate-500 font-mono block mt-0.5">
+                                      Hit at {alert.triggeredAt || alert.createdAt}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPriceAlerts(prev => prev.filter(p => p.id !== alert.id))}
+                                    className="p-1 text-slate-500 hover:text-rose-500 transition cursor-pointer"
+                                    title="Remove triggered alert log"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Google Finance Inspired Key Information Grid (Bottom stats bar is full width inside grid cols 12) */}
+                  <div className="lg:col-span-12 mt-4 w-full">
                       <h4 className={`text-xs font-bold uppercase tracking-wider mb-4 font-mono ${
                         isDark ? "text-slate-400" : "text-slate-700 font-semibold"
                       }`}>
@@ -4356,6 +4824,582 @@ export default function App() {
           </section>
 
         </div>
+        )}
+
+        {activeMainView === "partners" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Header Banner */}
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl"></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-mono font-bold tracking-wider text-sky-450 uppercase bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      Enterprise Directory
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Live Real-Time Integration</span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+                    ANZ Microsoft Partner Hub
+                  </h2>
+                  <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                    Spotlight active partners, verify licensing competencies, audit solution case studies, and coordinate direct co-investment opportunities across Australia and New Zealand.
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => setShowAddPartnerForm(!showAddPartnerForm)}
+                  className="inline-flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg cursor-pointer shadow transition shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Register Partner Entity</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Register Partner Form */}
+            <AnimatePresence>
+              {showAddPartnerForm && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-[#111827] border border-slate-800 rounded-2xl p-5 overflow-hidden shadow-inner font-sans"
+                >
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono mb-4 flex items-center gap-1.5 border-b border-slate-800 pb-3">
+                    <Building className="w-4 h-4 text-sky-400" />
+                    Add Your Custom Microsoft Partner Registry
+                  </h3>
+
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newPartnerName.trim() || !newPartnerDescription.trim()) {
+                      addToast("licensing_pricing", "Partner Info Incomplete", "Please provide a Partner Name and description.");
+                      return;
+                    }
+
+                    const specializationsArray = newPartnerSpecialization
+                      .split(",")
+                      .map(s => s.trim())
+                      .filter(Boolean);
+
+                    const freshPartner: MicrosoftPartner = {
+                      id: `partner-${Math.random().toString(36).substring(2, 9)}`,
+                      name: newPartnerName.trim(),
+                      location: newPartnerLocation.trim() || "Australia & New Zealand",
+                      rating: 5.0,
+                      ratingCount: 1,
+                      promoted: false,
+                      specialization: specializationsArray.length ? specializationsArray : ["General Services", "Cloud Consultant"],
+                      description: newPartnerDescription.trim(),
+                      caseStudyTitle: newPartnerCaseStudyTitle.trim() || "Enterprise Implementation",
+                      caseStudyContext: newPartnerCaseStudyContext.trim() || "Custom infrastructure audit and direct tenant optimisation services.",
+                      contactEmail: newPartnerEmail.trim() || "procurement-support@microsoft.com.au",
+                      websiteUrl: newPartnerWebsite.trim() || undefined,
+                      reviews: [
+                        {
+                          id: `rev-${Math.random().toString(36).substring(2, 9)}`,
+                          reviewer: "System Verified",
+                          rating: 5,
+                          comment: "Created and verified custom Microsoft Partner profile.",
+                          date: new Date().toISOString().split("T")[0]
+                        }
+                      ]
+                    };
+
+                    setPartners(prev => {
+                      const next = [...prev, freshPartner];
+                      localStorage.setItem("microsoft_intel_partners", JSON.stringify(next));
+                      return next;
+                    });
+
+                    addToast(
+                      "anz_strategy",
+                      "Partner Directory Registered",
+                      `Custom Microsoft Partner: ${freshPartner.name} registered successfully.`
+                    );
+
+                    setNewPartnerName("");
+                    setNewPartnerLocation("");
+                    setNewPartnerSpecialization("");
+                    setNewPartnerDescription("");
+                    setNewPartnerCaseStudyTitle("");
+                    setNewPartnerCaseStudyContext("");
+                    setNewPartnerEmail("");
+                    setNewPartnerWebsite("");
+                    setShowAddPartnerForm(false);
+                  }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Partner Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Crayon Australasia, SoftwareOne"
+                        value={newPartnerName}
+                        onChange={(e) => setNewPartnerName(e.target.value)}
+                        className={`w-full text-xs font-sans font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Office Location
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Sydney, NSW"
+                        value={newPartnerLocation}
+                        onChange={(e) => setNewPartnerLocation(e.target.value)}
+                        className={`w-full text-xs font-sans font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Official Homepage URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="e.g. https://www.crayon.com/au"
+                        value={newPartnerWebsite}
+                        onChange={(e) => setNewPartnerWebsite(e.target.value)}
+                        className={`w-full text-xs font-mono font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Contact Email Address
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="e.g. corporate@partner.com"
+                        value={newPartnerEmail}
+                        onChange={(e) => setNewPartnerEmail(e.target.value)}
+                        className={`w-full text-xs font-sans font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Core Specializations (Comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Licensing Optimization, Azure FinOps, M365 Security"
+                        value={newPartnerSpecialization}
+                        onChange={(e) => setNewPartnerSpecialization(e.target.value)}
+                        className={`w-full text-xs font-sans font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Corporate Bio / Description *
+                      </label>
+                      <textarea
+                        required
+                        rows={2}
+                        placeholder="Describe services, licensing capabilities, EA management history..."
+                        value={newPartnerDescription}
+                        onChange={(e) => setNewPartnerDescription(e.target.value)}
+                        className={`w-full text-xs font-sans font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Enterprise Project Case Study Title
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 10,000-seat Copilot and Azure Alignment Strategy"
+                        value={newPartnerCaseStudyTitle}
+                        onChange={(e) => setNewPartnerCaseStudyTitle(e.target.value)}
+                        className={`w-full text-xs font-sans font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                        Case Study Context / Achievements Description
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Describe exact licensing and cloud efficiency optimizations unlocked..."
+                        value={newPartnerCaseStudyContext}
+                        onChange={(e) => setNewPartnerCaseStudyContext(e.target.value)}
+                        className={`w-full text-xs font-sans font-bold py-2 px-3 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddPartnerForm(false)}
+                        className="px-4 py-2 border border-slate-800 rounded-lg text-slate-450 hover:text-white hover:bg-slate-900 font-bold font-sans text-xs cursor-pointer transition"
+                      >
+                        Cancel
+                      </button>
+                      
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold font-sans text-xs rounded-lg cursor-pointer shadow transition"
+                      >
+                        Register Partner
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Split view Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* LEFT COLUMN: Partners directory (7 col) */}
+              <div className="lg:col-span-7 flex flex-col gap-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
+                    Authorized Partner Registry Feed ({partners.length})
+                  </h3>
+                  <span className="text-[10px] text-slate-500 font-mono">Select a partner to audit reviews</span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {partners.map((partner) => {
+                    const isSpotlight = spotlightPartner.id === partner.id;
+                    const isReviewsSelected = activeReviewId === partner.id;
+                    
+                    return (
+                      <div
+                        key={partner.id}
+                        className={`p-4 rounded-xl border relative transition duration-155 flex flex-col justify-between ${
+                          isDark 
+                            ? isSpotlight 
+                              ? "bg-slate-950/90 border-emerald-500/30 ring-1 ring-emerald-500/10"
+                              : "bg-[#111827] border-slate-800/80 hover:border-slate-700"
+                            : isSpotlight
+                              ? "bg-emerald-500/5 border-emerald-500/30 shadow-sm"
+                              : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                        }`}
+                      >
+                        <div>
+                          {/* Card top row */}
+                          <div className="flex items-start justify-between gap-2.5 mb-2">
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className={`text-sm font-extrabold font-sans leading-none ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                                  {partner.name}
+                                </h4>
+                                {isSpotlight && (
+                                  <span className="inline-flex items-center gap-0.5 text-[8px] font-bold font-mono tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 uppercase shrink-0">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-450 animate-pulse inline-block shrink-0"></span>
+                                    <span>Spotlight</span>
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-mono mt-1 block">
+                                {partner.location}
+                              </span>
+                            </div>
+
+                            {/* Ratings stars */}
+                            <div className="flex items-center gap-1 bg-slate-950/40 border border-slate-850 px-2 py-0.5 rounded-lg shrink-0">
+                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                              <span className="text-xs font-bold font-mono text-slate-200">{partner.rating.toFixed(1)}</span>
+                              <span className="text-[10px] text-slate-500 font-mono">({partner.ratingCount})</span>
+                            </div>
+                          </div>
+
+                          {/* Tag badges */}
+                          <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
+                            {partner.specialization.map((spec, idx) => (
+                              <span
+                                key={idx}
+                                className={`text-[9px] font-mono leading-none tracking-tight font-semibold px-1.5 py-0.5 rounded border ${
+                                  isDark 
+                                    ? "bg-sky-500/10 border-sky-500/15 text-sky-400" 
+                                    : "bg-sky-100/70 border-sky-200 text-sky-800"
+                                }`}
+                              >
+                                {spec}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* Description */}
+                          <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                            {partner.description}
+                          </p>
+                        </div>
+
+                        {/* Bottom Actions Row */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/40 mt-1">
+                          
+                          {/* Homepage URL click and email click */}
+                          <div className="flex items-center gap-3">
+                            {partner.websiteUrl ? (
+                              <a
+                                href={partner.websiteUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-xs font-bold font-mono text-sky-400 hover:text-sky-305 hover:underline transition duration-150"
+                                title={`Navigate to official homepage of ${partner.name}`}
+                              >
+                                <Globe className="w-3.5 h-3.5 text-emerald-450" />
+                                <span>Official Homepage</span>
+                                <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-slate-550 font-mono">No homepage registered</span>
+                            )}
+                          </div>
+
+                          {/* Management Controls */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setActiveReviewId(isReviewsSelected ? null : partner.id);
+                              }}
+                              className={`p-1.5 px-3 rounded-lg border text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                                isReviewsSelected
+                                  ? "bg-slate-800 border-slate-705 text-white"
+                                  : isDark
+                                    ? "bg-slate-900 border-slate-800 text-slate-350 hover:bg-slate-800"
+                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs"
+                              }`}
+                              title="Audit customer statements and write evaluations"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>Reviews ({partner.reviews.length})</span>
+                            </button>
+
+                            {!isSpotlight && (
+                              <button
+                                onClick={() => handlePromotePartner(partner.id)}
+                                className="p-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] cursor-pointer transition shadow"
+                              >
+                                Spotlight
+                              </button>
+                            )}
+                          </div>
+
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: Active reviews & Spotlight Panel details (5 col) */}
+              <div className="lg:col-span-5 flex flex-col gap-6">
+                
+                {/* Active Spotlight Card */}
+                <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-full blur-xl"></div>
+                  
+                  <div className="pb-3 mb-4 border-b border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 px-1.5 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/25 shrink-0">
+                        <Award className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono leading-none">
+                          Featured Partner Spotlight
+                        </h4>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">Top-performing strategic integrator</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3.5">
+                    <div className="flex items-start justify-between gap-1.5">
+                      <div>
+                        <h3 className="text-base font-extrabold text-white leading-normal">
+                          {spotlightPartner.name}
+                        </h3>
+                        <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
+                          {spotlightPartner.location}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-slate-950/60 p-1.5 px-2.5 rounded-xl border border-slate-900 shrink-0">
+                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                        <span className="text-xs font-extrabold text-slate-100">{spotlightPartner.rating.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-555">/5</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-350 leading-relaxed max-w-xl">
+                      {spotlightPartner.description}
+                    </p>
+
+                    {/* Spotlight Case Study Box */}
+                    <div className="bg-[#0c101a] border-l-2 border-sky-400 p-3.5 rounded-r-lg">
+                      <div className="text-[9px] font-mono uppercase tracking-widest text-sky-400 font-bold mb-1 block">
+                        Enterprise Deployment Case Study
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-200 mb-1">
+                        {spotlightPartner.caseStudyTitle}
+                      </h5>
+                      <p className="text-[11px] text-slate-400 leading-normal">
+                        {spotlightPartner.caseStudyContext}
+                      </p>
+                    </div>
+
+                    {/* Spotlight URLs and Email */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                      {spotlightPartner.websiteUrl ? (
+                        <a
+                          href={spotlightPartner.websiteUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 text-xs font-bold text-sky-400 hover:text-sky-305 transition duration-150"
+                        >
+                          <Globe className="w-4 h-4 text-emerald-400" />
+                          <span>Visit Website</span>
+                          <ExternalLink className="w-3 h-3 text-slate-550" />
+                        </a>
+                      ) : (
+                        <div className="flex items-center justify-center p-1.5 text-[10px] font-mono text-slate-500">
+                          No URL registered
+                        </div>
+                      )}
+
+                      <a
+                        href={`mailto:${spotlightPartner.contactEmail}`}
+                        className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition duration-150"
+                      >
+                        <Mail className="w-4 h-4" />
+                        <span>Contact Partner</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reviews List & Feedback submission form */}
+                <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 relative">
+                  {(() => {
+                    // Decide target partner for reviews listing and review addition
+                    const reviewsTargetPartner = activeReviewId 
+                      ? partners.find(p => p.id === activeReviewId) || spotlightPartner
+                      : spotlightPartner;
+
+                    return (
+                      <div>
+                        {/* Title block */}
+                        <div className="pb-3 border-b border-slate-800 mb-4">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+                            Client Auditing & Reviews
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            Estates & evaluations for <span className="text-sky-400 font-bold font-sans">{reviewsTargetPartner.name}</span>
+                          </p>
+                        </div>
+
+                        {/* Existing Reviews List */}
+                        <div className="space-y-3 max-h-[240px] overflow-y-auto pr-0.5 custom-scrollbar mb-5">
+                          {reviewsTargetPartner.reviews.length === 0 ? (
+                            <div className="p-4 text-center rounded-lg border border-dashed border-slate-800 text-slate-500 text-xs font-mono">
+                              No client reviews submitted.
+                            </div>
+                          ) : (
+                            reviewsTargetPartner.reviews.map((rev) => (
+                              <div key={rev.id} className="p-3 rounded-lg bg-slate-950/50 border border-slate-850 flex flex-col justify-between">
+                                <div className="flex items-start justify-between gap-1.5 mb-1.5">
+                                  <div>
+                                    <span className="text-xs font-bold text-slate-200 font-sans block">{rev.reviewer}</span>
+                                    <span className="text-[9px] text-slate-500 font-mono block mt-0.5">Submitted: {rev.date}</span>
+                                  </div>
+                                  <div className="flex items-center gap-0.5 bg-amber-500/10 px-1.5 py-0.5 rounded text-[10px] text-amber-400 font-bold shrink-0">
+                                    <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-450 shrink-0" />
+                                    <span>{rev.rating}</span>
+                                  </div>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-normal font-sans italic">
+                                  "{rev.comment}"
+                                </p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Leave a review Form */}
+                        <div className="border-t border-slate-800 pt-4">
+                          <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono mb-3">
+                            Write Client Assessment Statement
+                          </h5>
+
+                          <form onSubmit={(e) => {
+                            e.preventDefault();
+                            handleAddReview(reviewsTargetPartner.id);
+                          }} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-500 mb-1">
+                                  Your Name
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="e.g. Liam Porter"
+                                  value={partnerReviewer}
+                                  onChange={(e) => setPartnerReviewer(e.target.value)}
+                                  className={`w-full text-xs font-sans font-bold py-1.5 px-2.5 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-500 mb-1">
+                                  Metric Rating
+                                </label>
+                                <select
+                                  value={partnerRating}
+                                  onChange={(e) => setPartnerRating(parseInt(e.target.value))}
+                                  className={`w-full text-xs font-sans font-bold py-1.5 px-2.5 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                                >
+                                  <option value={5}>5 ★ - Unsurpassed quality</option>
+                                  <option value={4}>4 ★ - High proficiency</option>
+                                  <option value={3}>3 ★ - Standard performance</option>
+                                  <option value={2}>2 ★ - Minor discrepancies</option>
+                                  <option value={1}>1 ★ - Serious exceptions</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-500 mb-1">
+                                Comments / Audit Result
+                              </label>
+                              <textarea
+                                required
+                                rows={2}
+                                placeholder="State direct operational results or licensing assessment comments..."
+                                value={partnerComment}
+                                onChange={(e) => setPartnerComment(e.target.value)}
+                                className={`w-full text-xs font-sans font-bold py-1.5 px-2.5 rounded-lg border focus:outline-none transition ${isDark ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500" : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 shadow-sm"}`}
+                              />
+                            </div>
+
+                            <button
+                              type="submit"
+                              className="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-850 hover:border-slate-700 hover:text-white transition text-[#e2e8f0] font-sans font-bold text-xs rounded-lg cursor-pointer text-center"
+                            >
+                              Publish Audit Statement
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+              </div>
+
+            </div>
+          </div>
         )}
 
       </div>
