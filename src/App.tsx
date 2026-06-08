@@ -1109,7 +1109,8 @@ ${advice}
 
   const [groupingMode, setGroupingMode] = useState<"flat" | "category">("flat");
 
-  // Subscription Form State (Persisted in localStorage)
+  // Subscription Form State (Persisted in localStorage and backed by Server-Side Registry)
+  const [subUsername, setSubUsername] = useState<string>("");
   const [subName, setSubName] = useState<string>("");
   const [subEmail, setSubEmail] = useState<string>("");
   const [subOrg, setSubOrg] = useState<string>("");
@@ -1127,6 +1128,7 @@ ${advice}
 
   const [subscriptionsList, setSubscriptionsList] = useState<{
     id: string;
+    username?: string;
     name: string;
     email: string;
     org: string;
@@ -1140,6 +1142,7 @@ ${advice}
       return stored ? JSON.parse(stored) : [
         {
           id: "preview-sub-1",
+          username: "ashguth",
           name: "Ash Guthrie",
           email: "ashguth@gmail.com",
           org: "ANZ Corporate Services",
@@ -1154,10 +1157,38 @@ ${advice}
     }
   });
 
+  // Pull subscriber list from the server registry on mount
+  useEffect(() => {
+    fetch("/api/subscribers")
+      .then(res => {
+        if (!res.ok) throw new Error("Could not pull corporate subscriber registry.");
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSubscriptionsList(data);
+          localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(data));
+        }
+      })
+      .catch(err => {
+        console.warn("Using offline storage for subscribers directory:", err);
+      });
+  }, []);
+
   const handleSubscribeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubFormError(null);
 
+    const cleanUser = subUsername.trim().toLowerCase().replace(/^@/, "");
+
+    if (!cleanUser) {
+      setSubFormError("Please choose a unique profile username handle.");
+      return;
+    }
+    if (!/^[a-zA-Z0-9_\-]+$/.test(cleanUser)) {
+      setSubFormError("Username must containing only alphanumeric characters, underscores, or hyphens.");
+      return;
+    }
     if (!subName.trim()) {
       setSubFormError("Please provide your full name for the briefings register.");
       return;
@@ -1172,55 +1203,98 @@ ${advice}
     }
 
     setIsSubmittingSub(true);
-    
-    setTimeout(() => {
-      const newSub = {
-        id: Math.random().toString(36).substring(2, 9),
+
+    fetch("/api/subscribers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: cleanUser,
         name: subName.trim(),
         email: subEmail.trim(),
         org: subOrg.trim() || "Independent Organization",
         role: subRole,
-        categories: [...subCategories],
-        frequency: subFrequency,
-        date: new Date().toLocaleDateString()
-      };
+        categories: subCategories,
+        frequency: subFrequency
+      })
+    })
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "An error occurred during registration.");
+        }
+        return data;
+      })
+      .then(data => {
+        const newSub = data.subscriber;
+        const updated = [newSub, ...subscriptionsList.filter(s => s.email.toLowerCase() !== newSub.email.toLowerCase())];
+        localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
+        setSubscriptionsList(updated);
 
-      const updated = [newSub, ...subscriptionsList.filter(s => s.email.toLowerCase() !== newSub.email.toLowerCase())];
-      localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
-      setSubscriptionsList(updated);
-      
-      setIsSubmittingSub(false);
-      setSubSuccess(true);
-      
-      // Clear fields
-      setSubName("");
-      setSubEmail("");
-      setSubOrg("");
-      
-      // Trigger instant toast notification helper
-      addToast(
-        subCategories[0] || "pricing_news",
-        `Subscription Verified: ${newSub.name}`,
-        `Successfully registered ${newSub.email} to receive our ${subFrequency} update digests.`
-      );
+        setIsSubmittingSub(false);
+        setSubSuccess(true);
 
-      // Auto clear success indicator state after 6 seconds
-      setTimeout(() => {
-        setSubSuccess(false);
-      }, 7000);
-    }, 1200);
+        // Clear fields
+        setSubUsername("");
+        setSubName("");
+        setSubEmail("");
+        setSubOrg("");
+
+        addToast(
+          subCategories[0] || "licensing_pricing",
+          `Subscriber Registered: @${newSub.username}`,
+          `Successfully registered ${newSub.name} in the corporate subscriber directory.`
+        );
+
+        // Auto clear success indicator
+        setTimeout(() => {
+          setSubSuccess(false);
+        }, 7000);
+      })
+      .catch(err => {
+        setIsSubmittingSub(false);
+        setSubFormError(err.message || "Failed to establish registry connection.");
+        addToast(
+          "licensing_pricing",
+          "Registry Connection Fail",
+          err.message || "Could not write subscription entry to corporate registry."
+        );
+      });
   };
 
   const handleRemoveSubscription = (id: string, email: string) => {
-    const updated = subscriptionsList.filter(s => s.id !== id);
-    localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
-    setSubscriptionsList(updated);
-    
-    addToast(
-      "licensing_pricing",
-      "Subscription Revoked",
-      `Removed ${email} from the monthly intelligence briefings index.`
-    );
+    fetch(`/api/subscribers/${id}`, {
+      method: "DELETE"
+    })
+      .then(async res => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "An error occurred during profile clearing.");
+        }
+        return res.json();
+      })
+      .then(() => {
+        const updated = subscriptionsList.filter(s => s.id !== id);
+        localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
+        setSubscriptionsList(updated);
+        
+        addToast(
+          "licensing_pricing",
+          "Subscription Revoked",
+          `Successfully removed ${email} from corporate database registry.`
+        );
+      })
+      .catch(err => {
+        console.warn("Falling back to local-only eviction of subscription registry:", err);
+        const updated = subscriptionsList.filter(s => s.id !== id);
+        localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
+        setSubscriptionsList(updated);
+        
+        addToast(
+          "licensing_pricing",
+          "Subscription Revoked (Local)",
+          `Removed ${email} from local dashboard directory fallback.`
+        );
+      });
   };
 
   // States and handler for sending dynamic structured summaries to subscriber emails
@@ -5622,14 +5696,29 @@ ${advice}
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-wider text-slate-450 font-mono block mb-1.5">
+                        Registry Username <span className="text-rose-405">*</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-xs font-mono text-slate-550 select-none">@</span>
+                        <input
+                          type="text"
+                          placeholder="ashguth"
+                          value={subUsername}
+                          onChange={(e) => setSubUsername(e.target.value)}
+                          className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg pl-7 pr-3 py-2 text-xs text-slate-205 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition font-mono"
+                        />
+                      </div>
+                    </div>
                     <div>
                       <label className="text-[10px] uppercase font-bold tracking-wider text-slate-450 font-mono block mb-1.5">
                         Full Name <span className="text-rose-405">*</span>
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. John Doe"
+                        placeholder="e.g. Ash Guthrie"
                         value={subName}
                         onChange={(e) => setSubName(e.target.value)}
                         className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-205 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition"
@@ -5644,7 +5733,7 @@ ${advice}
                         placeholder="john.doe@company.com"
                         value={subEmail}
                         onChange={(e) => setSubEmail(e.target.value)}
-                        className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-205 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition"
+                        className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-205 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition font-mono"
                       />
                     </div>
                   </div>
@@ -5796,8 +5885,11 @@ ${advice}
                         className="flex items-start justify-between bg-slate-950/40 border border-slate-900/80 p-2.5 rounded-lg text-xs text-slate-300"
                       >
                         <div className="min-w-0 pr-2">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <strong className="text-white font-medium truncate">{sub.name}</strong>
+                            <span className="text-[10px] text-sky-400 font-mono font-semibold">
+                              @{sub.username || sub.name.toLowerCase().replace(/\s+/g, "")}
+                            </span>
                             <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1 py-0.5 rounded border border-slate-850">
                               {sub.role}
                             </span>
