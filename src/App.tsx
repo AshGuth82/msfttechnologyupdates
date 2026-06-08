@@ -568,6 +568,7 @@ export default function App() {
   // Regional headquarters map states
   const [selectedCityFilter, setSelectedCityFilter] = useState<string | null>(null);
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+  const [partnerSortBy, setPartnerSortBy] = useState<"name" | "rating" | "reviews">("rating");
 
   // Dynamic geospatial mapper helpers
   const getPartnersForCity = (cityId: string) => {
@@ -587,22 +588,35 @@ export default function App() {
     });
   };
 
-  const filteredPartnersList = selectedCityFilter
-    ? partners.filter(p => {
-        const loc = (p.location || "").toLowerCase();
-        if (selectedCityFilter === "sydney") return loc.includes("sydney") || loc.includes("nsw");
-        if (selectedCityFilter === "melbourne") return loc.includes("melbourne") || loc.includes("vic");
-        if (selectedCityFilter === "brisbane") return loc.includes("brisbane") || loc.includes("qld");
-        if (selectedCityFilter === "perth") return loc.includes("perth") || loc.includes("wa");
-        if (selectedCityFilter === "adelaide") return loc.includes("adelaide") || loc.includes("sa");
-        if (selectedCityFilter === "canberra") return loc.includes("canberra") || loc.includes("act");
-        if (selectedCityFilter === "darwin") return loc.includes("darwin") || loc.includes("nt");
-        if (selectedCityFilter === "hobart") return loc.includes("hobart") || loc.includes("tas") || loc.includes("tasmania");
-        if (selectedCityFilter === "auckland") return loc.includes("auckland");
-        if (selectedCityFilter === "wellington") return loc.includes("wellington");
-        return false;
-      })
-    : partners;
+  const filteredPartnersList = (() => {
+    const list = selectedCityFilter
+      ? partners.filter(p => {
+          const loc = (p.location || "").toLowerCase();
+          if (selectedCityFilter === "sydney") return loc.includes("sydney") || loc.includes("nsw");
+          if (selectedCityFilter === "melbourne") return loc.includes("melbourne") || loc.includes("vic");
+          if (selectedCityFilter === "brisbane") return loc.includes("brisbane") || loc.includes("qld");
+          if (selectedCityFilter === "perth") return loc.includes("perth") || loc.includes("wa");
+          if (selectedCityFilter === "adelaide") return loc.includes("adelaide") || loc.includes("sa");
+          if (selectedCityFilter === "canberra") return loc.includes("canberra") || loc.includes("act");
+          if (selectedCityFilter === "darwin") return loc.includes("darwin") || loc.includes("nt");
+          if (selectedCityFilter === "hobart") return loc.includes("hobart") || loc.includes("tas") || loc.includes("tasmania");
+          if (selectedCityFilter === "auckland") return loc.includes("auckland");
+          if (selectedCityFilter === "wellington") return loc.includes("wellington");
+          return false;
+        })
+      : partners;
+
+    return [...list].sort((a, b) => {
+      if (partnerSortBy === "name") {
+        return a.name.localeCompare(b.name);
+      }
+      if (partnerSortBy === "reviews") {
+        return (b.reviews?.length || 0) - (a.reviews?.length || 0);
+      }
+      // default: rating highest to lowest
+      return b.rating - a.rating;
+    });
+  })();
 
   const handlePromotePartner = (id: string) => {
     setPartners(current => {
@@ -7759,13 +7773,52 @@ ${advice}
               
               {/* LEFT COLUMN: Partners directory (7 col) */}
               <div className="lg:col-span-7 flex flex-col gap-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                  <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
-                    Authorized Partner Registry Feed ({filteredPartnersList.length})
-                  </h3>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    {selectedCityFilter ? `Filtered by city: ${CITIES_HQ.find(c => c.id === selectedCityFilter)?.name}` : "Select a partner to audit reviews"}
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-850">
+                  <div>
+                    <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
+                      Authorized Partner Registry Feed ({filteredPartnersList.length})
+                    </h3>
+                    <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">
+                      {selectedCityFilter ? `Filtered by city: ${CITIES_HQ.find(c => c.id === selectedCityFilter)?.name}` : "Select a partner to audit reviews"}
+                    </span>
+                  </div>
+
+                  {/* Directory Sorting Controls */}
+                  <div className="flex items-center gap-2 font-mono text-[10px] shrink-0">
+                    <span className="text-slate-400">Sort by:</span>
+                    <div className="inline-flex rounded-lg p-0.5 bg-slate-950/60 border border-slate-800">
+                      <button
+                        onClick={() => setPartnerSortBy("rating")}
+                        className={`px-2 py-1 rounded text-[9px] font-bold cursor-pointer transition ${
+                          partnerSortBy === "rating"
+                            ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                            : "text-slate-500 hover:text-slate-350 border border-transparent"
+                        }`}
+                      >
+                        Rating
+                      </button>
+                      <button
+                        onClick={() => setPartnerSortBy("name")}
+                        className={`px-2 py-1 rounded text-[9px] font-bold cursor-pointer transition ${
+                          partnerSortBy === "name"
+                            ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                            : "text-slate-500 hover:text-slate-350 border border-transparent"
+                        }`}
+                      >
+                        A-Z
+                      </button>
+                      <button
+                        onClick={() => setPartnerSortBy("reviews")}
+                        className={`px-2 py-1 rounded text-[9px] font-bold cursor-pointer transition ${
+                          partnerSortBy === "reviews"
+                            ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                            : "text-slate-500 hover:text-slate-350 border border-transparent"
+                        }`}
+                      >
+                        Reviews
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
@@ -7774,128 +7827,140 @@ ${advice}
                       No certified partners registered under the {CITIES_HQ.find(c => c.id === selectedCityFilter)?.name} hub.
                     </div>
                   ) : (
-                    filteredPartnersList.map((partner) => {
-                    const isSpotlight = spotlightPartner.id === partner.id;
-                    const isReviewsSelected = activeReviewId === partner.id;
-                    
-                    return (
-                      <div
-                        key={partner.id}
-                        className={`p-4 rounded-xl border relative transition duration-155 flex flex-col justify-between ${
-                          isDark 
-                            ? isSpotlight 
-                              ? "bg-slate-950/90 border-emerald-500/30 ring-1 ring-emerald-500/10"
-                              : "bg-[#111827] border-slate-800/80 hover:border-slate-700"
-                            : isSpotlight
-                              ? "bg-emerald-500/5 border-emerald-500/30 shadow-sm"
-                              : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
-                        }`}
-                      >
-                        <div>
-                          {/* Card top row */}
-                          <div className="flex items-start justify-between gap-2.5 mb-2">
+                    <AnimatePresence mode="popLayout">
+                      {filteredPartnersList.map((partner) => {
+                        const isSpotlight = spotlightPartner.id === partner.id;
+                        const isReviewsSelected = activeReviewId === partner.id;
+                        
+                        return (
+                          <motion.div
+                            layout
+                            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.96, y: -12 }}
+                            transition={{ 
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 26,
+                              opacity: { duration: 0.18 }
+                            }}
+                            key={partner.id}
+                            className={`p-4 rounded-xl border relative flex flex-col justify-between transition-colors duration-150 ${
+                              isDark 
+                                ? isSpotlight 
+                                  ? "bg-slate-950/90 border-emerald-500/30 ring-1 ring-emerald-500/10"
+                                  : "bg-[#111827] border-slate-800/80 hover:border-slate-700"
+                                : isSpotlight
+                                  ? "bg-emerald-500/5 border-emerald-500/30 shadow-sm"
+                                  : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                            }`}
+                          >
                             <div>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <h4 className={`text-sm font-extrabold font-sans leading-none ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-                                  {partner.name}
-                                </h4>
-                                {isSpotlight && (
-                                  <span className="inline-flex items-center gap-0.5 text-[8px] font-bold font-mono tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 uppercase shrink-0">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-450 animate-pulse inline-block shrink-0"></span>
-                                    <span>Spotlight</span>
+                              {/* Card top row */}
+                              <div className="flex items-start justify-between gap-2.5 mb-2">
+                                <div>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <h4 className={`text-sm font-extrabold font-sans leading-none ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                                      {partner.name}
+                                    </h4>
+                                    {isSpotlight && (
+                                      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold font-mono tracking-wide px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 uppercase shrink-0">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-450 animate-pulse inline-block shrink-0"></span>
+                                        <span>Spotlight</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 font-mono mt-1 block">
+                                    {partner.location}
                                   </span>
+                                </div>
+
+                                {/* Ratings stars */}
+                                <div className="flex items-center gap-1 bg-slate-950/40 border border-slate-850 px-2 py-0.5 rounded-lg shrink-0">
+                                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                                  <span className="text-xs font-bold font-mono text-slate-200">{partner.rating.toFixed(1)}</span>
+                                  <span className="text-[10px] text-slate-500 font-mono">({partner.ratingCount})</span>
+                                </div>
+                              </div>
+
+                              {/* Tag badges */}
+                              <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
+                                {partner.specialization.map((spec, idx) => (
+                                  <span
+                                    key={idx}
+                                    className={`text-[9px] font-mono leading-none tracking-tight font-semibold px-1.5 py-0.5 rounded border ${
+                                      isDark 
+                                        ? "bg-sky-500/10 border-sky-500/15 text-sky-400" 
+                                        : "bg-sky-100/70 border-sky-200 text-sky-800"
+                                    }`}
+                                  >
+                                    {spec}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* Description */}
+                              <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                                {partner.description}
+                              </p>
+                            </div>
+
+                            {/* Bottom Actions Row */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/40 mt-1">
+                              
+                              {/* Homepage URL click and email click */}
+                              <div className="flex items-center gap-3">
+                                {partner.websiteUrl ? (
+                                  <a
+                                    href={partner.websiteUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs font-bold font-mono text-sky-400 hover:text-sky-305 hover:underline transition duration-150"
+                                    title={`Navigate to official homepage of ${partner.name}`}
+                                  >
+                                    <Globe className="w-3.5 h-3.5 text-emerald-450" />
+                                    <span>Official Homepage</span>
+                                    <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                                  </a>
+                                ) : (
+                                  <span className="text-[10px] text-slate-555 font-mono">No homepage registered</span>
                                 )}
                               </div>
-                              <span className="text-[10px] text-slate-400 font-mono mt-1 block">
-                                {partner.location}
-                              </span>
+
+                              {/* Management Controls */}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    setActiveReviewId(isReviewsSelected ? null : partner.id);
+                                  }}
+                                  className={`p-1.5 px-3 rounded-lg border text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
+                                    isReviewsSelected
+                                      ? "bg-slate-800 border-slate-705 text-white"
+                                      : isDark
+                                        ? "bg-slate-900 border-slate-800 text-slate-350 hover:bg-slate-800"
+                                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs"
+                                  }`}
+                                  title="Audit customer statements and write evaluations"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  <span>Reviews ({partner.reviews.length})</span>
+                                </button>
+
+                                {!isSpotlight && (
+                                  <button
+                                    onClick={() => handlePromotePartner(partner.id)}
+                                    className="p-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] cursor-pointer transition shadow"
+                                  >
+                                    Spotlight
+                                  </button>
+                                )}
+                              </div>
+
                             </div>
-
-                            {/* Ratings stars */}
-                            <div className="flex items-center gap-1 bg-slate-950/40 border border-slate-850 px-2 py-0.5 rounded-lg shrink-0">
-                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                              <span className="text-xs font-bold font-mono text-slate-200">{partner.rating.toFixed(1)}</span>
-                              <span className="text-[10px] text-slate-500 font-mono">({partner.ratingCount})</span>
-                            </div>
-                          </div>
-
-                          {/* Tag badges */}
-                          <div className="flex flex-wrap gap-1.5 mt-2 mb-3">
-                            {partner.specialization.map((spec, idx) => (
-                              <span
-                                key={idx}
-                                className={`text-[9px] font-mono leading-none tracking-tight font-semibold px-1.5 py-0.5 rounded border ${
-                                  isDark 
-                                    ? "bg-sky-500/10 border-sky-500/15 text-sky-400" 
-                                    : "bg-sky-100/70 border-sky-200 text-sky-800"
-                                }`}
-                              >
-                                {spec}
-                              </span>
-                            ))}
-                          </div>
-
-                          {/* Description */}
-                          <p className={`text-xs leading-relaxed mb-3 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
-                            {partner.description}
-                          </p>
-                        </div>
-
-                        {/* Bottom Actions Row */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/40 mt-1">
-                          
-                          {/* Homepage URL click and email click */}
-                          <div className="flex items-center gap-3">
-                            {partner.websiteUrl ? (
-                              <a
-                                href={partner.websiteUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-xs font-bold font-mono text-sky-400 hover:text-sky-305 hover:underline transition duration-150"
-                                title={`Navigate to official homepage of ${partner.name}`}
-                              >
-                                <Globe className="w-3.5 h-3.5 text-emerald-450" />
-                                <span>Official Homepage</span>
-                                <ExternalLink className="w-2.5 h-2.5 shrink-0" />
-                              </a>
-                            ) : (
-                              <span className="text-[10px] text-slate-550 font-mono">No homepage registered</span>
-                            )}
-                          </div>
-
-                          {/* Management Controls */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                setActiveReviewId(isReviewsSelected ? null : partner.id);
-                              }}
-                              className={`p-1.5 px-3 rounded-lg border text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
-                                isReviewsSelected
-                                  ? "bg-slate-800 border-slate-705 text-white"
-                                  : isDark
-                                    ? "bg-slate-900 border-slate-800 text-slate-350 hover:bg-slate-800"
-                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs"
-                              }`}
-                              title="Audit customer statements and write evaluations"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                              <span>Reviews ({partner.reviews.length})</span>
-                            </button>
-
-                            {!isSpotlight && (
-                              <button
-                                onClick={() => handlePromotePartner(partner.id)}
-                                className="p-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] cursor-pointer transition shadow"
-                              >
-                                Spotlight
-                              </button>
-                            )}
-                          </div>
-
-                        </div>
-                      </div>
-                    );
-                  })
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
                   )}
                 </div>
               </div>
