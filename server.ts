@@ -626,61 +626,61 @@ app.get("/api/news", async (req, res) => {
 
 // 1.5. Scrape partner info from Microsoft Partner Center or Web Search Grounding
 app.post("/api/scrape-partner", async (req, res) => {
-  const { queryOrUrl } = req.body;
-  if (!queryOrUrl || queryOrUrl.trim() === "") {
-    return res.status(400).json({ error: "Partner name, ID, or Partner Center URL is required" });
-  }
-
-  const ai = getGeminiClient();
-  if (!ai) {
-    // Elegant local simulation based on standard partner domains or queries
-    const qLower = queryOrUrl.toLowerCase();
-    let name = "Microsoft Solutions Specialist";
-    let location = "Sydney, NSW (ANZ HQ)";
-    let tier = "Microsoft Solutions Partner";
-    let specializations = ["Modern Work", "Azure Infrastructure", "Security"];
-    let overview = "Standard certified Microsoft Systems Integrator and Cloud Solutions Provider in the ANZ regional market.";
-    let website = "https://partner.microsoft.com/";
-    let partnerId = "MPID-" + Math.floor(1000000 + Math.random() * 9000000);
-
-    if (qLower.includes("data#3") || qLower.includes("data3")) {
-      name = "Data#3 Limited";
-      location = "Brisbane, QLD (Offices Nationwide)";
-      tier = "Microsoft Solutions Partner (Designated in all 6 areas)";
-      specializations = ["Modern Work", "Security", "Azure Cloud Infrastructure", "Data & AI", "Education Solutions"];
-      overview = "Data#3 is Australia's leading Microsoft partner, helping customers to design, deploy, and manage complex Microsoft enterprise environments.";
-      website = "https://www.data3.com/";
-    } else if (qLower.includes("insight")) {
-      name = "Insight Enterprises";
-      location = "Sydney, NSW (Offices Nationwide)";
-      tier = "Azure Expert MSP & Solutions Partner";
-      specializations = ["Digital & App Innovation", "Cloud Migration", "Software Asset Management", "M365 Copilot Enablement"];
-      overview = "Insight is a global integrator and commercial software advisor, specializing in licensing optimization, hardware procurement, and cloud advisory.";
-      website = "https://au.insight.com/";
-    } else if (qLower.includes("softwareone")) {
-      name = "SoftwareOne ANZ";
-      location = "Melbourne, VIC";
-      tier = "Microsoft Gold & Strategic Licensing Partner";
-      specializations = ["Enterprise Agreement Advisory", "FinOps", "Azure Governance", "Cloud Spend Optimization"];
-      overview = "SoftwareOne is a leading end-to-end software and cloud technology solutions provider, specialising in licensing diagnostics and global enterprise advisories.";
-      website = "https://www.softwareone.com/";
+  try {
+    const { queryOrUrl } = req.body;
+    if (!queryOrUrl || queryOrUrl.trim() === "") {
+      return res.status(400).json({ error: "Partner name, ID, or Partner Center URL is required" });
     }
 
-    return res.json({
-      name,
-      location,
-      tier,
-      specializations,
-      overview,
-      website,
-      partnerId,
-      success: true,
-      isLive: false,
-      note: "Constructed using high-fidelity local catalog matching. (Configure a valid GEMINI_API_KEY to activate live search grounding)"
-    });
-  }
+    const ai = getGeminiClient();
+    if (!ai) {
+      // Elegant local simulation based on standard partner domains or queries
+      const qLower = queryOrUrl.toLowerCase();
+      let name = "Microsoft Solutions Specialist";
+      let location = "Sydney, NSW (ANZ HQ)";
+      let tier = "Microsoft Solutions Partner";
+      let specializations = ["Modern Work", "Azure Infrastructure", "Security"];
+      let overview = "Standard certified Microsoft Systems Integrator and Cloud Solutions Provider in the ANZ regional market.";
+      let website = "https://partner.microsoft.com/";
+      let partnerId = "MPID-" + Math.floor(1000000 + Math.random() * 9000000);
 
-  try {
+      if (qLower.includes("data#3") || qLower.includes("data3")) {
+        name = "Data#3 Limited";
+        location = "Brisbane, QLD (Offices Nationwide)";
+        tier = "Microsoft Solutions Partner (Designated in all 6 areas)";
+        specializations = ["Modern Work", "Security", "Azure Cloud Infrastructure", "Data & AI", "Education Solutions"];
+        overview = "Data#3 is Australia's leading Microsoft partner, helping customers to design, deploy, and manage complex Microsoft enterprise environments.";
+        website = "https://www.data3.com/";
+      } else if (qLower.includes("insight")) {
+        name = "Insight Enterprises";
+        location = "Sydney, NSW (Offices Nationwide)";
+        tier = "Azure Expert MSP & Solutions Partner";
+        specializations = ["Digital & App Innovation", "Cloud Migration", "Software Asset Management", "M365 Copilot Enablement"];
+        overview = "Insight is a global integrator and commercial software advisor, specializing in licensing optimization, hardware procurement, and cloud advisory.";
+        website = "https://au.insight.com/";
+      } else if (qLower.includes("softwareone")) {
+        name = "SoftwareOne ANZ";
+        location = "Melbourne, VIC";
+        tier = "Microsoft Gold & Strategic Licensing Partner";
+        specializations = ["Enterprise Agreement Advisory", "FinOps", "Azure Governance", "Cloud Spend Optimization"];
+        overview = "SoftwareOne is a leading end-to-end software and cloud technology solutions provider, specialising in licensing diagnostics and global enterprise advisories.";
+        website = "https://www.softwareone.com/";
+      }
+
+      return res.json({
+        name,
+        location,
+        tier,
+        specializations,
+        overview,
+        website,
+        partnerId,
+        success: true,
+        isLive: false,
+        note: "Constructed using high-fidelity local catalog matching. (Configure a valid GEMINI_API_KEY to activate live search grounding)"
+      });
+    }
+
     console.log(`Live Scrape/Lookup requested for: "${queryOrUrl}"`);
     const prompt = `You are a professional Microsoft Partner Intelligence Scraper. 
 Your goal is to parse and retrieve verified company details about the Microsoft Partner specified in the query/URL.
@@ -705,8 +705,7 @@ CRITICAL: Return ONLY raw JSON starting with { and ending with }. No markdown co
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json"
+        tools: [{ googleSearch: {} }] // Removed responseMimeType to resolve incompatibility with search grounding tools causing API failure
       }
     });
 
@@ -716,7 +715,16 @@ CRITICAL: Return ONLY raw JSON starting with { and ending with }. No markdown co
     }
 
     const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    const result = JSON.parse(cleanedText);
+    
+    // Fallback search indexer bounds matching to extract clean JSON matching pattern
+    let cleanedJSON = cleanedText;
+    const jsonStartIndex = cleanedText.indexOf("{");
+    const jsonEndIndex = cleanedText.lastIndexOf("}");
+    if (jsonStartIndex !== -1 && jsonEndIndex !== -1 && jsonEndIndex > jsonStartIndex) {
+      cleanedJSON = cleanedText.substring(jsonStartIndex, jsonEndIndex + 1);
+    }
+
+    const result = JSON.parse(cleanedJSON);
 
     res.json({
       ...result,
