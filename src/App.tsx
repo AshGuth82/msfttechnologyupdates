@@ -865,6 +865,7 @@ ${advice}
   const [compareIndex, setCompareIndex] = useState<"none" | "nasdaq" | "sp500">("none");
   const [showEventMarkers, setShowEventMarkers] = useState<boolean>(true);
   const [historicalDataExpanded, setHistoricalDataExpanded] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   // LinkedIn Share Dialog State
   const [linkedInShareArticle, setLinkedInShareArticle] = useState<Article | null>(null);
@@ -1095,6 +1096,143 @@ ${advice}
     setZoomRange(null);
     setZoomRefAreaLeft(null);
     setZoomRefAreaRight(null);
+  };
+
+  const exportChartToPng = async () => {
+    setIsExporting(true);
+    try {
+      const container = document.getElementById("msft-interactive-chart");
+      if (!container) {
+        alert("Chart element container not found.");
+        setIsExporting(false);
+        return;
+      }
+      
+      const svgElement = container.querySelector("svg");
+      if (!svgElement) {
+        alert("Chart vector data is currently loading or unrendered.");
+        setIsExporting(false);
+        return;
+      }
+
+      // Clone and prepare SVG structure for XML serialization
+      const svgCopy = svgElement.cloneNode(true) as SVGSVGElement;
+      svgCopy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+      // Inject explicit coloring & branding styles directly to prevent external layout leakage
+      const styleNode = document.createElement("style");
+      styleNode.textContent = `
+        text {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+          fill: ${isDark ? "#94a3b8" : "#475569"} !important;
+        }
+        .recharts-cartesian-axis-tick-value {
+          fill: ${isDark ? "#94a3b8" : "#475569"} !important;
+          font-size: 10px !important;
+        }
+        .recharts-legend-item-text {
+          fill: ${isDark ? "#e2e8f0" : "#0f172a"} !important;
+          font-size: 11px !important;
+        }
+      `;
+      svgCopy.appendChild(styleNode);
+
+      // Serialize to standard XML String and create local secure Blob URL
+      const svgString = new XMLSerializer().serializeToString(svgCopy);
+      const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+      const blobURL = window.URL.createObjectURL(svgBlob);
+
+      // Load into off-screen image element for canvas transfer
+      const image = new Image();
+      image.onload = () => {
+        // Render at 2.5x standard vector bounding box to ensure pristine Ultra HD resolution for executive presentations
+        const scale = 2.5; 
+        const containerWidth = svgElement.clientWidth || svgElement.getBoundingClientRect().width || 800;
+        const containerHeight = svgElement.clientHeight || svgElement.getBoundingClientRect().height || 320;
+        
+        const width = containerWidth * scale;
+        const height = containerHeight * scale;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          setIsExporting(false);
+          return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        // Solid theme-matching background (pristine look)
+        ctx.fillStyle = isDark ? "#0b1329" : "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+
+        // Elegant inner border bounding frame
+        ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)";
+        ctx.lineWidth = 1 * scale;
+        ctx.strokeRect(10 * scale, 10 * scale, width - (20 * scale), height - (20 * scale));
+
+        // Dynamically compute positive performance trend directional state
+        const activeDataset = getDisplayedChartData() || [];
+        const startingPrice = activeDataset.length > 0 ? activeDataset[0].price : 417.62;
+        const endPrice = activeDataset.length > 0 ? activeDataset[activeDataset.length - 1].price : liveMsftPrice;
+        const isTrendPositive = (endPrice - startingPrice) >= 0;
+
+        // Draw executive corporate headers
+        ctx.fillStyle = isDark ? "#38bdf8" : "#0284c7"; // Cyan primary dark or clean sky light
+        ctx.font = `bold ${9 * scale}px sans-serif`;
+        ctx.fillText("MICROSOFT CORPORATE INTELLIGENCE", 25 * scale, 35 * scale);
+
+        ctx.fillStyle = isDark ? "#e2e8f0" : "#1e293b";
+        ctx.font = `bold ${13 * scale}px sans-serif`;
+        ctx.fillText(`MSFT Stock Performance Trend (${msftTimeframe})`, 25 * scale, 55 * scale);
+
+        ctx.fillStyle = isDark ? "#64748b" : "#64748b";
+        ctx.font = `${8 * scale}px sans-serif`;
+        const dateStr = new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+        ctx.fillText(`Executive Briefing Ledger Chart • Generated: ${dateStr} • Status: Commercial Report Draft`, 25 * scale, 72 * scale);
+
+        // Decorative direction strip
+        ctx.fillStyle = isTrendPositive ? "#10b981" : "#f43f5e";
+        ctx.fillRect(25 * scale, 78 * scale, 45 * scale, 2.5 * scale);
+
+        // Render target chart onto high-res canvas path
+        const chartOffsetY = 90 * scale;
+        const chartHeight = height - chartOffsetY - (30 * scale);
+        ctx.drawImage(image, 20 * scale, chartOffsetY, width - (40 * scale), chartHeight);
+
+        // Legal & source watermark footer
+        ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.35)";
+        ctx.font = `italic ${7.5 * scale}px monospace`;
+        ctx.fillText("Source: Live MSFT Corporate Intelligence Systems Division (2026)", 25 * scale, height - 18 * scale);
+
+        // Convert and trigger automatic download stream
+        const pngURL = canvas.toDataURL("image/png");
+        const downloadLink = document.createElement("a");
+        downloadLink.href = pngURL;
+        downloadLink.download = `MSFT_Stock_Chart_${msftTimeframe}_Executive_Briefing.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        window.URL.revokeObjectURL(blobURL);
+        setIsExporting(false);
+      };
+
+      image.onerror = (e) => {
+        console.error("SVG Image rendering failed for Canvas drawing:", e);
+        alert("Failed to render high-resolution chart format due to vector structure parsing.");
+        setIsExporting(false);
+      };
+      
+      image.src = blobURL;
+    } catch (err) {
+      console.error("Error executing dynamic SVG export sequence:", err);
+      setIsExporting(false);
+    }
   };
 
   useEffect(() => {
@@ -3510,6 +3648,21 @@ ${advice}
                       <span className="text-xs">{showEventMarkers ? "🔔" : "🔕"}</span>
                       <span>{showEventMarkers ? "News Markers" : "Markers Hide"}</span>
                     </button>
+
+                    {/* Export High-Resolution Chart PNG */}
+                    <button
+                      onClick={exportChartToPng}
+                      disabled={isExporting}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                        isExporting
+                          ? "opacity-60 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400"
+                          : `${isDark ? "bg-sky-500/10 border-sky-500/25 text-sky-400 hover:bg-sky-500/20 hover:text-sky-350" : "bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100"}`
+                      }`}
+                      title="Export high-resolution stock chart and annotations as PNG image for slides or reporting"
+                    >
+                      <Download className={`w-3.5 h-3.5 ${isExporting ? "animate-spin" : ""}`} />
+                      <span>{isExporting ? "Exporting..." : "Export Chart PNG"}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -3518,7 +3671,7 @@ ${advice}
                   
                   {/* Google Finance Styled Interactive AreaChart */}
                   <div className="lg:col-span-8 w-full">
-                    <div className="h-72 sm:h-80 w-full text-xs font-mono select-none relative">
+                    <div id="msft-interactive-chart" className="h-72 sm:h-80 w-full text-xs font-mono select-none relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
                           data={getDisplayedChartData()}
