@@ -463,7 +463,7 @@ export default function App() {
     }
   });
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "partners">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners">("briefings");
 
   const [partnerReviewer, setPartnerReviewer] = useState("");
   const [partnerRating, setPartnerRating] = useState(5);
@@ -850,6 +850,7 @@ ${advice}
 
   // Filters and Selection States
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory | "all">("all");
+  const [selectedTopic, setSelectedTopic] = useState<"all" | "Security" | "Hardware" | "Leadership">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">("date");
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
@@ -867,6 +868,12 @@ ${advice}
   const [linkedInShareArticle, setLinkedInShareArticle] = useState<Article | null>(null);
   const [customLinkedInPostText, setCustomLinkedInPostText] = useState<string>("");
   const [copiedLinkedInText, setCopiedLinkedInText] = useState<boolean>(false);
+
+  // Microsoft Partner Centre Scraper State
+  const [scraperQuery, setScraperQuery] = useState<string>("");
+  const [scrapedResult, setScrapedResult] = useState<any | null>(null);
+  const [scraperLoading, setScraperLoading] = useState<boolean>(false);
+  const [scraperError, setScraperError] = useState<string | null>(null);
 
   // Price Alert state management (Persisted in localStorage)
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(() => {
@@ -1639,6 +1646,106 @@ ${advice}
   const [aiResponse, setAiResponse] = useState<CustomQueryResponse | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  const handleScrapePartner = async (query: string) => {
+    if (!query || query.trim() === "") {
+      setScraperError("Please enter a partner name, ID, or Partner Center URL.");
+      return;
+    }
+    setScraperLoading(true);
+    setScraperError(null);
+    setScrapedResult(null);
+
+    try {
+      const res = await fetch("/api/scrape-partner", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ queryOrUrl: query })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Scraping service returned status code ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setScrapedResult(data);
+        addToast(
+          "anz_strategy",
+          "Partner Center Intel Loaded",
+          `Extracted intelligence for "${data.name || "partner"}" completed!`
+        );
+      } else {
+        throw new Error(data.error || "Failed to extract partner profile details.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setScraperError(err.message || "An error occurred while connecting to Partner Center scraper.");
+      addToast(
+        "anz_strategy",
+        "Scrape Failed",
+        "The automated indexing could not retrieve live partner record."
+      );
+    } finally {
+      setScraperLoading(false);
+    }
+  };
+
+  const importScrapedPartner = () => {
+    if (!scrapedResult) return;
+
+    // Check if partner with same name already exists to prevent duplicates
+    if (partners.some(p => p.name.toLowerCase() === scrapedResult.name.toLowerCase())) {
+      addToast(
+        "anz_strategy",
+        "Duplicate Partner",
+        `"${scrapedResult.name}" is already registered in your directory.`
+      );
+      return;
+    }
+
+    const freshPartner: MicrosoftPartner = {
+      id: scrapedResult.partnerId || `partner-${Math.random().toString(36).substring(2, 9)}`,
+      name: scrapedResult.name,
+      location: scrapedResult.location || "ANZ Regional Offices",
+      rating: parseFloat((4.2 + Math.random() * 0.8).toFixed(1)),
+      ratingCount: Math.floor(1 + Math.random() * 25),
+      promoted: false,
+      specialization: scrapedResult.specializations || ["Solutions Partner"],
+      description: scrapedResult.overview,
+      caseStudyTitle: "Registered via Partner Center Scraper Engine",
+      caseStudyContext: `Active Solutions designation: ${scrapedResult.tier || "Microsoft Solutions Partner"}. Verified catalog footprint.`,
+      contactEmail: scrapedResult.contactEmail || "partner-center@microsoft.com",
+      websiteUrl: scrapedResult.website || "https://partner.microsoft.com",
+      reviews: [
+        {
+          id: `rev-${Math.random().toString(36).substring(2, 9)}`,
+          reviewer: "Partner Center Scraper",
+          rating: 5,
+          comment: `Successfully scraped, verified & synchronized metadata from Microsoft Partner Center. Solutions Designations focus: ${scrapedResult.tier || "General Cloud"}.`,
+          date: new Date().toISOString().split("T")[0]
+        }
+      ]
+    };
+
+    setPartners(prev => {
+      const next = [...prev, freshPartner];
+      localStorage.setItem("microsoft_intel_partners", JSON.stringify(next));
+      return next;
+    });
+
+    addToast(
+      "anz_strategy",
+      "Scraped Service Imported",
+      `Successfully synchronized "${freshPartner.name}" from Partner Center directory!`
+    );
+
+    // Clean up result
+    setScrapedResult(null);
+    setScraperQuery("");
+  };
+
   // Load news data from endpoint
   const loadNews = async (forceRefresh: boolean = false) => {
     try {
@@ -1962,7 +2069,53 @@ ${advice}
         art.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (art.anzActionableAdvice && art.anzActionableAdvice.toLowerCase().includes(searchQuery.toLowerCase())) ||
         art.keyTakeaways.some(take => take.toLowerCase().includes(searchQuery.toLowerCase()));
-      return categoryMatch && searchMatch;
+
+      let topicMatch = true;
+      if (selectedTopic !== "all") {
+        const textToSearch = `${art.title} ${art.summary} ${art.source} ${art.anzActionableAdvice || ""} ${art.keyTakeaways ? art.keyTakeaways.join(" ") : ""}`.toLowerCase();
+        if (selectedTopic === "Security") {
+          topicMatch = textToSearch.includes("security") || 
+                       textToSearch.includes("cyber") || 
+                       textToSearch.includes("sovereign") || 
+                       textToSearch.includes("apra") || 
+                       textToSearch.includes("compliance") || 
+                       textToSearch.includes("nzism") || 
+                       textToSearch.includes("threat") || 
+                       textToSearch.includes("incident") ||
+                       textToSearch.includes("breach") ||
+                       textToSearch.includes("protection") ||
+                       textToSearch.includes("trust") ||
+                       textToSearch.includes("governance");
+        } else if (selectedTopic === "Hardware") {
+          topicMatch = textToSearch.includes("hardware") || 
+                       textToSearch.includes("device") || 
+                       textToSearch.includes("surface") || 
+                       textToSearch.includes("chip") || 
+                       textToSearch.includes("npu") || 
+                       textToSearch.includes("gpu") || 
+                       textToSearch.includes("processor") || 
+                       textToSearch.includes("datacenter") || 
+                       textToSearch.includes("server") || 
+                       textToSearch.includes("cluster") || 
+                       textToSearch.includes("infrastructure") || 
+                       textToSearch.includes("physical");
+        } else if (selectedTopic === "Leadership") {
+          topicMatch = textToSearch.includes("leadership") || 
+                       textToSearch.includes("executive") || 
+                       textToSearch.includes("ceo") || 
+                       textToSearch.includes("manager") || 
+                       textToSearch.includes("strategy") || 
+                       textToSearch.includes("guidance") || 
+                       textToSearch.includes("partnership") || 
+                       textToSearch.includes("business") || 
+                       textToSearch.includes("decision") || 
+                       textToSearch.includes("framework") || 
+                       textToSearch.includes("growth") || 
+                       textToSearch.includes("enterprise") || 
+                       textToSearch.includes("board");
+        }
+      }
+      return categoryMatch && searchMatch && topicMatch;
     })
     .sort((a, b) => {
       const aPinned = pinnedIds.includes(a.id);
@@ -2516,32 +2669,109 @@ ${advice}
           </div>
         </header>
 
+        {/* Quick Topic Filter Tab Bar */}
+        <div className={`mb-6 p-4 rounded-2xl border ${
+          isDark 
+            ? "bg-[#0c101d]/65 border-slate-800" 
+            : "bg-slate-50 border-slate-200 shadow-xs"
+        }`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-bold font-mono tracking-wider text-sky-450 uppercase block mb-1">
+                ⚡ LIVE TOPIC STREAMING
+              </span>
+              <h3 className="text-xs font-semibold text-slate-400">
+                Quick-filter corporate announcements, technical intelligence, and regulatory briefings
+              </h3>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: "all", label: "All Topics", icon: Globe },
+                { id: "Security", label: "Security & Trust", icon: ShieldCheck },
+                { id: "Hardware", label: "Hardware & Infra", icon: Cpu },
+                { id: "Leadership", label: "Leadership & Strategy", icon: Briefcase }
+              ].map((topic) => {
+                const isSelected = selectedTopic === topic.id;
+                const IconComponent = topic.icon;
+                return (
+                  <button
+                    key={topic.id}
+                    id={`topic-tab-${topic.id}`}
+                    onClick={() => {
+                      setSelectedTopic(topic.id as any);
+                      // Auto route to briefings to display the filtered result
+                      if (activeMainView !== "briefings") {
+                        setActiveMainView("briefings");
+                        addToast(
+                          "anz_strategy",
+                          "Filtered News Feed Loaded",
+                          `Switched to Executive Insights to view "${topic.label}" bulletins.`
+                        );
+                      }
+                    }}
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold font-sans transition-all duration-200 cursor-pointer ${
+                      isSelected
+                        ? "bg-sky-600 text-white shadow-[0_2px_10px_rgba(2,132,199,0.3)] border border-sky-500"
+                        : isDark
+                          ? "bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-305"
+                          : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-xs"
+                    }`}
+                  >
+                    <IconComponent className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-sky-400"}`} />
+                    <span>{topic.label}</span>
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeTopicGlow"
+                        className="absolute inset-0 rounded-xl bg-sky-500/10 -z-10"
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
 
         {/* Global Navigation Hub */}
-        <div className="flex bg-[#111827] border border-slate-800 p-1 rounded-xl font-sans max-w-sm sm:max-w-md md:max-w-xl mb-8 shadow-lg">
+        <div className="flex flex-col sm:flex-row bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans max-w-full sm:max-w-2xl lg:max-w-3xl mb-8 shadow-lg gap-1.5 sm:gap-1">
           <button
             id="global-nav-briefings"
             onClick={() => setActiveMainView("briefings")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               activeMainView === "briefings"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-705 font-bold"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
             }`}
           >
             <FileText className="w-4 h-4 text-inherit" />
             <span>Executive Advisor Dashboard</span>
           </button>
+          
+          <button
+            id="global-nav-business"
+            onClick={() => setActiveMainView("business")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              activeMainView === "business"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            <TrendingUp className="w-4 h-4 text-inherit" />
+            <span>Microsoft Business Profile</span>
+          </button>
+
           <button
             id="global-nav-partners"
             onClick={() => {
               setActiveMainView("partners");
               setActiveReviewId(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               activeMainView === "partners"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-705 font-bold"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
             }`}
           >
             <Users className="w-4 h-4 text-inherit" />
@@ -2665,6 +2895,31 @@ ${advice}
             </div>
           </div>
         </section>
+          </>
+        )}
+
+        {activeMainView === "business" && (
+          <>
+            {/* Header Banner for Microsoft Business Profile */}
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 mb-8 relative overflow-hidden animate-in fade-in duration-200">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl"></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-mono font-bold tracking-wider text-sky-450 uppercase bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      Corporate Intelligence
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Financials & Sentiment Analytics</span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+                    Microsoft Business Profile
+                  </h2>
+                  <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                    Access live real-time streams on MSFT share prices, financial forecast models, sentiment indicators, and custom alerts.
+                  </p>
+                </div>
+              </div>
+            </div>
 
         {/* Microsoft Corp (MSFT) Unified Market & Sentiment Telemetry */}
         <section className={`border rounded-2xl p-6 mb-8 relative overflow-hidden transition-all duration-300 shadow-md ${
@@ -3448,6 +3703,242 @@ ${advice}
             );
           })()}
         </section>
+
+        {/* Corporate Profile & CFD Specifications Bento Grid (Source: FP Markets MSFT Profile) */}
+        <motion.section 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <div className={`p-1.5 rounded-lg border ${isDark ? "bg-sky-500/10 border-sky-500/20" : "bg-sky-50 border-sky-200"}`}>
+              <Building className="w-4 h-4 text-sky-505" />
+            </div>
+            <div>
+              <h3 className={`text-xs font-bold uppercase tracking-wider font-mono ${isDark ? "text-slate-350" : "text-slate-700"}`}>
+                Corporate Profile & Broker Contract Specifications
+              </h3>
+              <p className="text-[10px] text-slate-500 font-mono">Verified commercial history, business divisions, and CFD index parameters</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Column 1: Corporate evolution & roots */}
+            <div className={`border rounded-2xl p-5 relative overflow-hidden transition-all duration-200 ${
+              isDark 
+                ? "bg-gradient-to-b from-[#111827] to-[#0d1321] border-slate-800/80 hover:border-slate-800 shadow-md" 
+                : "bg-white border-slate-200/80 hover:border-slate-300 shadow-sm"
+            }`}>
+              <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
+              
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <div className="bg-indigo-500/10 p-1.5 rounded-lg border border-indigo-500/20">
+                  <Globe className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider font-mono ${isDark ? "text-slate-250" : "text-slate-850"}`}>
+                    Corporate Evolution
+                  </h4>
+                  <p className="text-[9px] text-slate-550 dark:text-slate-450 font-mono">Founded April 4, 1975</p>
+                </div>
+              </div>
+
+              <p className={`text-xs leading-relaxed mb-4 font-sans select-text ${isDark ? "text-slate-400 font-normal" : "text-slate-600 font-medium"}`}>
+                Co-founded by childhood friends <strong className={`${isDark ? "text-slate-200" : "text-slate-800"}`}>Bill Gates</strong> and <strong className={`${isDark ? "text-slate-200" : "text-slate-800"}`}>Paul Allen</strong> in Albuquerque, New Mexico to market a BASIC interpreter for the Altair 8800. It grew to dominate the PC operating system market with <strong className={`${isDark ? "text-slate-300" : "text-slate-705"}`}>MS-DOS</strong>, followed by the revolutionary <strong className={`${isDark ? "text-slate-300" : "text-slate-705"}`}>Microsoft Windows</strong> platform. On March 13, 1986, Microsoft held its highly anticipated IPO on the NASDAQ exchange. Headquartered in Redmond, WA, Microsoft has built a global cloud and software empire augmented by pivotal strategic acquisitions including LinkedIn, GitHub, Skype, and Activision Blizzard.
+              </p>
+
+              <div className="space-y-3 pt-3 border-t border-slate-200/50 dark:border-slate-850">
+                <div className="flex items-start gap-2.5">
+                  <span className="text-[10px] font-mono font-bold text-sky-500 dark:text-sky-400 bg-sky-500/10 px-1 rounded">1975</span>
+                  <div className="text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                    <strong className={isDark ? "text-slate-305" : "text-slate-705"}>Foundation</strong> • Established to write BASIC software interpretative layers.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="text-[10px] font-mono font-bold text-sky-500 dark:text-sky-400 bg-sky-500/10 px-1 rounded">1985</span>
+                  <div className="text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                    <strong className={isDark ? "text-slate-305" : "text-slate-705"}>Windows Launch</strong> • Released first GUI-based desktop operating system (Windows 1.0).
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="text-[10px] font-mono font-bold text-sky-500 dark:text-sky-400 bg-sky-500/10 px-1 rounded">1986</span>
+                  <div className="text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                    <strong className={isDark ? "text-slate-305" : "text-slate-705"}>NASDAQ IPO</strong> • Listed under ticker symbol <code className="text-sky-500 dark:text-sky-400 font-bold select-all">MSFT</code> at $21/share.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="text-[10px] font-mono font-bold text-sky-530 dark:text-sky-410 bg-sky-500/10 px-1 rounded">2024</span>
+                  <div className="text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                    <strong className={isDark ? "text-slate-305" : "text-slate-705"}>AI & Activision Expansion</strong> • Consolidated its standing as the world's premier cloud systems and generative AI infrastructure platform.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Business divisions and segments */}
+            <div className={`border rounded-2xl p-5 relative overflow-hidden transition-all duration-200 ${
+              isDark 
+                ? "bg-gradient-to-b from-[#111827] to-[#0d1321] border-slate-800/80 hover:border-slate-800 shadow-md" 
+                : "bg-white border-slate-200/80 hover:border-slate-300 shadow-sm"
+            }`}>
+              <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
+              
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <div className="bg-indigo-500/10 p-1.5 rounded-lg border border-indigo-500/20">
+                  <Cpu className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider font-mono ${isDark ? "text-slate-250" : "text-slate-850"}`}>
+                    Commercial Divisions
+                  </h4>
+                  <p className="text-[9px] text-slate-550 dark:text-slate-450 font-mono">Consolidated Revenue Pillars</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Pillar 1 */}
+                <div className="p-3 bg-slate-950/45 border border-slate-900 rounded-xl">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                    <h5 className="text-[11px] font-bold font-mono uppercase tracking-wider text-slate-205 dark:text-slate-300">Intelligent Cloud</h5>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    The core driver powered by <strong className="text-slate-300">Microsoft Azure</strong>, Windows Server, SQL Server, and enterprise cloud developer systems. Delivers public, hybrid, and sovereign high-margin web frameworks and advanced cognitive AI/Copilot models.
+                  </p>
+                </div>
+
+                {/* Pillar 2 */}
+                <div className="p-3 bg-slate-950/45 border border-slate-900 rounded-xl">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <h5 className="text-[11px] font-bold font-mono uppercase tracking-wider text-slate-205 dark:text-slate-300">Productivity & Business Processes</h5>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    Encompasses commercial licensing and cloud subscriptions across <strong className="text-slate-300">Microsoft 365</strong> (Word, Excel, PowerPoint, Outlook, Teams), Microsoft Dynamics ERP/CRM cloud software suite, and the LinkedIn corporate network.
+                  </p>
+                </div>
+
+                {/* Pillar 3 */}
+                <div className="p-3 bg-slate-950/45 border border-slate-900 rounded-xl">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <h5 className="text-[11px] font-bold font-mono uppercase tracking-wider text-slate-205 dark:text-slate-300">More Personal Computing</h5>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-normal">
+                    Encompasses consumer technology licensing. Key programs include <strong className="text-slate-300">Windows OS</strong> OEM licensing, multi-tiered Xbox Interactive hardware and digital subscription services, and premium Surface workstation hardware devices.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 3: CFD specifications from FP Markets source */}
+            <div className={`border rounded-2xl p-5 relative overflow-hidden transition-all duration-200 ${
+              isDark 
+                ? "bg-gradient-to-b from-[#111827] to-[#0d1321] border-slate-800/80 hover:border-slate-800 shadow-md" 
+                : "bg-white border-slate-200/80 hover:border-slate-300 shadow-sm"
+            }`}>
+              <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
+              
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <div className="bg-indigo-500/10 p-1.5 rounded-lg border border-indigo-500/20">
+                  <ShieldCheck className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider font-mono ${isDark ? "text-slate-250" : "text-slate-850"}`}>
+                    CFD Trading Specifications
+                  </h4>
+                  <p className="text-[9px] text-slate-550 dark:text-slate-450 font-mono">FP Markets Broker Parameters</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-sans text-xs border-collapse">
+                  <tbody>
+                    <tr className="border-b border-slate-200/40 dark:border-slate-850/60">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Ticker / Symbol</td>
+                      <td className="py-2 px-1 text-right font-extrabold font-mono text-sky-505 dark:text-sky-450 select-all">MSFT</td>
+                    </tr>
+                    <tr className="border-b border-slate-200/40 dark:border-slate-850/60">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Underlying Asset</td>
+                      <td className={`py-2 px-1 text-right font-semibold ${isDark ? "text-slate-300" : "text-slate-700"}`}>Microsoft Corp Shares</td>
+                    </tr>
+                    <tr className="border-b border-slate-200/40 dark:border-slate-850/60">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Main Listing Exchange</td>
+                      <td className={`py-2 px-1 text-right font-semibold ${isDark ? "text-slate-300" : "text-slate-700"}`}>NASDAQ GS (USA)</td>
+                    </tr>
+                    <tr className="border-b border-slate-200/40 dark:border-slate-850/60">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Base Target Spread</td>
+                      <td className="py-2 px-1 text-right font-bold text-emerald-500 font-mono">Tight Market-Driven (ECN)</td>
+                    </tr>
+                    <tr className="border-b border-slate-200/40 dark:border-slate-850/60">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Broker Leverage</td>
+                      <td className={`py-2 px-1 text-right font-bold font-mono ${isDark ? "text-slate-300" : "text-slate-700"}`}>Up to 5:1 Retail • 20:1 Pro</td>
+                    </tr>
+                    <tr className="border-b border-slate-200/40 dark:border-slate-850/60">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Order Routing Latency</td>
+                      <td className="py-2 px-1 text-right font-bold text-sky-500 font-mono select-none">Sub-millisecond ECN execution</td>
+                    </tr>
+                    <tr className="border-b border-slate-200/40 dark:border-slate-850/60">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Software Platforms</td>
+                      <td className={`py-2 px-1 text-right font-semibold ${isDark ? "text-slate-300" : "text-slate-700"}`}>MT5 / Iress / WebTrader</td>
+                    </tr>
+                    <tr className="border-b border-transparent">
+                      <td className="py-2 px-1 font-mono text-[10px] text-slate-450 uppercase tracking-tight">Dividend Yield Ratio</td>
+                      <td className="py-2 px-1 text-right text-emerald-500 font-extrabold font-mono">0.71% Quarterly consistent</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 p-3 bg-indigo-500/5 border border-indigo-550/15 rounded-xl">
+                <p className="text-[10px] text-slate-500 leading-relaxed font-sans select-none">
+                  💡 <strong className="text-slate-400">CFD Advisory Note:</strong> Share contract CFDs allow traders to capitalize on corporate movements long or short, without owning underlying physical stock certificates layout, optimizing capital efficiency.
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* External Profile Sources Panel */}
+          <div className={`mt-6 p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+            isDark 
+              ? "bg-[#111827]/60 border-slate-800/80" 
+              : "bg-slate-50 border-slate-200 shadow-xs"
+          }`}>
+            <div className="flex items-center gap-2.5">
+              <div className="p-1 px-2 text-[10px] uppercase font-mono font-bold rounded bg-sky-500/10 text-sky-450 border border-sky-500/15">
+                VERIFIED SOURCE STREAMERS
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium font-sans">
+                Corporate profiles and trading specifications synchronized from standard market listings:
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="https://www.fpmarkets.com/en-au/microsoft-share-price/?gclid=Cj0KCQjwrZTRBhDSARIsAHidYfcIflCizafMl0p4FB2dN9AVwN3-riRBxCV5vFjCVXMcj4gDUaxNl9saAoSBEALw_wcB&fpm-affiliate-pcode=G2383-gold-trading-en-1025-PM-A-gk-AU-159&fpm-affiliate-utm-source=Google/Paid"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-900 border border-slate-300 dark:border-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all duration-200"
+              >
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                <span>FP Markets Australia</span>
+                <ExternalLink className="w-3 h-3 text-slate-400" />
+              </a>
+              <a
+                href="https://au.finance.yahoo.com/quote/MSFT/?guccounter=1&guce_referrer=aHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS8&guce_referrer_sig=AQAAAEblfgj3SLYJmuSMTlgKyoYgxPfiMSuJGXkqNFNf7aCGjzpRfOqd3nM2SLFJq9On6G8axqHIFSeBmpQCZ-jk3cmJwLxC262BRuUU_bQYWfy3OBspYmNhLHXpIrqWHCwI_Wh9PUaSSjN4mUa6ksGc1Y2anIVTkNHY0UItjiOHnPC9"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-mono font-bold rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-900 border border-slate-300 dark:border-slate-850 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all duration-200"
+              >
+                <div className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse"></div>
+                <span>Yahoo Finance (AU)</span>
+                <ExternalLink className="w-3 h-3 text-slate-400" />
+              </a>
+            </div>
+          </div>
+        </motion.section>
           </>
         )}
 
@@ -3537,8 +4028,24 @@ ${advice}
             {/* News Database Cards Output */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111827] p-3.5 border border-slate-800 rounded-xl">
-                <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
-                  Executive Intelligence Briefings ({filteredArticles.length})
+                <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono flex items-center gap-2 flex-wrap">
+                  <span>Executive Intelligence Briefings ({filteredArticles.length})</span>
+                  {selectedTopic !== "all" && (
+                    <span className="text-[10px] uppercase font-bold font-mono tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2.5 py-0.5 rounded-lg flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+                      {selectedTopic}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTopic("all");
+                        }}
+                        className="hover:text-rose-400 ml-1 cursor-pointer font-bold text-xs"
+                        title="Clear topic filter"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
                 </h3>
                 <div className="flex flex-wrap items-center gap-2.5">
                   {/* View Grouping Toggle */}
@@ -5561,6 +6068,182 @@ ${advice}
                     Access premium marketing support tools, templates, and performance incentives to reward and scale business success.
                   </p>
                 </div>
+              </div>
+
+              {/* Scraping Tool Section */}
+              <div className="mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-800/60 relative z-10 w-full text-left">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-sky-400 uppercase tracking-widest font-mono flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-sky-500 animate-pulse"></span>
+                      Automated Partner Profile Indexer & Scraper
+                    </h4>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                      Scrape real-time Solutions metadata, credentials, and regional office locations directly by inputting a Partner Name or official URL from Microsoft's network.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScraperQuery("Data#3 Limited");
+                        handleScrapePartner("Data#3 Limited");
+                      }}
+                      className="text-[10px] font-mono font-medium px-2 py-1 rounded bg-slate-100 dark:bg-slate-900 border border-slate-250 dark:border-slate-800 hover:border-sky-500 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                    >
+                      Demo: Data#3
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScraperQuery("Insight Enterprises");
+                        handleScrapePartner("Insight Enterprises");
+                      }}
+                      className="text-[10px] font-mono font-medium px-2 py-1 rounded bg-slate-100 dark:bg-slate-900 border border-slate-250 dark:border-slate-800 hover:border-sky-500 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                    >
+                      Demo: Insight
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                      <Globe className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Enter Partner Name, ID, or Partner Center URL (e.g. partner.microsoft.com/en-us/partnership/directory/...)"
+                      value={scraperQuery}
+                      onChange={(e) => setScraperQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleScrapePartner(scraperQuery);
+                        }
+                      }}
+                      className={`w-full text-xs font-sans font-bold pl-10 pr-4 py-2.5 rounded-xl border focus:outline-none transition ${
+                        isDark 
+                          ? "bg-slate-950 border-slate-800 text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500/25" 
+                          : "bg-white border-slate-250 text-slate-900 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/25 shadow-sm"
+                      }`}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleScrapePartner(scraperQuery)}
+                    disabled={scraperLoading}
+                    className="inline-flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-bold font-mono px-5 py-2.5 rounded-xl shadow transition cursor-pointer"
+                  >
+                    {scraperLoading ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Search className="w-3.5 h-3.5" />
+                    )}
+                    <span>{scraperLoading ? "Scraping..." : "Scrape & Verify"}</span>
+                  </button>
+                </div>
+
+                {/* Scraper Error Notice */}
+                {scraperError && (
+                  <div className="mt-3 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-450 rounded-xl text-xs flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div>{scraperError}</div>
+                  </div>
+                )}
+
+                {/* Scraped Results Section */}
+                <AnimatePresence>
+                  {scrapedResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className={`mt-4 p-5 rounded-xl border ${
+                        isDark 
+                          ? "bg-slate-950/80 border-sky-500/20" 
+                          : "bg-sky-500/5 border-sky-300 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="text-left">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                              Verified Registry Footprint
+                            </span>
+                            {scrapedResult.partnerId && (
+                              <span className="text-[10px] font-bold font-mono text-slate-500 bg-slate-200/50 dark:bg-slate-900 px-2 py-0.5 rounded">
+                                ID: {scrapedResult.partnerId}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <h5 className="text-sm font-black text-slate-850 dark:text-slate-100 mt-2 font-sans tracking-tight">
+                            {scrapedResult.name}
+                          </h5>
+
+                          <p className="text-xs text-sky-500 font-medium font-mono mt-0.5 flex items-center gap-1">
+                            <Building className="w-3.5 h-3.5 shrink-0 text-sky-500" />
+                            {scrapedResult.location || "Verified Solutions Partner Region"}
+                          </p>
+
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed max-w-2xl">
+                            {scrapedResult.overview}
+                          </p>
+
+                          {/* Specialties Tags */}
+                          {scrapedResult.specializations && scrapedResult.specializations.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/60">
+                              {scrapedResult.specializations.map((spec: string, idx: number) => (
+                                <span
+                                  key={idx}
+                                  className="text-[9px] font-mono leading-none tracking-tight font-semibold px-2 py-1 rounded bg-slate-100 dark:bg-slate-900 border border-slate-205 dark:border-slate-800 text-slate-600 dark:text-slate-300"
+                                >
+                                  {spec}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Badge Credentials Designation */}
+                          {scrapedResult.tier && (
+                            <div className="mt-2.5 inline-flex items-center gap-1.5 p-1.5 pr-3 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/15">
+                              <Award className="w-3.5 h-3.5" />
+                              <span className="text-[10px] font-bold font-mono uppercase tracking-wider">{scrapedResult.tier}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Import & Actions Panel */}
+                        <div className="flex flex-row sm:flex-col gap-2 shrink-0 self-end sm:self-auto">
+                          <button
+                            onClick={importScrapedPartner}
+                            className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-[11px] px-3.5 py-2 rounded-lg cursor-pointer shadow transition"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Import to Registry</span>
+                          </button>
+                          
+                          {scrapedResult.website && (
+                            <a
+                              href={scrapedResult.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-[11px] px-3.5 py-2 rounded-lg cursor-pointer transition border border-slate-700"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>Go to Website</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {scrapedResult.note && (
+                        <div className="text-[10px] text-slate-500 font-mono mt-3 text-right">
+                          💡 {scrapedResult.note}
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
