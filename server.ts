@@ -777,100 +777,115 @@ app.post("/api/send-trend-alert", (req, res) => {
 
 // 1. Get all subscribed profiles
 app.get("/api/subscribers", (req, res) => {
-  res.json(subscribersRegistry);
+  try {
+    res.json(subscribersRegistry || []);
+  } catch (error: any) {
+    console.error("Error in GET /api/subscribers:", error);
+    res.status(500).json({ error: "Could not retrieve the corporate subscriber directory matching state." });
+  }
 });
 
 // 2. Register/update subscription with username & email
 app.post("/api/subscribers", (req, res) => {
-  const { username, name, email, org, role, categories, frequency } = req.body;
+  try {
+    const { username, name, email, org, role, categories, frequency } = req.body;
 
-  if (!name || !name.trim()) {
-    return res.status(400).json({ error: "Full subscriber name is required." });
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: "Full subscriber name is required." });
+    }
+    if (!email || !email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "A valid corporate or business email address is required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    
+    // Auto-generate or sanitize username if not provided
+    let cleanUsername = username ? username.trim().toLowerCase().replace(/^@/, "") : "";
+    if (!cleanUsername) {
+      const prefix = cleanEmail.split("@")[0].replace(/[^a-zA-Z0-9_\-]/g, "");
+      cleanUsername = prefix || "user";
+    }
+
+    // Validate and sanitize alphanumeric form
+    if (!/^[a-zA-Z0-9_\-]+$/.test(cleanUsername)) {
+      cleanUsername = cleanUsername.replace(/[^a-zA-Z0-9_\-]/g, "") || "user";
+    }
+
+    // Check unique constraints for database integrity
+    // Ensure username doesn't clash with anyone else
+    let finalUsername = cleanUsername;
+    let suffix = 1;
+    while (subscribersRegistry.some(s => s?.username?.toLowerCase() === finalUsername && s?.email?.toLowerCase() !== cleanEmail)) {
+      finalUsername = `${cleanUsername}${suffix}`;
+      suffix++;
+    }
+    cleanUsername = finalUsername;
+
+    // Find if subscriber with this email already exists so we can update them in-place, keeping the ID
+    const existingIndex = subscribersRegistry.findIndex(s => s?.email?.toLowerCase() === cleanEmail);
+
+    let newSub: Subscriber;
+    
+    if (existingIndex !== -1) {
+      // Update existing subscription
+      newSub = {
+        ...subscribersRegistry[existingIndex],
+        username: cleanUsername,
+        name: name.trim(),
+        org: org ? org.trim() : subscribersRegistry[existingIndex].org,
+        role: role || subscribersRegistry[existingIndex].role,
+        categories: Array.isArray(categories) ? categories : subscribersRegistry[existingIndex].categories,
+        frequency: frequency || subscribersRegistry[existingIndex].frequency,
+        date: new Date().toLocaleDateString()
+      };
+      subscribersRegistry[existingIndex] = newSub;
+    } else {
+      // Create modern premium profile entry
+      newSub = {
+        id: "sub-" + Math.random().toString(36).substring(2, 9),
+        username: cleanUsername,
+        name: name.trim(),
+        email: cleanEmail,
+        org: org ? org.trim() : "Independent Organization",
+        role: role || "IT Leader",
+        categories: Array.isArray(categories) ? categories : ["licensing_pricing"],
+        frequency: frequency || "monthly",
+        date: new Date().toLocaleDateString()
+      };
+      subscribersRegistry.unshift(newSub);
+    }
+
+    // Persist registry writeout
+    saveSubscribers(subscribersRegistry);
+
+    res.json({
+      success: true,
+      subscriber: newSub,
+      message: `Secure registry confirmation created for subscriber @${newSub.username}.`
+    });
+  } catch (error: any) {
+    console.error("Error in POST /api/subscribers:", error);
+    res.status(500).json({ error: `Internal registry failure during secure profile setup: ${error.message}` });
   }
-  if (!email || !email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ error: "A valid corporate or business email address is required." });
-  }
-
-  const cleanEmail = email.trim().toLowerCase();
-  
-  // Auto-generate or sanitize username if not provided
-  let cleanUsername = username ? username.trim().toLowerCase().replace(/^@/, "") : "";
-  if (!cleanUsername) {
-    const prefix = cleanEmail.split("@")[0].replace(/[^a-zA-Z0-9_\-]/g, "");
-    cleanUsername = prefix || "user";
-  }
-
-  // Validate and sanitize alphanumeric form
-  if (!/^[a-zA-Z0-9_\-]+$/.test(cleanUsername)) {
-    cleanUsername = cleanUsername.replace(/[^a-zA-Z0-9_\-]/g, "") || "user";
-  }
-
-  // Check unique constraints for database integrity
-  // Ensure username doesn't clash with anyone else
-  let finalUsername = cleanUsername;
-  let suffix = 1;
-  while (subscribersRegistry.some(s => s.username?.toLowerCase() === finalUsername && s.email.toLowerCase() !== cleanEmail)) {
-    finalUsername = `${cleanUsername}${suffix}`;
-    suffix++;
-  }
-  cleanUsername = finalUsername;
-
-  // Find if subscriber with this email already exists so we can update them in-place, keeping the ID
-  const existingIndex = subscribersRegistry.findIndex(s => s.email.toLowerCase() === cleanEmail);
-
-  let newSub: Subscriber;
-  
-  if (existingIndex !== -1) {
-    // Update existing subscription
-    newSub = {
-      ...subscribersRegistry[existingIndex],
-      username: cleanUsername,
-      name: name.trim(),
-      org: org ? org.trim() : subscribersRegistry[existingIndex].org,
-      role: role || subscribersRegistry[existingIndex].role,
-      categories: Array.isArray(categories) ? categories : subscribersRegistry[existingIndex].categories,
-      frequency: frequency || subscribersRegistry[existingIndex].frequency,
-      date: new Date().toLocaleDateString()
-    };
-    subscribersRegistry[existingIndex] = newSub;
-  } else {
-    // Create modern premium profile entry
-    newSub = {
-      id: "sub-" + Math.random().toString(36).substring(2, 9),
-      username: cleanUsername,
-      name: name.trim(),
-      email: cleanEmail,
-      org: org ? org.trim() : "Independent Organization",
-      role: role || "IT Leader",
-      categories: Array.isArray(categories) ? categories : ["licensing_pricing"],
-      frequency: frequency || "monthly",
-      date: new Date().toLocaleDateString()
-    };
-    subscribersRegistry.unshift(newSub);
-  }
-
-  // Persist registry writeout
-  saveSubscribers(subscribersRegistry);
-
-  res.json({
-    success: true,
-    subscriber: newSub,
-    message: `Secure registry confirmation created for subscriber @${newSub.username}.`
-  });
 });
 
 // 3. Revoke/delete subscriber index
 app.delete("/api/subscribers/:id", (req, res) => {
-  const { id } = req.params;
-  const initialLength = subscribersRegistry.length;
-  subscribersRegistry = subscribersRegistry.filter(s => s.id !== id);
+  try {
+    const { id } = req.params;
+    const initialLength = subscribersRegistry.length;
+    subscribersRegistry = subscribersRegistry.filter(s => s.id !== id);
 
-  if (subscribersRegistry.length === initialLength) {
-    return res.status(404).json({ error: "Subscriber profile slot not found in corporate record system." });
+    if (subscribersRegistry.length === initialLength) {
+      return res.status(404).json({ error: "Subscriber profile slot not found in corporate record system." });
+    }
+
+    saveSubscribers(subscribersRegistry);
+    res.json({ success: true, message: "Subscriber registry profile removed successfully." });
+  } catch (error: any) {
+    console.error("Error in DELETE /api/subscribers:", error);
+    res.status(500).json({ error: `Could not revoke subscription: ${error.message}` });
   }
-
-  saveSubscribers(subscribersRegistry);
-  res.json({ success: true, message: "Subscriber registry profile removed successfully." });
 });
 
 // Configure Vite integration

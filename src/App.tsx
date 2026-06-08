@@ -1160,9 +1160,15 @@ ${advice}
   // Pull subscriber list from the server registry on mount
   useEffect(() => {
     fetch("/api/subscribers")
-      .then(res => {
-        if (!res.ok) throw new Error("Could not pull corporate subscriber registry.");
-        return res.json();
+      .then(async res => {
+        const contentType = res.headers.get("content-type");
+        const isJson = contentType && contentType.includes("application/json");
+        const data = isJson ? await res.json() : null;
+        if (!res.ok) {
+          const errMsg = data?.error || (isJson ? "Could not pull corporate subscriber registry." : await res.text()) || "Could not pull corporate subscriber registry.";
+          throw new Error(errMsg);
+        }
+        return data;
       })
       .then(data => {
         if (Array.isArray(data)) {
@@ -1228,9 +1234,12 @@ ${advice}
       })
     })
       .then(async res => {
-        const data = await res.json();
+        const contentType = res.headers.get("content-type");
+        const isJson = contentType && contentType.includes("application/json");
+        const data = isJson ? await res.json() : null;
         if (!res.ok) {
-          throw new Error(data.error || "An error occurred during registration.");
+          const errMsg = data?.error || (isJson ? "An error occurred during registration." : await res.text()) || "An error occurred during registration.";
+          throw new Error(errMsg);
         }
         return data;
       })
@@ -1276,11 +1285,14 @@ ${advice}
       method: "DELETE"
     })
       .then(async res => {
+        const contentType = res.headers.get("content-type");
+        const isJson = contentType && contentType.includes("application/json");
+        const data = isJson ? await res.json() : null;
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || "An error occurred during profile clearing.");
+          const errMsg = data?.error || (isJson ? "An error occurred during profile clearing." : await res.text()) || "An error occurred during profile clearing.";
+          throw new Error(errMsg);
         }
-        return res.json();
+        return data;
       })
       .then(() => {
         const updated = subscriptionsList.filter(s => s.id !== id);
