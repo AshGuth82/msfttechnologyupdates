@@ -8,6 +8,8 @@ import path from "path";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { Article, CachedNews } from "./src/types";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, getDocs, collection, setDoc, deleteDoc } from "firebase/firestore";
 
 // Load environment variables
 dotenv.config();
@@ -30,7 +32,72 @@ const SUBSCRIBERS_FILE = process.env.VERCEL
   ? path.join("/tmp", "subscribers.json") 
   : path.join(process.cwd(), "subscribers.json");
 
-function loadSubscribers(): Subscriber[] {
+// Parse Firebase Configuration
+const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+let firebaseConfig: any = null;
+if (fs.existsSync(configPath)) {
+  try {
+    firebaseConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch (err) {
+    console.error("Error reading firebase-applet-config.json:", err);
+  }
+}
+
+let db: any = null;
+if (firebaseConfig) {
+  try {
+    const firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+    console.log("Firebase Firestore successfully initialized on backend server.");
+  } catch (err) {
+    console.error("Failed to initialize Firebase Firestore server-side:", err);
+  }
+}
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: null,
+      email: null,
+      emailVerified: null,
+      isAnonymous: null,
+      tenantId: null,
+      providerInfo: []
+    },
+    operationType,
+    path
+  };
+  console.error("Firestore Error structured context: ", JSON.stringify(errInfo, null, 2));
+}
+
+async function loadSubscribersFromFirestore(): Promise<Subscriber[]> {
   const seedList: Subscriber[] = [
     {
       id: "preview-sub-1",
@@ -45,48 +112,106 @@ function loadSubscribers(): Subscriber[] {
     }
   ];
 
-  if (process.env.VERCEL && !fs.existsSync(SUBSCRIBERS_FILE)) {
+  if (!db) {
     try {
-      const bundledPath = path.join(process.cwd(), "subscribers.json");
-      if (fs.existsSync(bundledPath)) {
-        fs.copyFileSync(bundledPath, SUBSCRIBERS_FILE);
+      if (fs.existsSync(SUBSCRIBERS_FILE)) {
+        const data = fs.readFileSync(SUBSCRIBERS_FILE, "utf-8");
+        const list = JSON.parse(data);
+        if (Array.isArray(list) && list.length > 0) {
+          return list;
+        }
       }
-    } catch (err) {
-      console.error("Failed to copy bundled subscribers file to /tmp:", err);
+    } catch (error) {
+      console.error("Error loading local subscribers registry file:", error);
     }
+    return seedList;
   }
 
   try {
-    if (fs.existsSync(SUBSCRIBERS_FILE)) {
-      const data = fs.readFileSync(SUBSCRIBERS_FILE, "utf-8");
-      const list = JSON.parse(data);
-      if (Array.isArray(list) && list.length > 0) {
-        return list;
+    const querySnapshot = await getDocs(collection(db, "subscribers"));
+    const list: Subscriber[] = [];
+    querySnapshot.forEach((docRef) => {
+      list.push(docRef.data() as Subscriber);
+    });
+
+    if (list.length === 0) {
+      for (const sub of seedList) {
+        await setDoc(doc(db, "subscribers", sub.id), sub);
+        list.push(sub);
       }
+      console.log("Seeded empty Firestore datastore with default subscribers.");
     }
+    return list;
   } catch (error) {
-    console.error("Error loading subscribers registry file:", error);
+    handleFirestoreError(error, OperationType.LIST, "subscribers");
+    try {
+      if (fs.existsSync(SUBSCRIBERS_FILE)) {
+        const data = fs.readFileSync(SUBSCRIBERS_FILE, "utf-8");
+        const list = JSON.parse(data);
+        if (Array.isArray(list) && list.length > 0) {
+          return list;
+        }
+      }
+    } catch (localError) {
+      console.error("Error reading local registry file backup:", localError);
+    }
+    return seedList;
   }
-  
-  // Seed subscriber default and save it to the database file
-  try {
-    fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(seedList, null, 2), "utf-8");
-  } catch (error) {
-    console.error("Error seeding subscribers registry file:", error);
-  }
-  return seedList;
 }
 
-function saveSubscribers(list: Subscriber[]) {
+async function saveSubscriberToFirestore(sub: Subscriber) {
+  if (!db) {
+    try {
+      const list = await loadSubscribersFromFirestore();
+      const idx = list.findIndex(s => s.id === sub.id || s.email.toLowerCase() === sub.email.toLowerCase());
+      if (idx !== -1) {
+        list[idx] = sub;
+      } else {
+        list.unshift(sub);
+      }
+      fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    } catch (error) {
+      console.error("Error writing to local backup subscribers file:", error);
+    }
+    return;
+  }
+
   try {
-    fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    await setDoc(doc(db, "subscribers", sub.id), sub);
+    console.log(`Persisted subscriber @${sub.username} to Firestore.`);
   } catch (error) {
-    console.error("Error writing to subscribers registry file:", error);
+    handleFirestoreError(error, OperationType.WRITE, `subscribers/${sub.id}`);
   }
 }
 
-// Initialize registry list cache
-let subscribersRegistry = loadSubscribers();
+async function deleteSubscriberFromFirestore(id: string) {
+  if (!db) {
+    try {
+      let list = await loadSubscribersFromFirestore();
+      list = list.filter(s => s.id !== id);
+      fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    } catch (error) {
+      console.error("Error deleting from local backup subscribers file:", error);
+    }
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "subscribers", id));
+    console.log(`Deleted subscriber ${id} from Firestore.`);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `subscribers/${id}`);
+  }
+}
+
+// Initialize registry list cache from Firestore asynchronously
+let subscribersRegistry: Subscriber[] = [];
+loadSubscribersFromFirestore().then((list) => {
+  subscribersRegistry = list;
+}).catch((err) => {
+  console.error("Initial database cache preload failed:", err);
+});
+
 
 const app = express();
 const PORT = 3000;
@@ -789,9 +914,11 @@ app.post("/api/send-trend-alert", (req, res) => {
 // ==========================================
 
 // 1. Get all subscribed profiles
-app.get("/api/subscribers", (req, res) => {
+app.get("/api/subscribers", async (req, res) => {
   try {
-    res.json(subscribersRegistry || []);
+    const list = await loadSubscribersFromFirestore();
+    subscribersRegistry = list; // Update in-memory cache
+    res.json(list);
   } catch (error: any) {
     console.error("Error in GET /api/subscribers:", error);
     res.status(500).json({ error: "Could not retrieve the corporate subscriber directory matching state." });
@@ -799,7 +926,7 @@ app.get("/api/subscribers", (req, res) => {
 });
 
 // 2. Register/update subscription with username & email
-app.post("/api/subscribers", (req, res) => {
+app.post("/api/subscribers", async (req, res) => {
   try {
     const { username, name, email, org, role, categories, frequency } = req.body;
 
@@ -823,6 +950,10 @@ app.post("/api/subscribers", (req, res) => {
     if (!/^[a-zA-Z0-9_\-]+$/.test(cleanUsername)) {
       cleanUsername = cleanUsername.replace(/[^a-zA-Z0-9_\-]/g, "") || "user";
     }
+
+    // Refresh memory registry to get latest and avoid concurrency clashes
+    const latestRegistry = await loadSubscribersFromFirestore();
+    subscribersRegistry = latestRegistry;
 
     // Check unique constraints for database integrity
     // Ensure username doesn't clash with anyone else
@@ -851,7 +982,6 @@ app.post("/api/subscribers", (req, res) => {
         frequency: frequency || subscribersRegistry[existingIndex].frequency,
         date: new Date().toLocaleDateString()
       };
-      subscribersRegistry[existingIndex] = newSub;
     } else {
       // Create modern premium profile entry
       newSub = {
@@ -865,11 +995,13 @@ app.post("/api/subscribers", (req, res) => {
         frequency: frequency || "monthly",
         date: new Date().toLocaleDateString()
       };
-      subscribersRegistry.unshift(newSub);
     }
 
-    // Persist registry writeout
-    saveSubscribers(subscribersRegistry);
+    // Persist registry writeout to Firestore
+    await saveSubscriberToFirestore(newSub);
+    
+    // Refresh registry cache
+    subscribersRegistry = await loadSubscribersFromFirestore();
 
     res.json({
       success: true,
@@ -883,17 +1015,20 @@ app.post("/api/subscribers", (req, res) => {
 });
 
 // 3. Revoke/delete subscriber index
-app.delete("/api/subscribers/:id", (req, res) => {
+app.delete("/api/subscribers/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const initialLength = subscribersRegistry.length;
-    subscribersRegistry = subscribersRegistry.filter(s => s.id !== id);
+    
+    const latestRegistry = await loadSubscribersFromFirestore();
+    const subExists = latestRegistry.some(s => s.id === id);
 
-    if (subscribersRegistry.length === initialLength) {
+    if (!subExists) {
       return res.status(404).json({ error: "Subscriber profile slot not found in corporate record system." });
     }
 
-    saveSubscribers(subscribersRegistry);
+    await deleteSubscriberFromFirestore(id);
+    subscribersRegistry = await loadSubscribersFromFirestore();
+
     res.json({ success: true, message: "Subscriber registry profile removed successfully." });
   } catch (error: any) {
     console.error("Error in DELETE /api/subscribers:", error);

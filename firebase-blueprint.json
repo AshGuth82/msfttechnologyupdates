@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "Subscriber": {
+      "title": "Subscriber",
+      "description": "A subscribed user registered for alerts, updates, and MSFT corporate intelligence newsletters.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique subscriber ID" },
+        "username": { "type": "string", "description": "Direct social username or target ID" },
+        "email": { "type": "string", "description": "Email address of subscriber" },
+        "name": { "type": "string", "description": "Full name of subscriber" },
+        "org": { "type": "string", "description": "Organization or company affiliation" },
+        "role": { "type": "string", "description": "Corporate or industry role identifier" },
+        "categories": { "type": "array", "description": "Selected topics or intelligence categories" },
+        "frequency": { "type": "string", "description": "Preferred digest sequence cycle" },
+        "date": { "type": "string", "description": "ISO timestamp of initial sign up" }
+      },
+      "required": ["id", "username", "email", "name", "role", "categories", "frequency", "date"]
+    }
+  },
+  "firestore": {
+    "subscribers/{subscriberId}": {
+      "schema": "Subscriber",
+      "description": "Collection of all system subscribers"
+    }
+  }
+}

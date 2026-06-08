@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Reusable helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidSubscriber(data) {
+      return data.keys().hasAll(['id', 'username', 'email', 'name', 'org', 'role', 'categories', 'frequency', 'date'])
+        && data.keys().size() == 9
+        && data.id is string && data.id.size() <= 128
+        && data.username is string && data.username.size() <= 100
+        && data.email is string && data.email.size() <= 120
+        && data.name is string && data.name.size() <= 100
+        && data.org is string && data.org.size() <= 150
+        && data.role is string && data.role.size() <= 100
+        && data.frequency is string && data.frequency.size() <= 50
+        && data.date is string && data.date.size() <= 50
+        && data.categories is list && data.categories.size() <= 20
+        && (data.categories.size() == 0 || data.categories[0] is string);
+    }
+
+    // 2. Main Match rules with strict validation enforcements
+    match /subscribers/{subscriberId} {
+      allow get, list: if true;
+      allow create: if isValidId(subscriberId) && isValidSubscriber(incoming());
+      allow update: if isValidId(subscriberId) && isValidSubscriber(incoming());
+      allow delete: if isValidId(subscriberId);
+    }
+  }
+}
