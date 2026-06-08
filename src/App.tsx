@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
+import { Analytics } from '@vercel/analytics/react';
 import { 
   TrendingUp, 
   Coins, 
@@ -8024,6 +8025,7 @@ ${advice}
           </motion.div>
         )}
       </AnimatePresence>
+      <Analytics />
     </div>
   );
 }
