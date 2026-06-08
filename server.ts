@@ -26,7 +26,9 @@ interface Subscriber {
   date: string;
 }
 
-const SUBSCRIBERS_FILE = path.join(process.cwd(), "subscribers.json");
+const SUBSCRIBERS_FILE = process.env.VERCEL 
+  ? path.join("/tmp", "subscribers.json") 
+  : path.join(process.cwd(), "subscribers.json");
 
 function loadSubscribers(): Subscriber[] {
   const seedList: Subscriber[] = [
@@ -42,6 +44,17 @@ function loadSubscribers(): Subscriber[] {
       date: new Date().toLocaleDateString()
     }
   ];
+
+  if (process.env.VERCEL && !fs.existsSync(SUBSCRIBERS_FILE)) {
+    try {
+      const bundledPath = path.join(process.cwd(), "subscribers.json");
+      if (fs.existsSync(bundledPath)) {
+        fs.copyFileSync(bundledPath, SUBSCRIBERS_FILE);
+      }
+    } catch (err) {
+      console.error("Failed to copy bundled subscribers file to /tmp:", err);
+    }
+  }
 
   try {
     if (fs.existsSync(SUBSCRIBERS_FILE)) {

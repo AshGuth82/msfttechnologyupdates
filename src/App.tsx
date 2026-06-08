@@ -863,6 +863,7 @@ ${advice}
   const [zoomRange, setZoomRange] = useState<{ start: string; end: string } | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<{ price: number; comparePrice?: number; time: string; chartX: number; chartY: number } | null>(null);
   const [compareIndex, setCompareIndex] = useState<"none" | "nasdaq" | "sp500">("none");
+  const [showEventMarkers, setShowEventMarkers] = useState<boolean>(true);
   const [historicalDataExpanded, setHistoricalDataExpanded] = useState<boolean>(false);
 
   // LinkedIn Share Dialog State
@@ -2664,6 +2665,103 @@ ${advice}
     return mergedData.slice(minIdx, maxIdx + 1);
   };
 
+  const getActiveEventMarkers = () => {
+    const displayedData = getDisplayedChartData() || [];
+    if (displayedData.length === 0) return [];
+
+    // Filter only major articles from the briefing list (impactScore >= 6)
+    const majorArticles = articles.filter(a => a.impactScore >= 6);
+
+    const markers: {
+      article: Article;
+      time: string; // The chart X-axis label (e.g. "Jun 02")
+      price: number; // The stock price at that point
+    }[] = [];
+
+    majorArticles.forEach(art => {
+      if (msftTimeframe === "1D") {
+        if (art.publishedDate === "2026-06-04" || art.publishedDate === "2026-06-08") {
+          // Deterministically map to an index of the displayed 8 hours
+          const sumCharCode = art.id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const ptIdx = Math.min(sumCharCode % displayedData.length, displayedData.length - 1);
+          markers.push({
+            article: art,
+            time: displayedData[ptIdx].time,
+            price: displayedData[ptIdx].price
+          });
+        }
+      } else {
+        const artTime = new Date(art.publishedDate).getTime();
+        
+        let closestPt: any = null;
+        let minDiff = Infinity;
+        
+        for (const pt of displayedData) {
+          const ptDateStr = parseDateLabel(pt.time);
+          const ptTime = new Date(ptDateStr).getTime();
+          const diff = Math.abs(artTime - ptTime);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestPt = pt;
+          }
+        }
+        
+        // Ensure closestPt is valid and within range of displayed chart labels
+        if (displayedData.length > 0) {
+          const startPtDateStr = parseDateLabel(displayedData[0].time);
+          const endPtDateStr = parseDateLabel(displayedData[displayedData.length - 1].time);
+          
+          const startTime = new Date(startPtDateStr).getTime();
+          const endTime = new Date(endPtDateStr).getTime();
+          
+          // Allocate a buffer window of 15 days or bound limits
+          if (artTime >= startTime - 15 * 24 * 60 * 60 * 1000 && artTime <= endTime + 15 * 24 * 60 * 60 * 1000) {
+            if (closestPt) {
+              markers.push({
+                article: art,
+                time: closestPt.time,
+                price: closestPt.price
+              });
+            }
+          }
+        }
+      }
+    });
+
+    return markers;
+  };
+
+  const getArticlesForChartPoint = (timeLabel: string) => {
+    if (!showEventMarkers) return [];
+    const allMarkers = getActiveEventMarkers();
+    return allMarkers
+      .filter(m => m.time === timeLabel)
+      .map(m => m.article);
+  };
+
+  // Group event markers by distinct X-axis time label to prevent duplicate/overlapping lines
+  const getGroupedEventMarkers = () => {
+    if (!showEventMarkers) return [];
+    
+    const markers = getActiveEventMarkers();
+    const grouped: Record<string, { time: string; price: number; articles: Article[] }> = {};
+    
+    markers.forEach(m => {
+      if (!grouped[m.time]) {
+        grouped[m.time] = {
+          time: m.time,
+          price: m.price,
+          articles: []
+        };
+      }
+      if (!grouped[m.time].articles.some(art => art.id === m.article.id)) {
+        grouped[m.time].articles.push(m.article);
+      }
+    });
+    
+    return Object.values(grouped);
+  };
+
   const handleZoom = () => {
     if (!zoomRefAreaLeft || !zoomRefAreaRight) {
       setZoomRefAreaLeft(null);
@@ -3398,6 +3496,20 @@ ${advice}
                         </button>
                       ))}
                     </div>
+
+                    {/* Toggle Event Markers on Chart */}
+                    <button
+                      onClick={() => setShowEventMarkers(!showEventMarkers)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-xl border flex items-center gap-1.5 transition-all duration-200 cursor-pointer ${
+                        showEventMarkers
+                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 hover:bg-amber-500/20"
+                          : `${isDark ? "bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200" : "bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900"}`
+                      }`}
+                      title="Toggle vertical markers for major news events from the briefing list"
+                    >
+                      <span className="text-xs">{showEventMarkers ? "🔔" : "🔕"}</span>
+                      <span>{showEventMarkers ? "News Markers" : "Markers Hide"}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -3550,6 +3662,41 @@ ${advice}
                               }}
                             />
                           ))}
+
+                          {/* Corporate News Intelligence Event Markers */}
+                          {showEventMarkers && getGroupedEventMarkers().map((group, idx) => {
+                            const isHighImpact = group.articles.some(a => a.impactScore >= 8);
+                            const hasPositiveSentiment = group.articles.some(a => a.sentiment === "positive");
+                            const labelText = group.articles.length === 1 
+                              ? `📢 ${group.articles[0].title.substring(0, 16)}...`
+                              : `📢 ${group.articles.length} Briefing Events`;
+                            const strokeColor = isHighImpact 
+                              ? "#ef4444" 
+                              : hasPositiveSentiment 
+                                ? "#10b981" 
+                                : "#f59e0b";
+                            return (
+                              <ReferenceLine
+                                key={`event-marker-${group.time}-${idx}`}
+                                yAxisId="left"
+                                x={group.time}
+                                stroke={strokeColor}
+                                strokeWidth={2}
+                                strokeDasharray="3 3"
+                                isFront={true}
+                                label={{
+                                  value: labelText,
+                                  position: "top",
+                                  fill: strokeColor,
+                                  fontSize: 8,
+                                  fontWeight: "bold",
+                                  fontFamily: "monospace",
+                                  dy: -10,
+                                  fillOpacity: 0.85
+                                }}
+                              />
+                            );
+                          })}
                         </ComposedChart>
                       </ResponsiveContainer>
                     {/* Precise Floating Price Point Label that follows the cursor on hover */}
@@ -3588,14 +3735,109 @@ ${advice}
                                 </span>
                               </div>
                             )}
-                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-normal text-right mt-1.5 border-t border-slate-200/30 dark:border-slate-800/40 pt-1">
-                              {hoveredPoint.time}
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-normal text-right mt-1.5 border-t border-slate-200/30 dark:border-slate-800/40 pt-1 flex items-center justify-between gap-4">
+                              {getArticlesForChartPoint(hoveredPoint.time).length > 0 && (
+                                <span className="text-[9px] font-bold text-amber-500 font-mono animate-pulse">📢 Event Active</span>
+                              )}
+                              <span>{hoveredPoint.time}</span>
                             </div>
+
+                            {/* Floating Tooltip News List */}
+                            {getArticlesForChartPoint(hoveredPoint.time).length > 0 && (
+                              <div className="border-t border-slate-200/10 dark:border-slate-800/40 pt-1.5 mt-1 sm:max-w-xs space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
+                                <div className="text-[10px] uppercase font-bold tracking-wider text-amber-500 font-mono flex items-center gap-1">
+                                  <span>🚀 Major Briefing Event</span>
+                                </div>
+                                {getArticlesForChartPoint(hoveredPoint.time).map((art) => (
+                                  <div key={art.id} className="max-w-[260px] whitespace-normal bg-slate-50/10 dark:bg-slate-900/40 p-1.5 rounded-lg border border-slate-200/10 dark:border-slate-800/20">
+                                    <p className="font-semibold text-[10px] text-slate-900 dark:text-slate-100 line-clamp-2">
+                                      {art.title}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1 text-[8px] text-slate-500">
+                                      <span className="font-mono">{art.source}</span>
+                                      <span>•</span>
+                                      <span className={`px-1 py-0.2 rounded font-semibold ${
+                                        art.impactScore >= 8 
+                                          ? "bg-rose-500/10 text-rose-500" 
+                                          : "bg-sky-500/10 text-sky-500"
+                                      }`}>
+                                        Impact: {art.impactScore}/10
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
+
+                  {/* Selected Timeframe Major Briefing Events Index Ledger */}
+                  {showEventMarkers && getActiveEventMarkers().length > 0 && (
+                    <div className={`mt-5 p-4 rounded-xl border font-sans w-full text-left ${
+                      isDark 
+                        ? "bg-slate-900/10 border-slate-800/80" 
+                        : "bg-slate-50/70 border-slate-205"
+                    }`}>
+                      <div className="flex items-center justify-between mb-3 w-full border-b pb-2 border-slate-200/50 dark:border-slate-800/50">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">📢</span>
+                          <span className={`text-xs font-bold uppercase tracking-wider font-mono ${
+                            isDark ? "text-slate-300" : "text-slate-800"
+                          }`}>
+                            Chart Event Ledger ({getActiveEventMarkers().length})
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                          {msftTimeframe} range
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
+                        {getActiveEventMarkers().map((marker, idx) => {
+                          const isHigh = marker.article.impactScore >= 8;
+                          return (
+                            <div 
+                              key={`ledger-event-${marker.article.id}-${idx}`}
+                              className={`p-2.5 rounded-lg border transition-all duration-150 text-left ${
+                                isDark 
+                                  ? "bg-slate-950/40 border-slate-800/80 hover:border-slate-75 hover:bg-slate-950/75" 
+                                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/40"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shrink-0 uppercase tracking-wide ${
+                                  isHigh 
+                                    ? "bg-rose-500/10 text-rose-500" 
+                                    : "bg-amber-500/10 text-amber-500"
+                                  }`}>
+                                  {marker.time}
+                                </span>
+                                <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono shrink-0">
+                                  Impact: {marker.article.impactScore}/10
+                                </span>
+                              </div>
+                              <h5 className={`text-[11px] font-bold mt-1.5 line-clamp-2 leading-snug cursor-help ${
+                                isDark ? "text-slate-200 hover:text-sky-400" : "text-slate-800 hover:text-sky-600"
+                              }`}
+                              title={marker.article.summary}
+                              >
+                                {marker.article.title}
+                              </h5>
+                              <div className="flex items-center gap-2 mt-1.5 text-[9px] text-slate-400 dark:text-slate-500">
+                                <span className="font-medium shrink-0">{marker.article.source}</span>
+                                <span>•</span>
+                                <span className="truncate">{marker.article.category.replace(/_/g, " ")}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Real-Time Price Alerts Dashboard (4 of 12 cols) */}
                   <div className="lg:col-span-4 w-full flex flex-col gap-4">
