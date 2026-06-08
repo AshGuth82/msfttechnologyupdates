@@ -6325,25 +6325,34 @@ ${advice}
               
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-indigo-500 to-sky-500 flex items-center justify-center font-bold text-slate-950 font-sans text-sm tracking-wider shadow">
-                  CM
+                  AG
                 </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white tracking-wide">ANZ Lead Advisor Profile</h4>
-                  <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Country Manager & EA Strategist</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold text-white tracking-wide truncate">Ash Guth</h4>
+                  <p className="text-[10px] text-sky-400 font-mono uppercase tracking-wider font-bold">ANZ Lead Advisor</p>
                 </div>
+                <a
+                  href="https://www.linkedin.com/in/ashguth/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center p-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 hover:text-sky-300 transition duration-150 cursor-pointer"
+                  title="View LinkedIn Profile"
+                >
+                  <Linkedin className="w-4 h-4 fill-current" />
+                </a>
               </div>
 
-              <p className="text-xs text-slate-350 leading-relaxed font-sans mb-3 select-text">
+              <p className="text-xs text-slate-350 leading-relaxed font-sans mb-4 select-text">
                 Leveraging **12+ years of senior industry expertise**, I act as a strategic bridge coordinating investment decisions between **Procurement, Corporate Finance, and IT Leadership** across the ANZ territory. 
               </p>
               
-              <div className="space-y-2 pt-2 border-t border-slate-850">
+              <div className="space-y-2 pt-3 border-t border-slate-850 mb-4">
                 <div className="flex items-center gap-2 text-xs text-slate-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-sky-450"></span>
                   <span className="font-medium">Complex EA & SCE Structuring Advisor</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-455"></span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-450"></span>
                   <span className="font-medium">ECIF Funding Grant Application Specialist</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-300">
@@ -6351,6 +6360,16 @@ ${advice}
                   <span className="font-medium">Azure Cloud Economics & TCO Architect</span>
                 </div>
               </div>
+
+              <a
+                href="https://www.linkedin.com/in/ashguth/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-[#0284c7] hover:bg-[#0369a1] text-white font-bold font-mono rounded-lg text-xs transition cursor-pointer shadow-lg shadow-sky-500/5 hover:shadow-sky-500/10"
+              >
+                <Linkedin className="w-3.5 h-3.5 fill-current" />
+                <span>Connect on LinkedIn</span>
+              </a>
             </div>
 
             {/* Microsoft Corporate Intelligence Systems Division Information */}
