@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
+import { AppLogo } from "./components/AppLogo";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ResponsiveContainer, 
@@ -2786,9 +2787,7 @@ ${advice}
         <header className={`mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b ${isDark ? "border-slate-800" : "border-slate-200"} pb-6 gap-4`}>
           <div>
             <div className="flex items-center gap-3">
-              <div className="bg-sky-500/10 border border-sky-500/30 p-2 rounded-lg">
-                <BarChart3 className="w-6 h-6 text-sky-400" />
-              </div>
+              <AppLogo size="md" />
               <div>
                 <h1 id="main-title" className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-sky-400 bg-clip-text text-transparent">
                   Microsoft Corporate Intelligence Hub
