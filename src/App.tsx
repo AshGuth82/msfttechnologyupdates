@@ -4750,136 +4750,147 @@ ${advice}
                           </div>
 
                           {/* Collapsible Key Briefing Takeaways & Reference URL */}
-                          {expanded && (
-                            <div id={`article-takeaways-${article.id}`} className="px-5 pb-5 border-t border-slate-800/60 bg-slate-900/40 rounded-b-xl pt-4">
-                              <h5 className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
-                                <Terminal className="text-sky-400 w-3.5 h-3.5" />
-                                Key Intelligence Points
-                              </h5>
-                              
-                              <ul className="space-y-2 mb-4">
-                                {article.keyTakeaways.map((bullet, idx) => (
-                                  <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
-                                    <span className="text-sky-400 font-bold shrink-0 mt-0.5 select-none font-mono">▸</span>
-                                    <span>{bullet}</span>
-                                  </li>
-                                ))}
-                              </ul>
-
-                              {/* Technical Briefing Advisory Template Section */}
-                              {article.anzActionableAdvice && (
-                                <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
-                                    <h6 className="text-xs font-bold uppercase tracking-wider text-white">
-                                      ANZ Commercial & Advisory Briefing
-                                    </h6>
-                                  </div>
-                                  <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
-                                    {article.anzActionableAdvice}
-                                  </p>
+                          <AnimatePresence initial={false}>
+                            {expanded && (
+                              <motion.div
+                                key={`takeaways-container-${article.id}`}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.30, ease: [0.4, 0, 0.2, 1] }}
+                                className="overflow-hidden"
+                              >
+                                <div id={`article-takeaways-${article.id}`} className="px-5 pb-5 border-t border-slate-800/60 bg-slate-900/40 rounded-b-xl pt-4">
+                                  <h5 className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+                                    <Terminal className="text-sky-400 w-3.5 h-3.5" />
+                                    Key Intelligence Points
+                                  </h5>
                                   
-                                  {article.ecifFundingEligible && (
-                                    <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                      <span>
-                                        <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                                  <ul className="space-y-2 mb-4">
+                                    {article.keyTakeaways.map((bullet, idx) => (
+                                      <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
+                                        <span className="text-sky-400 font-bold shrink-0 mt-0.5 select-none font-mono">▸</span>
+                                        <span>{bullet}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
 
-                              {/* Subscriber Delivery Micro-Dispatch Controls */}
-                              <div className="my-4 bg-slate-950/25 border border-slate-800/60 p-3.5 rounded-lg">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="p-1.5 rounded bg-sky-500/10 border border-sky-550/20 text-sky-400 mt-0.5 shrink-0">
-                                      <Mail className="w-3.5 h-3.5" />
-                                    </div>
-                                    <div>
-                                      <h6 className="text-[11px] font-bold text-slate-200 uppercase font-mono tracking-wider">
-                                        Email Live Intelligence Digest
-                                      </h6>
-                                      <p className="text-[10px] text-slate-400 font-sans mt-0.5">
-                                        Dispatches these key intelligence points directly to registered business profiles.
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {activeDispatchArticleId === article.id ? (
-                                    <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-                                      <div className="flex items-center gap-1.5">
-                                        <input
-                                          type="email"
-                                          placeholder="subscriber@domain.com"
-                                          value={dispatchEmailInput}
-                                          onChange={(e) => setDispatchEmailInput(e.target.value)}
-                                          className="bg-slate-950 border border-slate-700/80 rounded px-2 py-1 text-xs text-slate-200 outline-none focus:border-sky-500 w-full sm:w-48 font-mono"
-                                          disabled={sendingSummaryId === article.id}
-                                        />
-                                        <button
-                                          onClick={() => handleSendSummary(article, dispatchEmailInput)}
-                                          disabled={sendingSummaryId === article.id}
-                                          className="px-2.5 py-1 bg-sky-500 hover:bg-sky-450 text-slate-950 font-bold font-mono rounded text-[10px] disabled:opacity-50 transition shrink-0 cursor-pointer"
-                                        >
-                                          {sendingSummaryId === article.id ? "Working..." : "Send"}
-                                        </button>
-                                        <button
-                                          onClick={() => setActiveDispatchArticleId(null)}
-                                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 font-mono rounded text-[10px] text-slate-400 cursor-pointer"
-                                        >
-                                          Cancel
-                                        </button>
+                                  {/* Technical Briefing Advisory Template Section */}
+                                  {article.anzActionableAdvice && (
+                                    <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
+                                        <h6 className="text-xs font-bold uppercase tracking-wider text-white">
+                                          ANZ Commercial & Advisory Briefing
+                                        </h6>
                                       </div>
-                                      {subscriptionsList.length > 0 && (
-                                        <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
-                                          <span className="text-slate-600">Shortcut:</span>
-                                          {subscriptionsList.slice(0, 2).map((sub) => (
-                                            <button
-                                              key={sub.id}
-                                              onClick={() => setDispatchEmailInput(sub.email)}
-                                              className="hover:text-sky-400 underline cursor-pointer"
-                                              title={`Quick select ${sub.name}`}
-                                            >
-                                              {sub.email}
-                                            </button>
-                                          ))}
+                                      <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
+                                        {article.anzActionableAdvice}
+                                      </p>
+                                      
+                                      {article.ecifFundingEligible && (
+                                        <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                          <span>
+                                            <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
+                                          </span>
                                         </div>
                                       )}
                                     </div>
-                                  ) : (
-                                    <button
-                                      onClick={() => {
-                                        setActiveDispatchArticleId(article.id);
-                                        setDispatchEmailInput(subscriptionsList[0]?.email || "");
-                                      }}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-450 font-mono rounded text-[10px] text-slate-350 cursor-pointer transition"
-                                    >
-                                      <Mail className="w-3 h-3 text-slate-500" />
-                                      <span>Dispatch Digest</span>
-                                    </button>
                                   )}
-                                </div>
-                              </div>
 
-                              <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
-                                <span className="text-xs text-slate-400">
-                                  Segment Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
-                                </span>
-                                
-                                <a 
-                                  href={article.url} 
-                                  target="_blank" 
-                                  rel="noreferrer" 
-                                  className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
-                                >
-                                  <span>Access Source File</span>
-                                  <ExternalLink className="w-3.5 h-3.5" />
-                                </a>
-                              </div>
-                            </div>
-                          )}
+                                  {/* Subscriber Delivery Micro-Dispatch Controls */}
+                                  <div className="my-4 bg-slate-950/25 border border-slate-800/60 p-3.5 rounded-lg">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                      <div className="flex items-start gap-2.5">
+                                        <div className="p-1.5 rounded bg-sky-500/10 border border-sky-550/20 text-sky-400 mt-0.5 shrink-0">
+                                          <Mail className="w-3.5 h-3.5" />
+                                        </div>
+                                        <div>
+                                          <h6 className="text-[11px] font-bold text-slate-200 uppercase font-mono tracking-wider">
+                                            Email Live Intelligence Digest
+                                          </h6>
+                                          <p className="text-[10px] text-slate-400 font-sans mt-0.5">
+                                            Dispatches these key intelligence points directly to registered business profiles.
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {activeDispatchArticleId === article.id ? (
+                                        <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                                          <div className="flex items-center gap-1.5">
+                                            <input
+                                              type="email"
+                                              placeholder="subscriber@domain.com"
+                                              value={dispatchEmailInput}
+                                              onChange={(e) => setDispatchEmailInput(e.target.value)}
+                                              className="bg-slate-950 border border-slate-700/80 rounded px-2 py-1 text-xs text-slate-200 outline-none focus:border-sky-500 w-full sm:w-48 font-mono"
+                                              disabled={sendingSummaryId === article.id}
+                                            />
+                                            <button
+                                              onClick={() => handleSendSummary(article, dispatchEmailInput)}
+                                              disabled={sendingSummaryId === article.id}
+                                              className="px-2.5 py-1 bg-sky-500 hover:bg-sky-450 text-slate-950 font-bold font-mono rounded text-[10px] disabled:opacity-50 transition shrink-0 cursor-pointer"
+                                            >
+                                              {sendingSummaryId === article.id ? "Working..." : "Send"}
+                                            </button>
+                                            <button
+                                              onClick={() => setActiveDispatchArticleId(null)}
+                                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 font-mono rounded text-[10px] text-slate-400 cursor-pointer"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
+                                          {subscriptionsList.length > 0 && (
+                                            <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
+                                              <span className="text-slate-600">Shortcut:</span>
+                                              {subscriptionsList.slice(0, 2).map((sub) => (
+                                                <button
+                                                  key={sub.id}
+                                                  onClick={() => setDispatchEmailInput(sub.email)}
+                                                  className="hover:text-sky-400 underline cursor-pointer"
+                                                  title={`Quick select ${sub.name}`}
+                                                >
+                                                  {sub.email}
+                                                </button>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={() => {
+                                            setActiveDispatchArticleId(article.id);
+                                            setDispatchEmailInput(subscriptionsList[0]?.email || "");
+                                          }}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-455 font-mono rounded text-[10px] text-slate-350 cursor-pointer transition"
+                                        >
+                                          <Mail className="w-3 h-3 text-slate-500" />
+                                          <span>Dispatch Digest</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
+                                    <span className="text-xs text-slate-400">
+                                      Segment Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
+                                    </span>
+                                    
+                                    <a 
+                                      href={article.url} 
+                                      target="_blank" 
+                                      rel="noreferrer" 
+                                      className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
+                                    >
+                                      <span>Access Source File</span>
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </a>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </article>
                       );
                     })
@@ -5158,138 +5169,149 @@ ${advice}
                                     </div>
 
                                     {/* Collapsible Key Briefing Takeaways & Reference URL */}
-                                    {expanded && (
-                                      <div id={`article-takeaways-grouped-${article.id}`} className="px-5 pb-5 border-t border-slate-800/60 bg-slate-900/40 rounded-b-xl pt-4">
-                                        <h5 className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
-                                          <Terminal className="text-sky-400 w-3.5 h-3.5" />
-                                          Key Intelligence Points
-                                        </h5>
-                                        
-                                        <ul className="space-y-2 mb-4">
-                                          {article.keyTakeaways.map((bullet, idx) => (
-                                            <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
-                                              <span className="text-sky-400 font-bold shrink-0 mt-0.5 select-none font-mono">▸</span>
-                                              <span>{bullet}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-
-                                        {/* Technical Briefing Advisory Template Section */}
-                                        {article.anzActionableAdvice && (
-                                          <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
-                                            <div className="flex items-center gap-2 mb-2">
-                                              <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
-                                              <h6 className="text-xs font-bold uppercase tracking-wider text-white">
-                                                ANZ Commercial & Advisory Briefing
-                                              </h6>
-                                            </div>
-                                            <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
-                                              {article.anzActionableAdvice}
-                                            </p>
+                                    <AnimatePresence initial={false}>
+                                      {expanded && (
+                                        <motion.div
+                                          key={`takeaways-container-grouped-${article.id}`}
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: "auto", opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.30, ease: [0.4, 0, 0.2, 1] }}
+                                          className="overflow-hidden"
+                                        >
+                                          <div id={`article-takeaways-grouped-${article.id}`} className="px-5 pb-5 border-t border-slate-800/60 bg-slate-900/40 rounded-b-xl pt-4">
+                                            <h5 className="text-xs uppercase font-mono tracking-wider font-semibold text-slate-405 mb-3 flex items-center gap-1.5">
+                                              <Terminal className="text-sky-400 w-3.5 h-3.5" />
+                                              Key Intelligence Points
+                                            </h5>
                                             
-                                            {article.ecifFundingEligible && (
-                                              <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                                <span>
-                                                  <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
-                                                </span>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
+                                            <ul className="space-y-2 mb-4">
+                                              {article.keyTakeaways.map((bullet, idx) => (
+                                                <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
+                                                  <span className="text-sky-400 font-bold shrink-0 mt-0.5 select-none font-mono">▸</span>
+                                                  <span>{bullet}</span>
+                                                </li>
+                                              ))}
+                                            </ul>
 
-                                        {/* Subscriber Delivery Micro-Dispatch Controls */}
-                                        <div className="my-4 bg-slate-950/25 border border-slate-800/60 p-3.5 rounded-lg text-left">
-                                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                            <div className="flex items-start gap-2.5">
-                                              <div className="p-1.5 rounded bg-sky-500/10 border border-sky-550/20 text-sky-400 mt-0.5 shrink-0">
-                                                <Mail className="w-3.5 h-3.5" />
-                                              </div>
-                                              <div>
-                                                <h6 className="text-[11px] font-bold text-slate-200 uppercase font-mono tracking-wider">
-                                                  Email Live Intelligence Digest
-                                                </h6>
-                                                <p className="text-[10px] text-slate-400 font-sans mt-0.5">
-                                                  Dispatches these key intelligence points directly to registered business profiles.
-                                                </p>
-                                              </div>
-                                            </div>
-
-                                            {activeDispatchArticleId === article.id ? (
-                                              <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-                                                <div className="flex items-center gap-1.5">
-                                                  <input
-                                                    type="email"
-                                                    placeholder="subscriber@domain.com"
-                                                    value={dispatchEmailInput}
-                                                    onChange={(e) => setDispatchEmailInput(e.target.value)}
-                                                    className="bg-slate-950 border border-slate-700/80 rounded px-2 py-1 text-xs text-slate-200 outline-none focus:border-sky-500 w-full sm:w-48 font-mono"
-                                                    disabled={sendingSummaryId === article.id}
-                                                  />
-                                                  <button
-                                                    onClick={() => handleSendSummary(article, dispatchEmailInput)}
-                                                    disabled={sendingSummaryId === article.id}
-                                                    className="px-2.5 py-1 bg-sky-500 hover:bg-sky-450 text-slate-950 font-bold font-mono rounded text-[10px] disabled:opacity-50 transition shrink-0 cursor-pointer"
-                                                  >
-                                                    {sendingSummaryId === article.id ? "Working..." : "Send"}
-                                                  </button>
-                                                  <button
-                                                    onClick={() => setActiveDispatchArticleId(null)}
-                                                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 font-mono rounded text-[10px] text-slate-400 cursor-pointer"
-                                                  >
-                                                    Cancel
-                                                  </button>
+                                            {/* Technical Briefing Advisory Template Section */}
+                                            {article.anzActionableAdvice && (
+                                              <div className="my-4 bg-slate-950/40 border-l-4 border-sky-500 p-4 rounded-r-lg">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                  <Briefcase className="w-4 h-4 text-sky-405 shrink-0" />
+                                                  <h6 className="text-xs font-bold uppercase tracking-wider text-white">
+                                                    ANZ Commercial & Advisory Briefing
+                                                  </h6>
                                                 </div>
-                                                {subscriptionsList.length > 0 && (
-                                                  <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
-                                                    <span className="text-slate-600">Shortcut:</span>
-                                                    {subscriptionsList.slice(0, 2).map((sub) => (
-                                                      <button
-                                                        key={sub.id}
-                                                        onClick={() => setDispatchEmailInput(sub.email)}
-                                                        className="hover:text-sky-400 underline cursor-pointer"
-                                                        title={`Quick select ${sub.name}`}
-                                                        type="button"
-                                                      >
-                                                        {sub.email}
-                                                      </button>
-                                                    ))}
+                                                <p className="text-xs text-slate-300 leading-relaxed font-sans mb-1 select-text">
+                                                  {article.anzActionableAdvice}
+                                                </p>
+                                                
+                                                {article.ecifFundingEligible && (
+                                                  <div className="mt-3 flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded px-2.5 py-1.5 text-[10px] text-emerald-400 font-mono">
+                                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                                    <span>
+                                                      <strong>ECIF Funding Opportunity:</strong> Works qualifying for Azure End-partner Investment Funding.
+                                                    </span>
                                                   </div>
                                                 )}
                                               </div>
-                                            ) : (
-                                              <button
-                                                onClick={() => {
-                                                  setActiveDispatchArticleId(article.id);
-                                                  setDispatchEmailInput(subscriptionsList[0]?.email || "");
-                                                }}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-455 font-mono rounded text-[10px] text-slate-350 cursor-pointer transition"
-                                                type="button"
-                                              >
-                                                <Mail className="w-3 h-3 text-slate-500" />
-                                                <span>Dispatch Digest</span>
-                                              </button>
                                             )}
-                                          </div>
-                                        </div>
 
-                                        <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
-                                          <span className="text-xs text-slate-400">
-                                            Item Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
-                                          </span>
-                                          
-                                          <a 
-                                            href={article.url} 
-                                            target="_blank" 
-                                            rel="noreferrer" 
-                                            className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
-                                          >
-                                            <span>Access Source File</span>
-                                            <ExternalLink className="w-3.5 h-3.5" />
-                                          </a>
-                                        </div>
-                                      </div>
-                                    )}
+                                            {/* Subscriber Delivery Micro-Dispatch Controls */}
+                                            <div className="my-4 bg-slate-950/25 border border-slate-800/60 p-3.5 rounded-lg text-left">
+                                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div className="flex items-start gap-2.5">
+                                                  <div className="p-1.5 rounded bg-sky-500/10 border border-sky-550/20 text-sky-400 mt-0.5 shrink-0">
+                                                    <Mail className="w-3.5 h-3.5" />
+                                                  </div>
+                                                  <div>
+                                                    <h6 className="text-[11px] font-bold text-slate-200 uppercase font-mono tracking-wider">
+                                                      Email Live Intelligence Digest
+                                                    </h6>
+                                                    <p className="text-[10px] text-slate-400 font-sans mt-0.5">
+                                                      Dispatches these key intelligence points directly to registered business profiles.
+                                                    </p>
+                                                  </div>
+                                                </div>
+
+                                                {activeDispatchArticleId === article.id ? (
+                                                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                                                    <div className="flex items-center gap-1.5">
+                                                      <input
+                                                        type="email"
+                                                        placeholder="subscriber@domain.com"
+                                                        value={dispatchEmailInput}
+                                                        onChange={(e) => setDispatchEmailInput(e.target.value)}
+                                                        className="bg-slate-950 border border-slate-700/80 rounded px-2 py-1 text-xs text-slate-200 outline-none focus:border-sky-500 w-full sm:w-48 font-mono"
+                                                        disabled={sendingSummaryId === article.id}
+                                                      />
+                                                      <button
+                                                        onClick={() => handleSendSummary(article, dispatchEmailInput)}
+                                                        disabled={sendingSummaryId === article.id}
+                                                        className="px-2.5 py-1 bg-sky-500 hover:bg-sky-450 text-slate-950 font-bold font-mono rounded text-[10px] disabled:opacity-50 transition shrink-0 cursor-pointer"
+                                                      >
+                                                        {sendingSummaryId === article.id ? "Working..." : "Send"}
+                                                      </button>
+                                                      <button
+                                                        onClick={() => setActiveDispatchArticleId(null)}
+                                                        className="px-2 py-1 bg-slate-800 hover:bg-slate-700 font-mono rounded text-[10px] text-slate-400 cursor-pointer"
+                                                      >
+                                                        Cancel
+                                                      </button>
+                                                    </div>
+                                                    {subscriptionsList.length > 0 && (
+                                                      <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
+                                                        <span className="text-slate-600">Shortcut:</span>
+                                                        {subscriptionsList.slice(0, 2).map((sub) => (
+                                                          <button
+                                                            key={sub.id}
+                                                            onClick={() => setDispatchEmailInput(sub.email)}
+                                                            className="hover:text-sky-400 underline cursor-pointer"
+                                                            title={`Quick select ${sub.name}`}
+                                                            type="button"
+                                                          >
+                                                            {sub.email}
+                                                          </button>
+                                                        ))}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                ) : (
+                                                  <button
+                                                    onClick={() => {
+                                                      setActiveDispatchArticleId(article.id);
+                                                      setDispatchEmailInput(subscriptionsList[0]?.email || "");
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-455 font-mono rounded text-[10px] text-slate-350 cursor-pointer transition"
+                                                    type="button"
+                                                  >
+                                                    <Mail className="w-3 h-3 text-slate-500" />
+                                                    <span>Dispatch Digest</span>
+                                                  </button>
+                                                )}
+                                              </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t border-slate-800/60 pt-3.5">
+                                              <span className="text-xs text-slate-400">
+                                                Item Impact Priority: <strong className={article.impactScore >= 8 ? "text-rose-400" : "text-sky-400"}>{article.impactScore >= 8 ? "CRITICAL RISK ALERT" : "MONITORABLE ACTIVITY"}</strong>
+                                              </span>
+                                              
+                                              <a 
+                                                href={article.url} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="inline-flex items-center gap-1 text-xs text-sky-400 hover:text-sky-305 hover:underline font-mono"
+                                              >
+                                                <span>Access Source File</span>
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                              </a>
+                                            </div>
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
                                   </article>
                                 );
                               })}
