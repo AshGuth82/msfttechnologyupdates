@@ -97,6 +97,26 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   console.error("Firestore Error structured context: ", JSON.stringify(errInfo, null, 2));
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`Database operation '${operationName}' timed out after ${timeoutMs}ms.`));
+    }, timeoutMs);
+    if (timer && typeof timer.unref === "function") {
+      timer.unref();
+    }
+  });
+
+  return Promise.race([
+    promise.then((res) => {
+      clearTimeout(timer);
+      return res;
+    }),
+    timeoutPromise
+  ]);
+}
+
 async function loadSubscribersFromFirestore(): Promise<Subscriber[]> {
   const seedList: Subscriber[] = [
     {
@@ -128,7 +148,11 @@ async function loadSubscribersFromFirestore(): Promise<Subscriber[]> {
   }
 
   try {
-    const querySnapshot = await getDocs(collection(db, "subscribers"));
+    const querySnapshot = await withTimeout(
+      getDocs(collection(db, "subscribers")),
+      3000,
+      "getDocs(subscribers)"
+    );
     const list: Subscriber[] = [];
     querySnapshot.forEach((docRef) => {
       list.push(docRef.data() as Subscriber);
@@ -136,7 +160,11 @@ async function loadSubscribersFromFirestore(): Promise<Subscriber[]> {
 
     if (list.length === 0) {
       for (const sub of seedList) {
-        await setDoc(doc(db, "subscribers", sub.id), sub);
+        await withTimeout(
+          setDoc(doc(db, "subscribers", sub.id), sub),
+          3000,
+          `seedSubscriber(${sub.id})`
+        );
         list.push(sub);
       }
       console.log("Seeded empty Firestore datastore with default subscribers.");
@@ -177,10 +205,27 @@ async function saveSubscriberToFirestore(sub: Subscriber) {
   }
 
   try {
-    await setDoc(doc(db, "subscribers", sub.id), sub);
+    await withTimeout(
+      setDoc(doc(db, "subscribers", sub.id), sub),
+      3000,
+      `saveSubscriber(${sub.id})`
+    );
     console.log(`Persisted subscriber @${sub.username} to Firestore.`);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `subscribers/${sub.id}`);
+    // Write to local cache backup on database operation error too so that it can be retrieved as fallback
+    try {
+      const list = await loadSubscribersFromFirestore();
+      const idx = list.findIndex(s => s.id === sub.id || s.email.toLowerCase() === sub.email.toLowerCase());
+      if (idx !== -1) {
+        list[idx] = sub;
+      } else {
+        list.unshift(sub);
+      }
+      fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    } catch (localWriteError) {
+      console.error("Error writing to local backup file after Firestore failure:", localWriteError);
+    }
   }
 }
 
@@ -197,10 +242,21 @@ async function deleteSubscriberFromFirestore(id: string) {
   }
 
   try {
-    await deleteDoc(doc(db, "subscribers", id));
+    await withTimeout(
+      deleteDoc(doc(db, "subscribers", id)),
+      3000,
+      `deleteSubscriber(${id})`
+    );
     console.log(`Deleted subscriber ${id} from Firestore.`);
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `subscribers/${id}`);
+    try {
+      let list = await loadSubscribersFromFirestore();
+      list = list.filter(s => s.id !== id);
+      fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(list, null, 2), "utf-8");
+    } catch (localError) {
+      console.error("Error updating local file after Firestore delete failure:", localError);
+    }
   }
 }
 
@@ -211,6 +267,7 @@ loadSubscribersFromFirestore().then((list) => {
 }).catch((err) => {
   console.error("Initial database cache preload failed:", err);
 });
+
 
 
 const app = express();

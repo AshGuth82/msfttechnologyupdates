@@ -57,7 +57,8 @@ import {
   MessageSquare,
   Building,
   Table,
-  Linkedin
+  Linkedin,
+  MapPin
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -330,6 +331,28 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
   }
 ];
 
+interface CityHQ {
+  id: string;
+  name: string;
+  state: string;
+  country: string;
+  left: string;
+  top: string;
+}
+
+const CITIES_HQ: CityHQ[] = [
+  { id: "sydney", name: "Sydney", state: "NSW", country: "Australia", left: "63%", top: "73%" },
+  { id: "melbourne", name: "Melbourne", state: "VIC", country: "Australia", left: "53%", top: "84%" },
+  { id: "brisbane", name: "Brisbane", state: "QLD", country: "Australia", left: "67%", top: "53%" },
+  { id: "perth", name: "Perth", state: "WA", country: "Australia", left: "14%", top: "64%" },
+  { id: "adelaide", name: "Adelaide", state: "SA", country: "Australia", left: "42%", top: "75%" },
+  { id: "canberra", name: "Canberra", state: "ACT", country: "Australia", left: "60%", top: "78%" },
+  { id: "darwin", name: "Darwin", state: "NT", country: "Australia", left: "34%", top: "21%" },
+  { id: "hobart", name: "Hobart", state: "TAS", country: "Australia", left: "55%", top: "94%" },
+  { id: "auckland", name: "Auckland", state: "Auckland", country: "New Zealand", left: "91%", top: "68%" },
+  { id: "wellington", name: "Wellington", state: "Wellington", country: "New Zealand", left: "90%", top: "78%" }
+];
+
 export default function App() {
   // Theme Select Configuration (High Contrast, Accessible Microsoft Corporate Aesthetic with Solar & System Auto Sync)
   const [themeMode, setThemeMode] = useState<"dark" | "light" | "system" | "solar">(() => {
@@ -481,6 +504,45 @@ export default function App() {
   const [newPartnerCaseStudyContext, setNewPartnerCaseStudyContext] = useState("");
   const [newPartnerEmail, setNewPartnerEmail] = useState("");
   const [newPartnerWebsite, setNewPartnerWebsite] = useState("");
+
+  // Regional headquarters map states
+  const [selectedCityFilter, setSelectedCityFilter] = useState<string | null>(null);
+  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+
+  // Dynamic geospatial mapper helpers
+  const getPartnersForCity = (cityId: string) => {
+    return partners.filter(p => {
+      const loc = (p.location || "").toLowerCase();
+      if (cityId === "sydney") return loc.includes("sydney") || loc.includes("nsw");
+      if (cityId === "melbourne") return loc.includes("melbourne") || loc.includes("vic");
+      if (cityId === "brisbane") return loc.includes("brisbane") || loc.includes("qld");
+      if (cityId === "perth") return loc.includes("perth") || loc.includes("wa");
+      if (cityId === "adelaide") return loc.includes("adelaide") || loc.includes("sa");
+      if (cityId === "canberra") return loc.includes("canberra") || loc.includes("act");
+      if (cityId === "darwin") return loc.includes("darwin") || loc.includes("nt");
+      if (cityId === "hobart") return loc.includes("hobart") || loc.includes("tas") || loc.includes("tasmania");
+      if (cityId === "auckland") return loc.includes("auckland");
+      if (cityId === "wellington") return loc.includes("wellington");
+      return false;
+    });
+  };
+
+  const filteredPartnersList = selectedCityFilter
+    ? partners.filter(p => {
+        const loc = (p.location || "").toLowerCase();
+        if (selectedCityFilter === "sydney") return loc.includes("sydney") || loc.includes("nsw");
+        if (selectedCityFilter === "melbourne") return loc.includes("melbourne") || loc.includes("vic");
+        if (selectedCityFilter === "brisbane") return loc.includes("brisbane") || loc.includes("qld");
+        if (selectedCityFilter === "perth") return loc.includes("perth") || loc.includes("wa");
+        if (selectedCityFilter === "adelaide") return loc.includes("adelaide") || loc.includes("sa");
+        if (selectedCityFilter === "canberra") return loc.includes("canberra") || loc.includes("act");
+        if (selectedCityFilter === "darwin") return loc.includes("darwin") || loc.includes("nt");
+        if (selectedCityFilter === "hobart") return loc.includes("hobart") || loc.includes("tas") || loc.includes("tasmania");
+        if (selectedCityFilter === "auckland") return loc.includes("auckland");
+        if (selectedCityFilter === "wellington") return loc.includes("wellington");
+        return false;
+      })
+    : partners;
 
   const handlePromotePartner = (id: string) => {
     setPartners(current => {
@@ -7379,6 +7441,259 @@ ${advice}
               </div>
             </div>
 
+            {/* ANZ Regional Headquarters Map Hub */}
+            <div className={`p-6 rounded-2xl border ${isDark ? "bg-[#111827] border-slate-800/80" : "bg-white border-slate-200 shadow-sm"}`} id="anz-partners-map-hub">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                <div>
+                  <h3 className={`text-sm font-extrabold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                    <MapPin className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span>ANZ Microsoft Partner Headquarters Map</span>
+                    <span className="text-[9px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/15 rounded shrink-0">
+                      CSS-Positioned Interactive
+                    </span>
+                  </h3>
+                  <p className={`text-xs mt-1 max-w-3xl leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                    Geospatial telemetry indicating verified partner offices across Australia and New Zealand. Hover over metropolitan nodes to inspect regional density, and click a city marker to filter partner registries.
+                  </p>
+                </div>
+
+                {selectedCityFilter && (
+                  <button
+                    onClick={() => setSelectedCityFilter(null)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-450 hover:bg-rose-600 hover:text-white transition cursor-pointer self-start sm:self-auto shadow-sm"
+                  >
+                    <span>Clear Filter: {CITIES_HQ.find(c => c.id === selectedCityFilter)?.name}</span>
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Interactive map visualization canvas */}
+              <div className={`relative w-full overflow-hidden rounded-xl border ${isDark ? "bg-[#0b0f19] border-slate-800" : "bg-slate-50 border-slate-200"} flex items-center justify-center`} style={{ minHeight: "380px" }}>
+                
+                {/* SVG Coordinate Grids & State Shapes */}
+                <svg className={`absolute inset-0 w-full h-full ${isDark ? "text-slate-800/35" : "text-slate-300/35"}`} viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <pattern id="map-grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                    </pattern>
+                  </defs>
+                  
+                  {/* Grid overlay */}
+                  <rect width="100%" height="100%" fill="url(#map-grid-pattern)" />
+                  
+                  {/* Subtle Radar Concentric Rings in center for tactical aesthetics */}
+                  <circle cx="500" cy="250" r="150" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4,4" className="opacity-20" />
+                  <circle cx="500" cy="250" r="300" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="4,4" className="opacity-10" />
+                  
+                  {/* Grid Coordinates Text */}
+                  <text x="40" y="40" className={`text-[9px] font-mono font-bold opacity-30 ${isDark ? "fill-slate-400" : "fill-slate-600"}`}>110° E</text>
+                  <text x="300" y="40" className={`text-[9px] font-mono font-bold opacity-30 ${isDark ? "fill-slate-400" : "fill-slate-600"}`}>120° E</text>
+                  <text x="600" y="40" className={`text-[9px] font-mono font-bold opacity-30 ${isDark ? "fill-slate-400" : "fill-slate-600"}`}>140° E</text>
+                  <text x="900" y="40" className={`text-[9px] font-mono font-bold opacity-30 ${isDark ? "fill-slate-400" : "fill-slate-600"}`}>160° E</text>
+                  
+                  <text x="940" y="100" className={`text-[9px] font-mono font-bold opacity-30 ${isDark ? "fill-slate-400" : "fill-slate-600"}`}>20° S</text>
+                  <text x="940" y="250" className={`text-[9px] font-mono font-bold opacity-30 ${isDark ? "fill-slate-400" : "fill-slate-600"}`}>30° S</text>
+                  <text x="940" y="400" className={`text-[9px] font-mono font-bold opacity-30 ${isDark ? "fill-slate-400" : "fill-slate-600"}`}>40° S</text>
+
+                  {/* ANZ Stylized State/Island Outlines */}
+                  <g className="transition-all duration-300">
+                    {/* Western Australia (WA) */}
+                    <path
+                      d="M 120 150 Q 110 180 110 230 Q 110 280 120 290 T 140 340 T 170 350 T 180 380 Q 210 380 230 350 T 250 380 Q 275 380 300 380 L 300 110 L 200 110 T 140 120 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'perth' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* Northern Territory (NT) */}
+                    <path
+                      d="M 300 110 L 300 250 L 400 250 L 400 150 L 420 140 L 400 105 Q 380 80 365 100 Q 350 90 320 115 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'darwin' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* South Australia (SA) */}
+                    <path
+                      d="M 300 250 L 300 380 L 370 380 Q 395 350 410 385 T 430 340 T 450 380 L 460 380 L 460 250 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'adelaide' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* Queensland (QLD) */}
+                    <path
+                      d="M 400 150 L 400 280 L 620 280 L 645 210 Q 635 150 560 140 T 505 100 T 488 40 T 472 90 T 452 120 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'brisbane' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* New South Wales (NSW) + ACT inside */}
+                    <path
+                      d="M 460 280 L 460 350 L 500 350 L 555 380 L 620 350 L 630 310 L 620 280 Z"
+                      className={`transition-all duration-200 ${['sydney', 'canberra'].includes(selectedCityFilter || '') ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* Victoria (VIC) */}
+                    <path
+                      d="M 460 350 L 500 350 L 555 380 L 610 360 L 590 395 L 540 395 L 480 380 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'melbourne' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* Tasmania (TAS) */}
+                    <path
+                      d="M 530 425 Q 545 420 565 425 T 555 455 T 525 445 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'hobart' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* NZ South Island */}
+                    <path
+                      d="M 850 360 Q 865 345 880 335 L 845 440 L 815 415 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'wellington' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                    {/* NZ North Island */}
+                    <path
+                      d="M 855 290 Q 870 270 890 260 L 915 295 L 870 335 Z"
+                      className={`transition-all duration-200 ${selectedCityFilter === 'auckland' ? 'fill-sky-500/15 stroke-sky-500/50' : 'fill-slate-400/5 dark:fill-slate-900/40 stroke-slate-300/25 dark:stroke-slate-800/80 hover:fill-slate-400/10 dark:hover:fill-slate-800/50'}`}
+                    />
+                  </g>
+                </svg>
+
+                {/* City Pins (CSS-based Absolute Positioning overlays) */}
+                <div className="absolute inset-0 pointer-events-none">
+                  {CITIES_HQ.map((city) => {
+                    const hqPartners = getPartnersForCity(city.id);
+                    const partnerCount = hqPartners.length;
+                    const isHovered = hoveredCity === city.id;
+                    const isSelected = selectedCityFilter === city.id;
+
+                    return (
+                      <div
+                        key={city.id}
+                        className="absolute pointer-events-auto cursor-pointer"
+                        style={{ left: city.left, top: city.top }}
+                        onMouseEnter={() => setHoveredCity(city.id)}
+                        onMouseLeave={() => setHoveredCity(null)}
+                        onClick={() => setSelectedCityFilter(isSelected ? null : city.id)}
+                      >
+                        {/* Glowing Ring Indicator */}
+                        <div className="relative flex items-center justify-center">
+                          {partnerCount > 0 && (
+                            <span className="absolute inline-flex h-6 w-6 rounded-full bg-sky-500/35 animate-ping opacity-75"></span>
+                          )}
+                          <div className={`h-3.5 w-3.5 rounded-full border transition-all duration-200 shadow-sm relative ${
+                            isSelected 
+                              ? "bg-rose-500 border-white scale-125 ring-4 ring-rose-500/25" 
+                              : partnerCount > 0 
+                                ? "bg-sky-500 border-white scale-110" 
+                                : "bg-slate-400 dark:bg-slate-700 border-slate-300 dark:border-slate-800"
+                          }`} />
+
+                          {/* Dynamic count badge if partners are present */}
+                          {partnerCount > 0 && (
+                            <div className={`absolute -top-3.5 -right-3.5 flex items-center justify-center h-4 px-1 min-w-[16px] text-[8px] font-mono font-extrabold rounded-full border shadow-sm transition-colors duration-150 ${
+                              isSelected
+                                ? "bg-rose-600 text-white border-rose-400"
+                                : "bg-sky-600 text-white border-sky-400"
+                            }`}>
+                              {partnerCount}
+                            </div>
+                          )}
+
+                          {/* Hover Tooltip/Popup */}
+                          <AnimatePresence>
+                            {isHovered && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className={`absolute bottom-6 left-1/2 -translate-x-1/2 w-56 p-3 rounded-xl border font-sans z-50 pointer-events-none shadow-2xl backdrop-blur-md ${isDark ? "bg-slate-950/95 border-slate-800 text-white" : "bg-white/95 border-slate-200 text-slate-800"}`}
+                              >
+                                <div className="flex items-center justify-between gap-1 border-b border-slate-800/35 pb-1.5 mb-1.5">
+                                  <div>
+                                    <h4 className="text-xs font-extrabold font-sans leading-none">{city.name}</h4>
+                                    <span className="text-[9px] font-mono text-slate-400 mt-1 block">{city.state}, {city.country}</span>
+                                  </div>
+                                  <span className={`text-[8px] font-mono font-bold tracking-wider uppercase px-1 rounded-sm ${partnerCount > 0 ? "bg-sky-500/10 text-sky-405" : "bg-slate-550/10 text-slate-400"}`}>
+                                    {partnerCount} Registered
+                                  </span>
+                                </div>
+
+                                {partnerCount > 0 ? (
+                                  <div className="space-y-1.5">
+                                    <div className="text-[9px] text-slate-400 uppercase font-mono tracking-widest font-bold">
+                                      Organizations:
+                                    </div>
+                                    <ul className="space-y-1 max-h-24 overflow-y-auto pr-0.5 custom-scrollbar">
+                                      {hqPartners.map(p => (
+                                        <li key={p.id} className="text-[10px] font-medium flex items-center gap-1">
+                                          <div className="h-1.5 w-1.5 bg-emerald-400 rounded-full shrink-0"></div>
+                                          <span className="truncate">{p.name}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    
+                                    {/* Average ratings */}
+                                    {(() => {
+                                      const totalRating = hqPartners.reduce((acc, p) => acc + p.rating, 0);
+                                      const avg = (totalRating / partnerCount).toFixed(1);
+                                      return (
+                                        <div className="flex items-center gap-1 border-t border-slate-800/20 pt-1.5 mt-1.5 text-[9px] text-slate-400 font-mono">
+                                          <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
+                                          <span>Average rating: <strong className={isDark ? "text-slate-200" : "text-slate-805"}>{avg}</strong></span>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                ) : (
+                                  <div className="text-[9px] text-slate-400 font-mono italic leading-relaxed py-0.5">
+                                    No registered systems integrators in this hub currently.
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Map Floating HUD Overlay */}
+                <div className="absolute top-3 left-3 bg-slate-950/80 dark:bg-[#080d1a]/85 border border-slate-200/25 dark:border-slate-800/80 p-2.5 px-3.5 rounded-xl pointer-events-none backdrop-blur-sm shadow z-10 w-44">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-405 font-mono">
+                    ANZ Map Telemetry
+                  </h4>
+                  <div className="flex flex-col gap-1 mt-1.5 font-mono text-[9px] text-slate-500 dark:text-slate-450">
+                    <div className="flex justify-between items-center">
+                      <span>Total Sites:</span>
+                      <span className="text-slate-200 font-bold">{CITIES_HQ.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Active Hubs:</span>
+                      <span className="text-sky-405 font-bold">
+                        {CITIES_HQ.filter(c => getPartnersForCity(c.id).length > 0).length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center border-t border-slate-800/40 pt-1 mt-1">
+                      <span>Filter status:</span>
+                      <span className={selectedCityFilter ? "text-rose-405 font-bold" : "text-emerald-450 font-bold"}>
+                        {selectedCityFilter ? "Active" : "None"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Map Controls / Legend */}
+                <div className="absolute bottom-3 right-3 bg-slate-950/80 dark:bg-[#080d1a]/85 border border-slate-200/25 dark:border-slate-800/80 p-2 rounded-lg pointer-events-auto backdrop-blur-sm text-[9px] flex gap-3 text-slate-400 z-10">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-sky-500 inline-block"></span>
+                    <span className="font-mono text-[9px]">Hub (Active)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-slate-500 inline-block"></span>
+                    <span className="font-mono text-[9px]">Hub (Empty)</span>
+                  </div>
+                  {selectedCityFilter && (
+                    <button
+                      onClick={() => setSelectedCityFilter(null)}
+                      className="font-mono text-[9px] text-rose-450 hover:underline font-bold cursor-pointer"
+                    >
+                      Reset Filter
+                    </button>
+                  )}
+                </div>
+
+              </div>
+            </div>
+
             {/* Split view Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
@@ -7386,13 +7701,20 @@ ${advice}
               <div className="lg:col-span-7 flex flex-col gap-4">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                   <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
-                    Authorized Partner Registry Feed ({partners.length})
+                    Authorized Partner Registry Feed ({filteredPartnersList.length})
                   </h3>
-                  <span className="text-[10px] text-slate-500 font-mono">Select a partner to audit reviews</span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {selectedCityFilter ? `Filtered by city: ${CITIES_HQ.find(c => c.id === selectedCityFilter)?.name}` : "Select a partner to audit reviews"}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                  {partners.map((partner) => {
+                  {filteredPartnersList.length === 0 ? (
+                    <div className={`p-8 text-center rounded-xl border border-dashed font-mono text-xs ${isDark ? "border-slate-800 text-slate-500" : "border-slate-200 text-slate-500 bg-slate-50"}`}>
+                      No certified partners registered under the {CITIES_HQ.find(c => c.id === selectedCityFilter)?.name} hub.
+                    </div>
+                  ) : (
+                    filteredPartnersList.map((partner) => {
                     const isSpotlight = spotlightPartner.id === partner.id;
                     const isReviewsSelected = activeReviewId === partner.id;
                     
@@ -7513,7 +7835,8 @@ ${advice}
                         </div>
                       </div>
                     );
-                  })}
+                  })
+                  )}
                 </div>
               </div>
 
