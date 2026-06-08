@@ -351,6 +351,29 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
         date: "2026-05-30"
       }
     ]
+  },
+  {
+    id: "partner-codify",
+    name: "Codify",
+    location: "Perth, WA",
+    rating: 4.9,
+    ratingCount: 45,
+    promoted: false,
+    specialization: ["Cloud Migration & DevOps", "Azure Security Infrastructure", "Managed IT Services"],
+    description: "A premium, Perth-based Microsoft partner specializing in secure cloud migrations, innovative DevOps tooling, automated environment provisioning, and structured enterprise cloud transitions.",
+    caseStudyTitle: "Western Australia Infrastructure Modernization",
+    caseStudyContext: "Successfully migrated tier-1 energy provider assets to secure Azure instances, improving system availability and reducing deployment time from weeks to minutes.",
+    contactEmail: "solutions@codify.com",
+    websiteUrl: "https://www.codify.com",
+    reviews: [
+      {
+        id: "rev-codify-1",
+        reviewer: "Marcus Finch",
+        rating: 5,
+        comment: "Excellent technical capability and seamless deployment automation workflows.",
+        date: "2026-05-20"
+      }
+    ]
   }
 ];
 
@@ -494,11 +517,16 @@ export default function App() {
       const stored = localStorage.getItem("microsoft_intel_partners");
       let parsed = stored ? JSON.parse(stored) : DEFAULT_PARTNERS;
       if (Array.isArray(parsed)) {
-        parsed = parsed.filter((p: any) => p.id !== "partner-codify" && p.name !== "Codify");
         if (!parsed.some((p: any) => p.id === "partner-brennan")) {
           const brennan = DEFAULT_PARTNERS.find(p => p.id === "partner-brennan");
           if (brennan) {
             parsed.push(brennan);
+          }
+        }
+        if (!parsed.some((p: any) => p.id === "partner-codify")) {
+          const codify = DEFAULT_PARTNERS.find(p => p.id === "partner-codify");
+          if (codify) {
+            parsed.push(codify);
           }
         }
       }
