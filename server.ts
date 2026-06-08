@@ -29,17 +29,7 @@ interface Subscriber {
 const SUBSCRIBERS_FILE = path.join(process.cwd(), "subscribers.json");
 
 function loadSubscribers(): Subscriber[] {
-  try {
-    if (fs.existsSync(SUBSCRIBERS_FILE)) {
-      const data = fs.readFileSync(SUBSCRIBERS_FILE, "utf-8");
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error("Error loading subscribers registry file:", error);
-  }
-  
-  // Seed subscriber default
-  return [
+  const seedList: Subscriber[] = [
     {
       id: "preview-sub-1",
       username: "ashguth",
@@ -52,6 +42,26 @@ function loadSubscribers(): Subscriber[] {
       date: new Date().toLocaleDateString()
     }
   ];
+
+  try {
+    if (fs.existsSync(SUBSCRIBERS_FILE)) {
+      const data = fs.readFileSync(SUBSCRIBERS_FILE, "utf-8");
+      const list = JSON.parse(data);
+      if (Array.isArray(list) && list.length > 0) {
+        return list;
+      }
+    }
+  } catch (error) {
+    console.error("Error loading subscribers registry file:", error);
+  }
+  
+  // Seed subscriber default and save it to the database file
+  try {
+    fs.writeFileSync(SUBSCRIBERS_FILE, JSON.stringify(seedList, null, 2), "utf-8");
+  } catch (error) {
+    console.error("Error seeding subscribers registry file:", error);
+  }
+  return seedList;
 }
 
 function saveSubscribers(list: Subscriber[]) {
@@ -774,9 +784,6 @@ app.get("/api/subscribers", (req, res) => {
 app.post("/api/subscribers", (req, res) => {
   const { username, name, email, org, role, categories, frequency } = req.body;
 
-  if (!username || !username.trim()) {
-    return res.status(400).json({ error: "Username registry handle is required." });
-  }
   if (!name || !name.trim()) {
     return res.status(400).json({ error: "Full subscriber name is required." });
   }
@@ -784,23 +791,29 @@ app.post("/api/subscribers", (req, res) => {
     return res.status(400).json({ error: "A valid corporate or business email address is required." });
   }
 
-  const cleanUsername = username.trim().toLowerCase().replace(/^@/, "");
   const cleanEmail = email.trim().toLowerCase();
+  
+  // Auto-generate or sanitize username if not provided
+  let cleanUsername = username ? username.trim().toLowerCase().replace(/^@/, "") : "";
+  if (!cleanUsername) {
+    const prefix = cleanEmail.split("@")[0].replace(/[^a-zA-Z0-9_\-]/g, "");
+    cleanUsername = prefix || "user";
+  }
 
-  // Validate username is alphanumeric (+ standard chars)
+  // Validate and sanitize alphanumeric form
   if (!/^[a-zA-Z0-9_\-]+$/.test(cleanUsername)) {
-    return res.status(400).json({ error: "Username must be alphanumeric and contain only letters, numbers, hyphens, or underscores." });
+    cleanUsername = cleanUsername.replace(/[^a-zA-Z0-9_\-]/g, "") || "user";
   }
 
   // Check unique constraints for database integrity
-  // Is this username already taken by another email?
-  const isUsernameTaken = subscribersRegistry.some(
-    s => s.username?.toLowerCase() === cleanUsername && s.email.toLowerCase() !== cleanEmail
-  );
-
-  if (isUsernameTaken) {
-    return res.status(400).json({ error: `The username handle @${cleanUsername} is already registered under a different email address.` });
+  // Ensure username doesn't clash with anyone else
+  let finalUsername = cleanUsername;
+  let suffix = 1;
+  while (subscribersRegistry.some(s => s.username?.toLowerCase() === finalUsername && s.email.toLowerCase() !== cleanEmail)) {
+    finalUsername = `${cleanUsername}${suffix}`;
+    suffix++;
   }
+  cleanUsername = finalUsername;
 
   // Find if subscriber with this email already exists so we can update them in-place, keeping the ID
   const existingIndex = subscribersRegistry.findIndex(s => s.email.toLowerCase() === cleanEmail);

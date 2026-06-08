@@ -1165,7 +1165,7 @@ ${advice}
         return res.json();
       })
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setSubscriptionsList(data);
           localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(data));
         }
@@ -1179,14 +1179,24 @@ ${advice}
     e.preventDefault();
     setSubFormError(null);
 
-    const cleanUser = subUsername.trim().toLowerCase().replace(/^@/, "");
+    // Dynamic clean-up and healing of username input
+    let cleanUser = subUsername.trim().toLowerCase().replace(/^@/, "");
+    
+    // Auto-repair common formatting inputs (e.g. replace spaces & periods with underscores)
+    cleanUser = cleanUser.replace(/[\s\.]+/g, "_").replace(/[^a-zA-Z0-9_\-]/g, "");
+
+    // If username is empty or completely stripped, attempt to derive it from their full name
+    if (!cleanUser && subName.trim()) {
+      cleanUser = subName.trim().toLowerCase().replace(/[\s\.\-]+/g, "_").replace(/[^a-zA-Z0-9_\-]/g, "");
+    }
 
     if (!cleanUser) {
-      setSubFormError("Please choose a unique profile username handle.");
+      setSubFormError("Please choose a valid profile username handle (alphanumeric, underscores, or hyphens).");
       return;
     }
+
     if (!/^[a-zA-Z0-9_\-]+$/.test(cleanUser)) {
-      setSubFormError("Username must containing only alphanumeric characters, underscores, or hyphens.");
+      setSubFormError("Username must contain only alphanumeric characters, underscores, or hyphens.");
       return;
     }
     if (!subName.trim()) {
@@ -5696,22 +5706,7 @@ ${advice}
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-wider text-slate-450 font-mono block mb-1.5">
-                        Registry Username <span className="text-rose-405">*</span>
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2 text-xs font-mono text-slate-550 select-none">@</span>
-                        <input
-                          type="text"
-                          placeholder="ashguth"
-                          value={subUsername}
-                          onChange={(e) => setSubUsername(e.target.value)}
-                          className="w-full bg-[#0b0f19] border border-slate-800 rounded-lg pl-7 pr-3 py-2 text-xs text-slate-205 placeholder-slate-500 focus:outline-none focus:border-sky-500/50 transition font-mono"
-                        />
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] uppercase font-bold tracking-wider text-slate-450 font-mono block mb-1.5">
                         Full Name <span className="text-rose-405">*</span>
