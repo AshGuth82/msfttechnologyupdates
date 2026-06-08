@@ -43,16 +43,7 @@ if (fs.existsSync(configPath)) {
   }
 }
 
-let db: any = null;
-if (firebaseConfig) {
-  try {
-    const firebaseApp = initializeApp(firebaseConfig);
-    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
-    console.log("Firebase Firestore successfully initialized on backend server.");
-  } catch (err) {
-    console.error("Failed to initialize Firebase Firestore server-side:", err);
-  }
-}
+let db: any = null; // Server-side operations utilize the JSON database backup on the filesystem to prevent serverless function hangs and timeouts (FUNCTION_INVOCATION_FAILED) caused by Web SDK socket handles. Frontend clients handle direct real-time Firestore synchronization.
 
 enum OperationType {
   CREATE = 'create',

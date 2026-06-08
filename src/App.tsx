@@ -62,6 +62,7 @@ import {
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
+import { db, collection, getDocs, doc, setDoc, deleteDoc } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -1432,28 +1433,53 @@ ${advice}
     }
   });
 
-  // Pull subscriber list from the server registry on mount
+  // Pull subscriber list from Firestore on mount with local-sync backends
   useEffect(() => {
-    fetch("/api/subscribers")
-      .then(async res => {
-        const contentType = res.headers.get("content-type");
-        const isJson = contentType && contentType.includes("application/json");
-        const data = isJson ? await res.json() : null;
-        if (!res.ok) {
-          const errMsg = data?.error || (isJson ? "Could not pull corporate subscriber registry." : await res.text()) || "Could not pull corporate subscriber registry.";
-          throw new Error(errMsg);
+    const fetchSubscribers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "subscribers"));
+        const list: any[] = [];
+        querySnapshot.forEach((docRef) => {
+          list.push({ ...docRef.data() });
+        });
+        
+        if (list.length > 0) {
+          setSubscriptionsList(list);
+          localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(list));
+        } else {
+          // If Firestore is empty, seed it with default corporate profile
+          const seedSub = {
+            id: "preview-sub-1",
+            username: "ashguth",
+            name: "Ash Guthrie",
+            email: "ashguth@gmail.com",
+            org: "ANZ Corporate Services",
+            role: "Procurement Director",
+            categories: ["licensing_pricing", "technology_updates"],
+            frequency: "monthly",
+            date: new Date().toLocaleDateString()
+          };
+          await setDoc(doc(db, "subscribers", seedSub.id), seedSub);
+          setSubscriptionsList([seedSub]);
+          localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify([seedSub]));
         }
-        return data;
-      })
-      .then(data => {
-        if (Array.isArray(data)) {
-          setSubscriptionsList(data);
-          localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(data));
+      } catch (err: any) {
+        console.warn("Client Firestore connection error, pulling from server fallback:", err);
+        try {
+          const res = await fetch("/api/subscribers");
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+              setSubscriptionsList(data);
+              localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(data));
+            }
+          }
+        } catch (fallbackErr) {
+          console.error("Local fallback pull failed too:", fallbackErr);
         }
-      })
-      .catch(err => {
-        console.warn("Using offline storage for subscribers directory:", err);
-      });
+      }
+    };
+    fetchSubscribers();
   }, []);
 
   const handleSubscribeSubmit = (e: React.FormEvent) => {
@@ -1495,39 +1521,52 @@ ${advice}
 
     setIsSubmittingSub(true);
 
-    fetch("/api/subscribers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: cleanUser,
-        name: subName.trim(),
-        email: subEmail.trim(),
-        org: subOrg.trim() || "Independent Organization",
-        role: subRole,
-        categories: subCategories,
-        frequency: subFrequency
-      })
-    })
-      .then(async res => {
-        const contentType = res.headers.get("content-type");
-        const isJson = contentType && contentType.includes("application/json");
-        const data = isJson ? await res.json() : null;
-        if (!res.ok) {
-          const errMsg = data?.error || (isJson ? "An error occurred during registration." : await res.text()) || "An error occurred during registration.";
-          throw new Error(errMsg);
+    const runRegister = async () => {
+      try {
+        let finalUsername = cleanUser;
+        let suffix = 1;
+        while (subscriptionsList.some(s => s?.username?.toLowerCase() === finalUsername && s?.email?.toLowerCase() !== subEmail.trim().toLowerCase())) {
+          finalUsername = `${cleanUser}${suffix}`;
+          suffix++;
         }
-        return data;
-      })
-      .then(data => {
-        const newSub = data.subscriber;
-        const updated = [newSub, ...subscriptionsList.filter(s => s.email.toLowerCase() !== newSub.email.toLowerCase())];
+        
+        const existingSub = subscriptionsList.find(s => s.email.toLowerCase() === subEmail.trim().toLowerCase());
+        const subId = existingSub ? existingSub.id : "sub-" + Math.random().toString(36).substring(2, 9);
+        
+        const newSub = {
+          id: subId,
+          username: finalUsername,
+          name: subName.trim(),
+          email: subEmail.trim().toLowerCase(),
+          org: subOrg.trim() || "Independent Organization",
+          role: subRole,
+          categories: subCategories,
+          frequency: subFrequency,
+          date: new Date().toLocaleDateString()
+        };
+
+        // 1. Direct persistent Firestore database registration
+        await setDoc(doc(db, "subscribers", subId), newSub);
+
+        // 2. Local State & Cache Refresh
+        const updated = [newSub, ...subscriptionsList.filter(s => s.id !== subId)];
         localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
         setSubscriptionsList(updated);
+
+        // 3. Mirror/Sync payload with the Express container server backup
+        try {
+          await fetch("/api/subscribers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newSub)
+          });
+        } catch (serverSyncErr) {
+          console.warn("Could not sync subscriber database registry with server backups:", serverSyncErr);
+        }
 
         setIsSubmittingSub(false);
         setSubSuccess(true);
 
-        // Clear fields
         setSubUsername("");
         setSubName("");
         setSubEmail("");
@@ -1539,12 +1578,10 @@ ${advice}
           `Successfully registered ${newSub.name} in the corporate subscriber directory.`
         );
 
-        // Auto clear success indicator
         setTimeout(() => {
           setSubSuccess(false);
         }, 7000);
-      })
-      .catch(err => {
+      } catch (err: any) {
         setIsSubmittingSub(false);
         setSubFormError(err.message || "Failed to establish registry connection.");
         addToast(
@@ -1552,24 +1589,27 @@ ${advice}
           "Registry Connection Fail",
           err.message || "Could not write subscription entry to corporate registry."
         );
-      });
+      }
+    };
+
+    runRegister();
   };
 
   const handleRemoveSubscription = (id: string, email: string) => {
-    fetch(`/api/subscribers/${id}`, {
-      method: "DELETE"
-    })
-      .then(async res => {
-        const contentType = res.headers.get("content-type");
-        const isJson = contentType && contentType.includes("application/json");
-        const data = isJson ? await res.json() : null;
-        if (!res.ok) {
-          const errMsg = data?.error || (isJson ? "An error occurred during profile clearing." : await res.text()) || "An error occurred during profile clearing.";
-          throw new Error(errMsg);
+    const runDelete = async () => {
+      try {
+        // 1. Direct Firestore database removal
+        await deleteDoc(doc(db, "subscribers", id));
+
+        // 2. Mirror action to Express server backup container
+        try {
+          await fetch(`/api/subscribers/${id}`, {
+            method: "DELETE"
+          });
+        } catch (serverDelErr) {
+          console.warn("Could not sync deletion with backend container registry:", serverDelErr);
         }
-        return data;
-      })
-      .then(() => {
+
         const updated = subscriptionsList.filter(s => s.id !== id);
         localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
         setSubscriptionsList(updated);
@@ -1579,8 +1619,7 @@ ${advice}
           "Subscription Revoked",
           `Successfully removed ${email} from corporate database registry.`
         );
-      })
-      .catch(err => {
+      } catch (err: any) {
         console.warn("Falling back to local-only eviction of subscription registry:", err);
         const updated = subscriptionsList.filter(s => s.id !== id);
         localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
@@ -1591,7 +1630,10 @@ ${advice}
           "Subscription Revoked (Local)",
           `Removed ${email} from local dashboard directory fallback.`
         );
-      });
+      }
+    };
+
+    runDelete();
   };
 
   // States and handler for sending dynamic structured summaries to subscriber emails
