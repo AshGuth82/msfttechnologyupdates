@@ -64,6 +64,7 @@ import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartne
 import { jsPDF } from "jspdf";
 import { db, collection, getDocs, doc, setDoc, deleteDoc } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
+import { SmartPartnerMatchmaker } from "./components/SmartPartnerMatchmaker";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ResponsiveContainer, 
@@ -548,7 +549,7 @@ export default function App() {
     }
   });
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "matchmaker">("briefings");
 
   const [partnerReviewer, setPartnerReviewer] = useState("");
   const [partnerRating, setPartnerRating] = useState(5);
@@ -3447,7 +3448,7 @@ ${advice}
 
 
         {/* Global Navigation Hub */}
-        <div className="flex flex-col sm:flex-row bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans max-w-full sm:max-w-2xl lg:max-w-3xl mb-8 shadow-lg gap-1.5 sm:gap-1">
+        <div className="flex flex-col sm:flex-row bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans max-w-full sm:max-w-3xl lg:max-w-4xl mb-8 shadow-lg gap-1.5 sm:gap-1">
           <button
             id="global-nav-briefings"
             onClick={() => setActiveMainView("briefings")}
@@ -3488,6 +3489,22 @@ ${advice}
           >
             <Users className="w-4 h-4 text-inherit" />
             <span>ANZ Microsoft Partner Hub</span>
+          </button>
+
+          <button
+            id="global-nav-matchmaker"
+            onClick={() => {
+              setActiveMainView("matchmaker");
+              setActiveReviewId(null);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              activeMainView === "matchmaker"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            <Cpu className="w-4 h-4 text-inherit" />
+            <span>AI Partner Matchmaker</span>
           </button>
         </div>
 
@@ -7056,6 +7073,10 @@ ${advice}
           </section>
 
         </div>
+        )}
+
+        {activeMainView === "matchmaker" && (
+          <SmartPartnerMatchmaker partners={partners} addToast={addToast} />
         )}
 
         {activeMainView === "partners" && (

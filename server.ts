@@ -6,7 +6,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { Article, CachedNews } from "./src/types";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, getDocs, collection, setDoc, deleteDoc } from "firebase/firestore";
@@ -963,6 +963,201 @@ app.post("/api/send-trend-alert", (req, res) => {
     timestamp,
     message: `Instant intraday trend alert dispatched to ${validEmails.length} subscriber(s).`
   });
+});
+
+// ==========================================
+// SMART SOLUTIONS PARTNER MATCHMAKING ENGINE
+// ==========================================
+app.post("/api/matchmake", express.json(), async (req, res) => {
+  try {
+    const { requirements, location, organizationSize, industry, desiredSpecializations } = req.body;
+
+    const queryRequirements = requirements || "Need general Microsoft partner guidance.";
+    const queryLocation = location || "ANZ Region";
+    const queryOrgSize = organizationSize || "Medium Business";
+    const queryIndustry = industry || "Cross-Industry";
+    const querySpecs = Array.isArray(desiredSpecializations) ? desiredSpecializations : [];
+
+    const ai = getGeminiClient();
+    if (!ai) {
+      // Robust offline/fallback rule if Gemini API Key is missing or invalid
+      // We will calculate a smart procedural match and return data that mirrors a real response
+      const catalog = [
+        {
+          partnerId: "partner-insight-apac",
+          matchScore: queryRequirements.toLowerCase().includes("licens") || querySpecs.includes("Licensing Optimization") ? 98 : 84,
+          justification: "Insight APAC is highly recommended because of their extensive corporate presence in Sydney and deep EA (Enterprise Agreement) licensing capability. They are uniquely qualified to resolve " + queryRequirements.slice(0, 80) + "...",
+          recommendedServices: ["Comprehensive EA Negotiation Scoping", "Sovereign Azure Landing Zones Verification", "M365 StepUp Readiness Assessment"],
+          suggestedActions: ["Claim local Solution Assessment Funding from Microsoft Account Unit", "Schedule a 45-minute EA diagnostic workshop"]
+        },
+        {
+          partnerId: "partner-crayon",
+          matchScore: queryLocation.toLowerCase().includes("melb") || queryRequirements.toLowerCase().includes("econ") ? 95 : 79,
+          justification: "Crayon Australia fits your operational geography and cloud economics specialization. Their experience in reducing license wastage addresses queries targeting Cost Control.",
+          recommendedServices: ["Cloud Economics Asset Auditing", "CSP Hybrid License Optimization Scoping", "Cost Containment Scenarios Workspace"],
+          suggestedActions: ["Validate if existing EA can compile into a leaner hybrid CSP structure"]
+        },
+        {
+          partnerId: "partner-softwareone",
+          matchScore: queryRequirements.toLowerCase().includes("consolida") || queryRequirements.toLowerCase().includes("modern") ? 92 : 80,
+          justification: "SoftwareOne Australia fits complex multi-tenant consolidation requirements under unified corporate agreements in Sydney. Their FinOps practices provide reliable workload rightsizing guidance.",
+          recommendedServices: ["Multi-Entity Tenant Consolidation Planning", "Azure FinOps Operations Architecture", "Custom Application Modernization Audit"],
+          suggestedActions: ["Initiate architectural baseline telemetry alignment", "Apply for standard Solution Assessment Credits"]
+        },
+        {
+          partnerId: "partner-brennan",
+          matchScore: queryRequirements.toLowerCase().includes("hybrid") || queryRequirements.toLowerCase().includes("secur") ? 94 : 82,
+          justification: "Brennan IT stands out as an award-winning MSP for enterprise network security and full-stack round-the-clock managed cloud environments. They fit perfectly for clients requesting managed IT operations.",
+          recommendedServices: ["24/7 Managed Hybrid Cloud Security Architecture", "Azure Server Migration Strategy Scoping", "Integrated Managed Security Operations"],
+          suggestedActions: ["Schedule a hybrid cloud topology review session", "Verify eligibility for direct Microsoft Migration Offsets"]
+        },
+        {
+          partnerId: "partner-codify",
+          matchScore: queryLocation.toLowerCase().includes("perth") || queryRequirements.toLowerCase().includes("devops") || querySpecs.includes("Cloud Migration & DevOps") ? 96 : 76,
+          justification: "Codify is the premier partner in Western Australia specialized in automated DevOps pipelines, high-security infrastructure as code, and fast Azure transitions.",
+          recommendedServices: ["DevOps Automation Pipelines Architecture", "Azure Infrastructure as Code Framework Setup", "Power Shell & Provisioning Deployment Automation"],
+          suggestedActions: ["Engage in a 1-day proof of concept scoping", "Submit co-investment sandbox request to Microsoft Perth desk"]
+        }
+      ];
+
+      // Sort catalog from highest match score to lowest
+      catalog.sort((a, b) => b.matchScore - a.matchScore);
+
+      return res.json({
+        matches: catalog,
+        isFallbackTelemetry: true,
+        executiveSummary: `Strategic matchmaking completed for ${queryOrgSize} in ${queryLocation}. The evaluation highlights local specializations matching your criteria in the ${queryIndustry} industry, utilizing direct structural optimizations.`,
+        fundingEligibilityScoping: "Your requested scenario qualifies for Microsoft Solution Assessment Program and potentially up to 100% funding on Proof-of-Concepts via ECIF (End-customer Investment Fund)."
+      });
+    }
+
+    // Prepare system instructions and partner catalog context for the AI model
+    const partnersCatalogJSON = [
+      {
+        id: "partner-insight-apac",
+        name: "Insight APAC",
+        location: "Sydney, NSW & Regional",
+        specialization: ["Licensing Optimization", "Azure Cloud Migration", "Copilot Transformation"],
+        description: "A leading global systems integrator and Microsoft Solution Assessment partner specializing in software asset management, complex EA negotiations, and enterprise Azure workload transformation.",
+        caseStudyTitle: "Federal Government Azure Multi-Tenant Transformation"
+      },
+      {
+        id: "partner-crayon",
+        name: "Crayon Australia",
+        location: "Melbourne, VIC",
+        specialization: ["Software Asset Management (SAM)", "Cloud Economics", "Microsoft CSP Program"],
+        description: "A globally recognized expert in IT optimization and software asset management. Crayon leverages proprietary methodologies to optimize software estates and cloud consumption models.",
+        caseStudyTitle: "Financial Sector Cloud Economics Audit"
+      },
+      {
+        id: "partner-softwareone",
+        name: "SoftwareOne Australia",
+        location: "Sydney, NSW",
+        specialization: ["Enterprise Software Advisor", "Azure FinOps", "Application Modernization"],
+        description: "A leading global provider of end-to-end software and cloud technology solutions. Specializes in managing software portfolios and guiding businesses through efficient multi-year cloud agreements.",
+        caseStudyTitle: "Multi-Entity Corporate Consolidation Alignment"
+      },
+      {
+        id: "partner-brennan",
+        name: "Brennan IT",
+        location: "Sydney, NSW",
+        specialization: ["Managed IT Services", "Cloud Migration", "Cyber Security & Compliance", "Outsourced Support"],
+        description: "One of Australia's award-winning Managed Service Providers (MSP). Brennan IT delivers reliable, highly secure hybrid cloud solutions, modern workplace architecture, and enterprise cybersecurity systems.",
+        caseStudyTitle: "National Enterprise Hybrid Cloud Transformation"
+      },
+      {
+        id: "partner-codify",
+        name: "Codify",
+        location: "Perth, WA",
+        specialization: ["Cloud Migration & DevOps", "Azure Security Infrastructure", "Managed IT Services"],
+        description: "A premium, Perth-based Microsoft partner specializing in secure cloud migrations, innovative DevOps tooling, automated environment provisioning, and structured enterprise cloud transitions.",
+        caseStudyTitle: "Western Australia Infrastructure Modernization"
+      }
+    ];
+
+    const promptText = `
+You are the Official ANZ Microsoft Partner Matchmaking AI. Your job is to intake a customer's IT requirements, localized position, and preferences, and programmatically match them against our five premier registered ANZ Microsoft partners.
+
+CUSTOMER PROFILE:
+- Business Location: ${queryLocation}
+- Primary Industry: ${queryIndustry}
+- Organization Size/Complexity: ${queryOrgSize}
+- Customer's Stated Requirements: "${queryRequirements}"
+- Specifc Desired Specializations Selected: ${querySpecs.join(", ") || "None specified"}
+
+PARTNERS DIRECTORY TO MATCH:
+${JSON.stringify(partnersCatalogJSON, null, 2)}
+
+DIRECTIONS:
+1. Evaluate each of the 5 partners. Calculate a score (1-100) based on alignment with:
+   - Specialization tags (E.g. licensing needs map to Crayon and Insight APAC, DevOps/Automations to Codify, Managed Security to Brennan, multi-tenant consolidation to SoftwareOne).
+   - Local geography (E.g., if customer is in Perth, Codify gets a high location rating; if Melbourne, Crayon; if Sydney, Brennan, Insight, SoftwareOne).
+   - Stated requirement terms.
+2. Formulate a personalized "justification" for each partner. Highlight specific elements of their specialization or case studies that sync with the customer.
+3. Recommend 2 to 3 tailored service offerings that each partner can deploy for this customer specifically.
+4. Suggest 1 or 2 next steps for the engagement.
+5. Provide a global Strategic "executiveSummary" and a deep-dive "fundingEligibilityScoping" explaining if they qualify for Microsoft ECIF, Solution Assessments, Sandbox credits, or migration subsidies based on what was requested.
+
+Provide the response in perfectly structured JSON following the requested response schema. All fields must be populated.
+`;
+
+    const modelToUse = "gemini-3.5-flash";
+    const response = await ai.models.generateContent({
+      model: modelToUse,
+      contents: promptText,
+      config: {
+        systemInstruction: "You are an Elite Enterprise Microsoft Partner Matching System. Always output perfectly formatted JSON adhering strictly to the schema.",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            matches: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  partnerId: { type: Type.STRING },
+                  matchScore: { type: Type.INTEGER, description: "A matchup rating score from 1 up to 100" },
+                  justification: { type: Type.STRING, description: "Detailed justification of why this partner is selected, referencing their specializations and specific user requirements" },
+                  recommendedServices: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: "2-3 highly customized services recommended for this customer's needs"
+                  },
+                  suggestedActions: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                    description: "Actionable concrete next steps to proceed with this partner (e.g., funding, engagement, architecture sizing)"
+                  }
+                },
+                required: ["partnerId", "matchScore", "justification", "recommendedServices", "suggestedActions"]
+              }
+            },
+            executiveSummary: {
+              type: Type.STRING,
+              description: "An overall brief summary of the optimal partnership strategic approach for the client's needs."
+            },
+            fundingEligibilityScoping: {
+              type: Type.STRING,
+              description: "Advice on potential Microsoft ANZ funding programs (like ECIF, Azure credits, or assessments) that this engagement is eligible for."
+            }
+          },
+          required: ["matches", "executiveSummary", "fundingEligibilityScoping"]
+        }
+      }
+    });
+
+    const parsedData = JSON.parse(response.text || "{}");
+    // Sort matches from highest rating to lowest
+    if (parsedData.matches && Array.isArray(parsedData.matches)) {
+      parsedData.matches.sort((a: any, b: any) => b.matchScore - a.matchScore);
+    }
+    res.json(parsedData);
+
+  } catch (error: any) {
+    console.error("Error in POST /api/matchmake:", error);
+    res.status(500).json({ error: error.message || "Failed to perform matching evaluation on the server." });
+  }
 });
 
 // ==========================================
