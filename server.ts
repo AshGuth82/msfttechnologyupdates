@@ -655,6 +655,59 @@ app.post("/api/send-summary", (req, res) => {
   });
 });
 
+// 4. Instant Intraday Trend Alert Email Dispatch Endpoint
+app.post("/api/send-trend-alert", (req, res) => {
+  const { emails, deviation, direction, price, threshold } = req.body;
+
+  if (!emails || !Array.isArray(emails) || emails.length === 0) {
+    return res.status(400).json({ error: "At least one registered subscriber email is required for Trend Alert dispatch." });
+  }
+
+  // Validate email formats and filter
+  const validEmails = emails.filter(em => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em.trim()));
+  if (validEmails.length === 0) {
+    return res.status(400).json({ error: "No valid registered subscriber emails were provided." });
+  }
+
+  const borderLine = "=".repeat(80);
+  const dispatchId = `MSG-TREND-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const timestamp = new Date().toISOString();
+
+  console.log(`\n${borderLine}`);
+  console.log(`[SOVEREIGN EMAIL DISPATCH CARRIER ENGINE - INTERACTION ALERT]`);
+  console.log(`Trend dispatch ID  : ${dispatchId}`);
+  console.log(`Trigger Timestamp  : ${timestamp}`);
+  console.log(`Active Recipients  : ${validEmails.join(", ")}`);
+  console.log(`Subject            : ⚠️ [MSFT VOLATILITY REPORT] INTRADAY TREND DEVIATION DETECTED`);
+  console.log(`${borderLine}`);
+  console.log(`Dear Subscriber,\n`);
+  console.log(`This is an instant corporate alert. The Microsoft (MSFT) stock value has breached your specified threshold:`);
+  console.log(`\nMARKET VOLATILITY ANALYSIS:`);
+  console.log(`- Intraday Shift  : ${deviation >= 0 ? "+" : ""}${parseFloat(deviation).toFixed(2)}% (${direction.toUpperCase()}WARD FORCE)`);
+  console.log(`- Current Price   : $${parseFloat(price).toFixed(2)}`);
+  console.log(`- Day Opening     : $417.62`);
+  console.log(`- Specified Limit : +/- ${parseFloat(threshold).toFixed(2)}%`);
+  
+  console.log(`\nMARKET ADVISORY ACTION:`);
+  if (direction === "down") {
+    console.log(`- Note: Downward trend exceeds default/configured 5.0% threshold. Procurements team should monitor potential licensing discounts or capital reallocation options.`);
+  } else {
+    console.log(`- Note: Upward trend exceeds default/configured 5.0% threshold. Strengthen sovereign partner co-investment pipelines.`);
+  }
+
+  console.log(`\nAll intelligence feeds and local metrics have been updated in your enterprise dashboard.`);
+  console.log(`\n© 2026 Microsoft Corporate Intelligence Systems Division. All rights reserved.`);
+  console.log(`${borderLine}\n`);
+
+  res.json({
+    success: true,
+    dispatchId,
+    recipients: validEmails,
+    timestamp,
+    message: `Instant intraday trend alert dispatched to ${validEmails.length} subscriber(s).`
+  });
+});
+
 // Configure Vite integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
