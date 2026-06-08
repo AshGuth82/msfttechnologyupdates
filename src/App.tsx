@@ -855,7 +855,7 @@ ${advice}
   const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">("date");
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   const [expandedSavedId, setExpandedSavedId] = useState<string | null>(null);
-  const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M">("1M");
+  const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M" | "1Y">("1M");
   const [liveMsftPrice, setLiveMsftPrice] = useState<number>(422.86);
   const [zoomRefAreaLeft, setZoomRefAreaLeft] = useState<string | null>(null);
   const [zoomRefAreaRight, setZoomRefAreaRight] = useState<string | null>(null);
@@ -1088,7 +1088,7 @@ ${advice}
     }
   }, [liveMsftPrice, trendAlertEnabled, trendAlertThreshold, hasTriggeredForCurrentDeviation, trendAlertEmails]);
 
-  const handleTimeframeChange = (val: "1D" | "1W" | "1M" | "3M") => {
+  const handleTimeframeChange = (val: "1D" | "1W" | "1M" | "3M" | "1Y") => {
     setMsftTimeframe(val);
     setZoomRange(null);
     setZoomRefAreaLeft(null);
@@ -2398,12 +2398,29 @@ ${advice}
     { time: "Jun 04", price: liveMsftPrice },
   ];
 
+  const msftData1Y = [
+    { time: "Jun 15 2025", price: 350.40 },
+    { time: "Jul 15 2025", price: 355.20 },
+    { time: "Aug 15 2025", price: 362.80 },
+    { time: "Sep 15 2025", price: 358.10 },
+    { time: "Oct 15 2025", price: 367.60 },
+    { time: "Nov 15 2025", price: 372.45 },
+    { time: "Dec 15 2025", price: 378.90 },
+    { time: "Jan 15 2026", price: 388.30 },
+    { time: "Feb 15 2026", price: 395.10 },
+    { time: "Mar 15 2026", price: 398.50 },
+    { time: "Apr 15 2026", price: 412.60 },
+    { time: "May 15 2026", price: 410.20 },
+    { time: "Jun 04 2026", price: liveMsftPrice },
+  ];
+
   const getMsftChartData = () => {
     switch (msftTimeframe) {
       case "1D": return msftData1D;
       case "1W": return msftData1W;
       case "1M": return msftData1M;
       case "3M": return msftData3M;
+      case "1Y": return msftData1Y;
     }
   };
 
@@ -2429,7 +2446,24 @@ ${advice}
     else if (monthStr.startsWith("dec")) month = "12";
     
     const formattedDay = dayVal < 10 ? `0${dayVal}` : `${dayVal}`;
-    return `2026-${month}-${formattedDay}`;
+    // Year extraction
+    let year = "2026";
+    if (parts.length >= 3) {
+      const yearStr = parts[2].trim().replace(/[^0-9]/g, "");
+      if (yearStr.length === 2) {
+        year = `20${yearStr}`;
+      } else if (yearStr.length === 4) {
+        year = yearStr;
+      }
+    } else {
+      // If no year is provided, estimate based on month to distinguish 2025 from 2026
+      // Current date is June 8, 2026. Therefore, months from July to December are in 2025.
+      const mVal = parseInt(month, 10);
+      if (mVal > 6) {
+        year = "2025";
+      }
+    }
+    return `${year}-${month}-${formattedDay}`;
   };
 
   const getComparePrice = (idx: number, timeframe: string, indexType: "none" | "nasdaq" | "sp500"): number | undefined => {
@@ -2440,6 +2474,7 @@ ${advice}
         "1W": [16730.20, 16920.50, 16828.10, 16857.30, 16960.40, 17042.10],
         "1M": [16330.40, 16340.50, 16550.20, 16740.10, 16730.80, 16920.50, 17042.10],
         "3M": [15930.10, 16100.80, 16250.30, 16150.90, 15880.40, 15920.20, 16330.40, 16550.20, 16730.80, 17042.10],
+        "1Y": [14000.20, 14350.40, 14820.60, 14510.90, 14930.15, 15120.40, 15550.80, 15930.10, 16100.80, 16250.30, 16330.45, 16550.20, 17042.10],
       };
       return db[timeframe]?.[idx];
     } else if (indexType === "sp500") {
@@ -2448,6 +2483,7 @@ ${advice}
         "1W": [5266.30, 5277.10, 5283.40, 5291.85, 5354.20, 5360.70],
         "1M": [5180.20, 5210.50, 5300.10, 5270.30, 5304.60, 5277.15, 5360.70],
         "3M": [5078.10, 5117.30, 5218.40, 5204.25, 5061.90, 5100.10, 5180.20, 5300.10, 5304.60, 5360.70],
+        "1Y": [4450.25, 4520.40, 4650.60, 4580.95, 4710.15, 4780.40, 4920.80, 5078.10, 5117.30, 5218.40, 5180.20, 5300.10, 5360.70],
       };
       return db[timeframe]?.[idx];
     }
@@ -3092,6 +3128,7 @@ ${advice}
                 case "1W": return 414.20;
                 case "1M": return 409.50;
                 case "3M": return 395.20;
+                case "1Y": return 350.40;
                 default: return 417.62;
               }
             };
@@ -3168,6 +3205,7 @@ ${advice}
                           {msftTimeframe === "1W" && "Past 5 Days"}
                           {msftTimeframe === "1M" && "Past Month"}
                           {msftTimeframe === "3M" && "Past 3 Months"}
+                          {msftTimeframe === "1Y" && "Past Year"}
                         </span>
                       </div>
                     </div>
@@ -3231,7 +3269,8 @@ ${advice}
                         { label: "1D", val: "1D" },
                         { label: "5D", val: "1W" },
                         { label: "1M", val: "1M" },
-                        { label: "6M", val: "3M" },
+                        { label: "3M", val: "3M" },
+                        { label: "1Y", val: "1Y" },
                       ] as const).map(({ label, val }) => (
                         <button
                           key={label}
