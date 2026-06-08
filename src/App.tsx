@@ -934,6 +934,105 @@ ${advice}
     });
   }, [liveMsftPrice]);
 
+  // Trend Alert (Intraday Deviation Monitor) State & Effects
+  const [trendAlertEnabled, setTrendAlertEnabled] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_trend_alert_enabled");
+      return stored ? JSON.parse(stored) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [trendAlertThreshold, setTrendAlertThreshold] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_trend_alert_threshold");
+      return stored ? JSON.parse(stored) : 5.0;
+    } catch {
+      return 5.0;
+    }
+  });
+
+  const [trendAlertsLog, setTrendAlertsLog] = useState<{
+    id: string;
+    timestamp: string;
+    direction: "up" | "down";
+    deviation: number;
+    price: number;
+    threshold: number;
+  }[]>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_trend_alerts_log");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [hasTriggeredForCurrentDeviation, setHasTriggeredForCurrentDeviation] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("microsoft_intel_trend_alert_enabled", JSON.stringify(trendAlertEnabled));
+    } catch (e) {
+      console.warn("localStorage trend_alert_enabled write blocked:", e);
+    }
+  }, [trendAlertEnabled]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("microsoft_intel_trend_alert_threshold", JSON.stringify(trendAlertThreshold));
+    } catch (e) {
+      console.warn("localStorage trend_alert_threshold write blocked:", e);
+    }
+  }, [trendAlertThreshold]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("microsoft_intel_trend_alerts_log", JSON.stringify(trendAlertsLog));
+    } catch (e) {
+      console.warn("localStorage trend_alerts_log write blocked:", e);
+    }
+  }, [trendAlertsLog]);
+
+  // Daily Trend Alert monitor
+  useEffect(() => {
+    if (!trendAlertEnabled) return;
+
+    const openPrice = 417.62;
+    const deviation = ((liveMsftPrice - openPrice) / openPrice) * 100;
+    const absDev = Math.abs(deviation);
+
+    if (absDev >= trendAlertThreshold) {
+      if (!hasTriggeredForCurrentDeviation) {
+        setHasTriggeredForCurrentDeviation(true);
+        const dir = deviation >= 0 ? "up" : "down";
+        const newLog = {
+          id: Math.random().toString(36).substring(2, 9),
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+          direction: dir,
+          deviation: parseFloat(deviation.toFixed(2)),
+          price: liveMsftPrice,
+          threshold: trendAlertThreshold
+        };
+        
+        setTrendAlertsLog(prev => [newLog, ...prev]);
+
+        // Trigger toast
+        addToast(
+          "technology_updates",
+          `⚠️ Intraday Trend Alert: MSFT ${dir === "up" ? "Spike" : "Plunge"}!`,
+          `MSFT stock price has deviated by ${deviation.toFixed(2)}% relative to opening (greater than your ${trendAlertThreshold}% threshold) today, trading at $${liveMsftPrice.toFixed(2)}.`
+        );
+      }
+    } else {
+      // Clean trigger block lock if price return to normal bounds (e.g. 90% of threshold)
+      if (hasTriggeredForCurrentDeviation && absDev < trendAlertThreshold * 0.90) {
+        setHasTriggeredForCurrentDeviation(false);
+      }
+    }
+  }, [liveMsftPrice, trendAlertEnabled, trendAlertThreshold, hasTriggeredForCurrentDeviation]);
+
   const handleTimeframeChange = (val: "1D" | "1W" | "1M" | "3M") => {
     setMsftTimeframe(val);
     setZoomRange(null);
@@ -3544,6 +3643,261 @@ ${advice}
                         )}
                       </div>
                     </div>
+
+                    {/* Intraday Trend Alert Card (Source: NASDAQ MSFT Daily Volatility Monitor) */}
+                    <div className={`p-4.5 rounded-xl border font-sans ${
+                      isDark 
+                        ? "bg-[#0b0f19]/45 border-slate-800" 
+                        : "bg-slate-50/50 border-slate-200 shadow-sm"
+                    }`}>
+                      {/* Title Bar */}
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200/50 dark:border-slate-800/60 w-full">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 px-1.5 bg-amber-500/10 text-amber-500 rounded border border-amber-500/25 shrink-0">
+                            <TrendingUp className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className={`text-xs font-bold uppercase tracking-wider font-mono leading-none ${
+                              isDark ? "text-slate-300" : "text-slate-800"
+                            }`}>
+                              Intraday Trend Alerts
+                            </h4>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">MSFT Daily Volatility</p>
+                          </div>
+                        </div>
+
+                        {/* Enable/Disable toggle switch */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTrendAlertEnabled(e => !e);
+                            addToast(
+                              "technology_updates",
+                              !trendAlertEnabled ? "Trend Monitor Live" : "Trend Monitor Disabled",
+                              `Daily trend deviation alert is now ${!trendAlertEnabled ? "enabled" : "disabled"}.`
+                            );
+                          }}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold font-mono uppercase tracking-wider border transition-all duration-150 cursor-pointer ${
+                            trendAlertEnabled
+                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                              : "bg-slate-500/10 text-slate-400 border-slate-500/15"
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${trendAlertEnabled ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`}></span>
+                          <span>{trendAlertEnabled ? "Active" : "Disabled"}</span>
+                        </button>
+                      </div>
+
+                      {/* Info & Metrics reading */}
+                      <div className="space-y-3.5">
+                        <div className={`p-3 rounded-lg border flex flex-col gap-1 font-mono text-[10px] ${
+                          isDark ? "bg-slate-950/50 border-slate-900" : "bg-white border-slate-200 shadow-xs"
+                        }`}>
+                          <div className="flex justify-between items-center text-slate-400">
+                            <span>Trading Day Open:</span>
+                            <span className={`font-bold ${isDark ? "text-slate-300" : "text-slate-700"}`}>$417.62</span>
+                          </div>
+                          <div className="flex justify-between items-center text-slate-405">
+                            <span>Current Quote:</span>
+                            <span className={`font-bold ${isDark ? "text-slate-300" : "text-slate-700"}`}>${liveMsftPrice.toFixed(2)}</span>
+                          </div>
+                          
+                          {/* Percent shift meter */}
+                          {(() => {
+                            const opening = 417.62;
+                            const currentDiff = liveMsftPrice - opening;
+                            const currentPct = (currentDiff / opening) * 100;
+                            const isPositive = currentPct >= 0;
+                            return (
+                              <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-200/40 dark:border-slate-800/40">
+                                <span>Today's Deviation:</span>
+                                <span className={`font-extrabold inline-flex items-center gap-0.5 ${
+                                  isPositive ? "text-emerald-500" : "text-rose-500"
+                                }`}>
+                                  {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                                  {isPositive ? "+" : ""}{currentPct.toFixed(2)}%
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* Threshold setter with Quick preset buttons */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-slate-400">
+                              Deviation Trigger Limit ({trendAlertThreshold.toFixed(1)}%)
+                            </label>
+                            <span className="text-[9px] text-slate-500 font-mono">Bridges +/- percentage shift</span>
+                          </div>
+
+                          {/* Quick presets row */}
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {[1.0, 2.0, 5.0, 10.0].map((preset) => {
+                              const isPresetActive = trendAlertThreshold === preset;
+                              return (
+                                <button
+                                  key={preset}
+                                  type="button"
+                                  onClick={() => {
+                                    setTrendAlertThreshold(preset);
+                                    addToast(
+                                      "technology_updates",
+                                      "Volatility Filter Pre-Set",
+                                      `Trend Alert deviation limit successfully set to +/- ${preset}% from today's open.`
+                                    );
+                                  }}
+                                  className={`py-1 text-[10px] font-bold font-mono rounded border transition cursor-pointer text-center ${
+                                    isPresetActive
+                                      ? "bg-amber-500/15 text-amber-500 border-amber-500/30 font-extrabold"
+                                      : isDark
+                                        ? "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-205"
+                                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-305"
+                                  }`}
+                                >
+                                  {preset}%
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Slider control */}
+                          <div className="flex items-center gap-2 pt-1">
+                            <input
+                              type="range"
+                              min="0.5"
+                              max="15.0"
+                              step="0.5"
+                              value={trendAlertThreshold}
+                              onChange={(e) => setTrendAlertThreshold(parseFloat(e.target.value))}
+                              className="flex-1 accent-amber-500 h-1 rounded-lg bg-slate-200 dark:bg-slate-800 appearance-none cursor-pointer"
+                            />
+                            <span className="text-[11px] font-bold font-mono text-slate-405 dark:text-slate-300 w-11 text-right">
+                              {trendAlertThreshold.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Interactive testing and simulator block */}
+                        <div className="p-3 bg-indigo-500/5 dark:bg-indigo-500/3 border border-indigo-550/15 dark:border-indigo-550/10 rounded-xl space-y-2">
+                          <span className="text-[9px] font-extrabold font-mono text-indigo-400 uppercase tracking-wider block">
+                            🔬 Intraday Volatility Simulator
+                          </span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-normal block">
+                            Test the system response by spawning instant price spikes/plunges over the + or - {trendAlertThreshold}% limit.
+                          </span>
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLiveMsftPrice(395.12);
+                                addToast(
+                                  "technology_updates",
+                                  "Market Downswing Simulated",
+                                  "Dropped the price of MSFT to $395.12 (-5.39% intraday fall) to trigger downswing alert."
+                                );
+                              }}
+                              className="py-1 px-2 text-[10px] font-bold font-mono rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 active:bg-rose-500/30 transition cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <ArrowDownRight className="w-3 h-3 text-rose-450 shrink-0" />
+                              <span>Dump -5.4%</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLiveMsftPrice(439.45);
+                                addToast(
+                                  "technology_updates",
+                                  "Market Volatility Surge Simulated",
+                                  "Spiked the price of MSFT to $439.45 (+5.23% intraday rise) to trigger volatility alert."
+                                );
+                              }}
+                              className="py-1 px-2 text-[10px] font-bold font-mono rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 active:bg-emerald-500/30 transition cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <ArrowUpRight className="w-3 h-3 text-emerald-450 shrink-0" />
+                              <span>Pump +5.2%</span>
+                            </button>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLiveMsftPrice(422.86);
+                              setHasTriggeredForCurrentDeviation(false);
+                              addToast(
+                                "technology_updates",
+                                "Market Quote Normalized",
+                                "Price of MSFT reset to baseline $422.86 and trend trigger lock cleared."
+                              );
+                            }}
+                            className={`w-full py-1 text-[9px] font-bold font-mono tracking-wider space-x-1 uppercase rounded border transition cursor-pointer ${
+                              isDark 
+                                ? "bg-slate-900 border-slate-800 text-slate-400 hover:bg-[#111827] hover:text-slate-200" 
+                                : "bg-white border-slate-205 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                            }`}
+                          >
+                            Reset Quote to Base ($422.86)
+                          </button>
+                        </div>
+
+                        {/* Trend Log list section */}
+                        {trendAlertsLog.length > 0 && (
+                          <div className="border-t border-slate-200/50 dark:border-slate-800/60 pt-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 font-mono">
+                                Volatility Log ({trendAlertsLog.length})
+                              </h5>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTrendAlertsLog([]);
+                                  addToast("technology_updates", "Logs Cleared", "Intraday trend deviation log cleared.");
+                                }}
+                                className="text-[9px] text-rose-500 hover:text-rose-400 font-bold hover:underline cursor-pointer"
+                              >
+                                Clear Logs
+                              </button>
+                            </div>
+
+                            <div className="space-y-1.5 max-h-32 overflow-y-auto pr-0.5 custom-scrollbar">
+                              {trendAlertsLog.map((log) => (
+                                <div
+                                  key={log.id}
+                                  className={`p-2 rounded-lg border text-[10px] font-mono leading-normal flex justify-between items-center ${
+                                    isDark
+                                      ? "bg-slate-900/40 border-slate-950 text-slate-400"
+                                      : "bg-slate-100/50 border-slate-150 text-slate-605 shadow-sm"
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-1">
+                                      <span className={`h-1.5 w-1.5 rounded-full ${log.direction === "up" ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                                      <strong className={isDark ? "text-slate-300" : "text-slate-800"}>
+                                        {log.deviation >= 0 ? "+" : ""}{log.deviation}%
+                                      </strong>
+                                      <span className="text-slate-500 text-[9px]">(Threshold: {log.threshold}%)</span>
+                                    </div>
+                                    <span className="text-[9px] text-slate-500 block mt-0.5">
+                                      {log.timestamp} • Price at ${log.price.toFixed(2)}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setTrendAlertsLog(prev => prev.filter(p => p.id !== log.id))}
+                                    className="p-1 hover:bg-slate-250/30 hover:text-rose-500 dark:hover:bg-slate-800/80 rounded text-slate-400 transition cursor-pointer"
+                                    title="Delete custom line log"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* Google Finance Inspired Key Information Grid (Bottom stats bar is full width inside grid cols 12) */}
