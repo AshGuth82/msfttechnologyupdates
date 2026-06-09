@@ -14,6 +14,7 @@ import {
   ShieldCheck, 
   Users, 
   Search, 
+  FileCheck, 
   RefreshCw, 
   AlertCircle, 
   ExternalLink, 
@@ -65,6 +66,7 @@ import { jsPDF } from "jspdf";
 import { db, collection, getDocs, doc, setDoc, deleteDoc } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
 import { MicrosoftAIBusiness } from "./components/MicrosoftAIBusiness";
+import { ContractAuditor } from "./components/ContractAuditor";
 
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -550,7 +552,16 @@ export default function App() {
     }
   });
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor">("briefings");
+
+  const [enableContractAuditor, setEnableContractAuditor] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_enable_contract_auditor");
+      return stored ? JSON.parse(stored) : false; // Defaults to false ("Parked" / Hidden by default)
+    } catch {
+      return false;
+    }
+  });
 
   const [partnerReviewer, setPartnerReviewer] = useState("");
   const [partnerRating, setPartnerRating] = useState(5);
@@ -792,7 +803,7 @@ export default function App() {
 
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const key = e.key.toLowerCase();
-        if (key === "b" || key === "f" || key === "p" || key === "a") {
+        if (key === "b" || key === "f" || key === "p" || key === "a" || key === "c") {
           e.preventDefault();
           if (key === "b") {
             setActiveMainView("briefings");
@@ -807,6 +818,10 @@ export default function App() {
             setActiveMainView("ai-business");
             setActiveReviewId(null);
             addToast("cloud_transformations", "Shortcut Triggered: Alt + A", "Navigated to Microsoft's AI Business.");
+          } else if (key === "c") {
+            setActiveMainView("contract-auditor");
+            setActiveReviewId(null);
+            addToast("licensing_pricing", "Shortcut Triggered: Alt + C", "Navigated to Corporate Contract Auditor.");
           }
         }
       }
@@ -3383,6 +3398,33 @@ ${advice}
               <span>{refreshing ? "Scraping..." : "Re-Scrape Web"}</span>
             </button>
 
+            {/* Parking / Activating Contract Auditor Add-on Toggle */}
+            <button
+              id="park-addon-toggle-btn"
+              onClick={() => {
+                const newValue = !enableContractAuditor;
+                setEnableContractAuditor(newValue);
+                localStorage.setItem("microsoft_enable_contract_auditor", JSON.stringify(newValue));
+                addToast(
+                  "licensing_pricing",
+                  newValue ? "Contract Auditor Enabled" : "Contract Auditor Parked",
+                  newValue ? "Advanced contract advisory system and SOW ledger now unparked." : "Contract auditor parked successfully. Toggle back on anytime to resume setup."
+                );
+                if (!newValue && activeMainView === "contract-auditor") {
+                  setActiveMainView("briefings");
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition duration-150 cursor-pointer text-xs font-semibold ${
+                enableContractAuditor 
+                  ? "bg-indigo-550/15 border-indigo-500 text-indigo-400 hover:bg-indigo-550/25" 
+                  : "bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-250 border-slate-700"
+              }`}
+              title="Park / Unpark the experimental Contract Document Auditor Hub"
+            >
+              <FileCheck className="w-3.5 h-3.5" />
+              <span>{enableContractAuditor ? "Add-on: Active" : "Add-on: Parked"}</span>
+            </button>
+
             {/* Theme Preference Selection dropdown */}
             <div 
               id="theme-select-container"
@@ -3562,6 +3604,27 @@ ${advice}
               <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+A</kbd>
             </span>
           </button>
+
+          {enableContractAuditor && (
+            <button
+              id="global-nav-contract-auditor"
+              onClick={() => {
+                setActiveMainView("contract-auditor");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "contract-auditor"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+              }`}
+            >
+              <FileCheck className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>Corporate Contract Auditor</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
+              </span>
+            </button>
+          )}
         </div>
 
         {activeMainView === "briefings" && (
@@ -8361,6 +8424,36 @@ ${advice}
             {/* Main Scraper Dashboard Component */}
             <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6">
               <MicrosoftAIBusiness addToast={addToast} />
+            </div>
+          </div>
+        )}
+
+        {activeMainView === "contract-auditor" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Header Banner */}
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 animate-in slide-in-from-left duration-200">
+                    <span className="text-xs font-mono font-bold tracking-wider text-indigo-400 uppercase bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                      Advisory Guardrails
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Automated Risk Ledger & Compliance Guard</span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight animate-in fade-in slide-in-from-bottom duration-250">
+                    AI-Powered Corporate Contract Advisory Assessment
+                  </h2>
+                  <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                    Instantly audit enterprise contract clauses (EA, SCE, CSP formats), review compliance safeguards under ASD IRAP policies, and identify cost recovery optimizations.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Interactive Auditor Workspace */}
+            <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6">
+              <ContractAuditor addToast={addToast} isDark={isDark} />
             </div>
           </div>
         )}
