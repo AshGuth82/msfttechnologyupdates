@@ -5661,7 +5661,7 @@ ${advice}
                               {article.summary}
                             </p>
 
-                            <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
+                            <div className="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-y-3.5 text-xs text-slate-500 border-t border-slate-800/40 pt-3">
                               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                                 <span>
                                   Source:{" "}
@@ -6080,7 +6080,7 @@ ${advice}
                                         {article.summary}
                                       </p>
 
-                                      <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-800/40 pt-3">
+                                      <div className="mt-4 flex flex-col md:flex-row md:items-center justify-between gap-y-3.5 text-xs text-slate-500 border-t border-slate-800/40 pt-3">
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                                           <span>
                                             Source:{" "}
