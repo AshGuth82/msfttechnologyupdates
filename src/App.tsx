@@ -554,7 +554,7 @@ export default function App() {
     }
   });
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console">("briefings");
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
@@ -569,6 +569,10 @@ export default function App() {
   const [adminLoginEmail, setAdminLoginEmail] = useState<string>("");
   const [adminLoginPasscode, setAdminLoginPasscode] = useState<string>("");
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
+  
+  const [adminDispatchSubject, setAdminDispatchSubject] = useState<string>("Urgent Executive Security Intelligence Briefing");
+  const [adminDispatchBody, setAdminDispatchBody] = useState<string>("Our web monitoring grounded indexing engine has flagged several key shifts in ANZ Azure Hub sovereign alignments. Please review the live Microsoft Business financials and partner status logs immediately.");
+  const [isDispatchingAlert, setIsDispatchingAlert] = useState<boolean>(false);
 
   const [enableContractAuditor, setEnableContractAuditor] = useState<boolean>(() => {
     try {
@@ -819,7 +823,7 @@ export default function App() {
 
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const key = e.key.toLowerCase();
-        if (key === "b" || key === "f" || key === "p" || key === "a" || key === "c") {
+        if (key === "b" || key === "f" || key === "p" || key === "a" || key === "c" || key === "m") {
           e.preventDefault();
           if (key === "b") {
             setActiveMainView("briefings");
@@ -838,6 +842,10 @@ export default function App() {
             setActiveMainView("contract-auditor");
             setActiveReviewId(null);
             addToast("licensing_pricing", "Shortcut Triggered: Alt + C", "Navigated to Corporate Contract Auditor.");
+          } else if (key === "m") {
+            setActiveMainView("admin-console");
+            setActiveReviewId(null);
+            addToast("licensing_pricing", "Shortcut Triggered: Alt + M", "Navigated to Admin Registry Console.");
           }
         }
       }
@@ -3641,6 +3649,29 @@ ${advice}
               </span>
             </button>
           )}
+
+          <button
+            id="global-nav-admin-console"
+            onClick={() => {
+              setActiveMainView("admin-console");
+              setActiveReviewId(null);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              activeMainView === "admin-console"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            {isAdminAuthenticated ? (
+              <Unlock className="w-3.5 h-3.5 text-sky-400" />
+            ) : (
+              <Lock className="w-3.5 h-3.5 text-slate-450" />
+            )}
+            <span className="flex items-center gap-1.5">
+              <span>Admin Center</span>
+              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+M</kbd>
+            </span>
+          </button>
         </div>
 
         {activeMainView === "briefings" && (
@@ -5409,10 +5440,168 @@ ${advice}
 
         {/* Double-Pane Main Screen Workflow */}
         {activeMainView === "briefings" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* LEFT COLUMN: News Explorer Grid (7 out of 12 columns) */}
-            <main className="lg:col-span-7 flex flex-col gap-6">
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Intelligent Briefing Hub Master Portal Header */}
+            <div id="intelligent-briefing-hub-master-header" className="bg-[#111827] border border-slate-800 rounded-2xl p-6 relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl"></div>
+              <div className="absolute bottom-0 left-0 h-24 w-24 bg-indigo-500/5 rounded-full blur-xl"></div>
+              
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-5">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="text-[10px] font-mono font-bold tracking-wider text-sky-450 uppercase bg-sky-500/10 px-2.5 py-0.5 rounded border border-sky-500/20">
+                      Sovereign Intelligence Portal
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Coordinated ANZ Advisory System</span>
+                  </div>
+                  <h1 className="text-xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+                    <Sparkles className="w-6 h-6 text-sky-400 animate-pulse" />
+                    <span>Intelligent Briefing Hub</span>
+                  </h1>
+                  <p className="text-xs text-slate-400 max-w-3xl mt-1.5 leading-relaxed">
+                    Welcome to the central strategic operations station. Here, live market feeds, corporate policy watchlists, AI scraping agents, and LinkedIn publisher assistants are consolidated into a unified regulatory advisory framework.
+                  </p>
+                </div>
+                
+                <div className="text-right font-mono hidden md:block">
+                  <div className="text-[10px] text-slate-500">SYSTEM TIME (UTC)</div>
+                  <div className="text-sm font-bold text-slate-350">{new Date().toISOString().slice(11, 19)}</div>
+                  <div className="text-[9px] text-sky-400 bg-sky-500/5 px-2 py-0.5 rounded border border-sky-500/10 mt-1 inline-block">
+                    ONLINE • GROUNDED
+                  </div>
+                </div>
+              </div>
+
+              {/* Segmented Bento Grid Index Router */}
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-450 font-mono block mb-3">
+                  Unified Hub Navigation Directory (Click segment to jump)
+                </span>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  
+                  {/* Segment 1: Briefings Hub */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("briefings-news-hub");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="bg-slate-900/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-700 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <FileText className="w-4 h-4 text-sky-400" />
+                      <span className="text-[9px] font-mono bg-sky-500/10 text-sky-400 px-1.5 py-0.2 rounded border border-sky-500/20 font-bold">
+                        {filteredArticles.length}
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">Briefings Hub</div>
+                    <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">Corporate news feed</div>
+                  </button>
+
+                  {/* Segment 2: AI Scraper & Grounded Workspace */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("ai-scraper-grounded-workspace");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="bg-slate-900/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-700 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <Sparkles className="w-4 h-4 text-purple-400" />
+                      <span className="text-[9px] font-mono bg-purple-500/10 text-purple-400 px-1.5 py-0.2 rounded border border-purple-500/20 font-bold">
+                        3.5
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">AI Scraper & Workspace</div>
+                    <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">Grounded research</div>
+                  </button>
+
+                  {/* Segment 3: Saved Briefs */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("saved-intelligence-briefs");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="bg-slate-900/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-700 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <Bookmark className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                      <span className="text-[9px] font-mono bg-amber-500/10 text-amber-400 px-1.5 py-0.2 rounded border border-amber-500/20 font-bold">
+                        {bookmarkedIds.length}
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">Saved Briefs</div>
+                    <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">Offline reference hub</div>
+                  </button>
+
+                  {/* Segment 4: Intelligence Watchlist */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("intelligence-watchlist");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="bg-slate-900/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-700 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <Bell className="w-4 h-4 text-rose-400" />
+                      <span className="text-[9px] font-mono bg-rose-500/10 text-rose-400 px-1.5 py-0.2 rounded border border-rose-500/20 font-bold">
+                        {watchlist.length}
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">Watchlist</div>
+                    <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">Monitored categories</div>
+                  </button>
+
+                  {/* Segment 5: Grounded Feed Indexes */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("grounded-feed-indexes");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="bg-slate-900/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-700 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <Globe className="w-4 h-4 text-emerald-400" />
+                      <span className="text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20 font-bold">
+                        2
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">Feed Indexes</div>
+                    <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">Crawl & scrapers</div>
+                  </button>
+
+                  {/* Segment 6: Ash Guth Linkedin connect bit */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("linkedin-connect-guth");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="bg-slate-900/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-700 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <Linkedin className="w-4 h-4 text-blue-400 fill-blue-400/10" />
+                      <span className="text-[9px] font-mono bg-blue-500/10 text-blue-400 px-1.5 py-0.2 rounded border border-blue-500/20 font-bold">
+                        Lead
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">Ash Guth Advisor</div>
+                    <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">ANZ profile connect</div>
+                  </button>
+
+                </div>
+              </div>
+
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* LEFT COLUMN: News Explorer Grid (7 out of 12 columns) */}
+              <main id="briefings-news-hub" className="lg:col-span-7 flex flex-col gap-6">
               <>
                 {/* Interactive Filters Area */}
             <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4">
@@ -6648,154 +6837,23 @@ ${advice}
                 </form>
               )}
 
-              {/* Subscriptions Registry List Section (Transparency block) */}
-              {subscriptionsList.length > 0 && (
-                <div className="mt-6 pt-5 border-t border-slate-800/60">
-                  {isAdminAuthenticated ? (
-                    <>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-405 font-mono flex items-center gap-1.5">
-                          <Unlock className="w-3 h-3 text-sky-400 animate-pulse" />
-                          <span>Active Briefing Registry Index ({subscriptionsList.length})</span>
-                        </span>
-                        <button
-                          onClick={() => {
-                            setIsAdminAuthenticated(false);
-                            localStorage.removeItem("microsoft_intel_admin_auth");
-                            addToast("licensing_pricing", "Admin Session Ended", "Secured registry directory files successfully.");
-                          }}
-                          className="text-[9px] text-slate-400 hover:text-rose-400 font-mono flex items-center gap-1 cursor-pointer bg-slate-900 hover:bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800 hover:border-slate-705 transition font-bold"
-                          title="Lock directory and slide away subscriber data"
-                        >
-                          <Lock className="w-2.5 h-2.5 text-rose-500" />
-                          <span>Close Access</span>
-                        </button>
-                      </div>
-
-                      <div className="max-h-36 overflow-y-auto space-y-2 pr-1.5 custom-scrollbar">
-                        {subscriptionsList.map((sub) => (
-                          <div 
-                            key={sub.id}
-                            className="flex items-start justify-between bg-slate-950/40 border border-slate-900/80 p-2.5 rounded-lg text-xs text-slate-300"
-                          >
-                            <div className="min-w-0 pr-2">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <strong className="text-white font-medium truncate">{sub.name}</strong>
-                                <span className="text-[10px] text-sky-400 font-mono font-semibold font-mono">
-                                  @{sub.username || sub.name.toLowerCase().replace(/\s+/g, "")}
-                                </span>
-                                <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1 py-0.5 rounded border border-slate-850">
-                                  {sub.role}
-                                </span>
-                              </div>
-                              <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{sub.email}</div>
-                              <div className="flex flex-wrap gap-1 mt-1.5">
-                                {sub.categories.map(cat => (
-                                  <span 
-                                    key={cat} 
-                                    className="text-[8px] uppercase tracking-wider font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-850/60"
-                                  >
-                                    {cat.replace("_", " ")}
-                                  </span>
-                                ))}
-                                <span className="text-[8px] uppercase tracking-wider font-mono text-sky-450 bg-sky-500/5 px-1.5 py-0.5 rounded border border-sky-500/10">
-                                  {sub.frequency}
-                                </span>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => handleRemoveSubscription(sub.id, sub.email)}
-                              className="text-[10px] text-rose-450 hover:text-rose-300 font-mono cursor-pointer bg-rose-500/5 border border-rose-500/10 hover:border-rose-500/30 px-2 py-1 rounded transition"
-                              title="Click to remove from directory state"
-                            >
-                              Revoke
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="bg-slate-950/50 border border-slate-900 p-4.5 rounded-xl flex flex-col items-center justify-center text-center">
-                      <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center border border-slate-800 mb-2.5">
-                        <Lock className="w-4 h-4 text-slate-400" />
-                      </div>
-                      <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider font-mono">Registry Secure Gate</h4>
-                      <p className="text-[10px] text-slate-500 max-w-xs mt-1 leading-normal mb-3">
-                        Active subscriber directory and email lookup endpoints are locked for non-administrative visitors.
-                      </p>
-
-                      {showAdminForm ? (
-                        <form 
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            if (adminLoginEmail.trim().toLowerCase() === "ashguth@gmail.com" && adminLoginPasscode.trim() === "ashguth2026") {
-                              setIsAdminAuthenticated(true);
-                              localStorage.setItem("microsoft_intel_admin_auth", "true");
-                              addToast("licensing_pricing", "Advisory Authorization Verified", "Access granted to Briefing Registry Index database.");
-                              setAdminLoginError(null);
-                              setAdminLoginPasscode("");
-                              setShowAdminForm(false);
-                            } else {
-                              setAdminLoginError("Invalid administrator credentials.");
-                              addToast("licensing_pricing", "Authentication High-Risk Alert", "Access request rejected.");
-                            }
-                          }}
-                          className="w-full space-y-2 mt-2"
-                        >
-                          <div>
-                            <input
-                              type="email"
-                              placeholder="Admin Email (e.g. ashguth@gmail.com)"
-                              value={adminLoginEmail}
-                              onChange={(e) => setAdminLoginEmail(e.target.value)}
-                              className="w-full bg-[#0a0d14] border border-slate-800 rounded px-2.5 py-1.5 text-[11px] text-slate-250 outline-none focus:border-indigo-500 font-mono"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <input
-                              type="password"
-                              placeholder="Access Passcode"
-                              value={adminLoginPasscode}
-                              onChange={(e) => setAdminLoginPasscode(e.target.value)}
-                              className="w-full bg-[#0a0d14] border border-slate-800 rounded px-2.5 py-1.5 text-[11px] text-slate-250 outline-none focus:border-indigo-500 font-mono"
-                              required
-                            />
-                          </div>
-                          {adminLoginError && (
-                            <p className="text-[9px] text-rose-450 font-mono text-left">{adminLoginError}</p>
-                          )}
-                          <div className="flex gap-2 pt-1">
-                            <button
-                              type="submit"
-                              className="flex-1 py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-[10px] rounded hover:scale-102 transition cursor-pointer"
-                            >
-                              Authorize
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowAdminForm(false);
-                                setAdminLoginError(null);
-                              }}
-                              className="py-1.5 px-2.5 bg-slate-850 hover:bg-slate-800 text-slate-400 font-mono text-[10px] rounded cursor-pointer"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </form>
-                      ) : (
-                        <button
-                          onClick={() => setShowAdminForm(true)}
-                          className="px-3.5 py-1.5 bg-indigo-950/45 hover:bg-indigo-900/60 border border-indigo-900/40 text-indigo-300 text-[10px] font-mono font-bold rounded-lg transition duration-200 cursor-pointer"
-                        >
-                          Decrypt Registry Index
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Subscriptions Registry Administration Access helper link */}
+              <div className="mt-5 pt-4 border-t border-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <span className="text-[10px] text-slate-500 font-mono leading-relaxed">
+                  Registered profiles persist in standard browser storage.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMainView("admin-console");
+                    addToast("licensing_pricing", "Console Navigation", "Accessing dynamic registry lookup directories.");
+                  }}
+                  className="text-[10px] text-indigo-400 hover:text-indigo-300 font-mono flex items-center justify-center gap-1 bg-indigo-500/5 hover:bg-slate-900 border border-indigo-500/15 hover:border-indigo-500/30 px-3 py-1.5 rounded transition cursor-pointer"
+                >
+                  <Lock className="w-3 h-3 text-indigo-400" />
+                  <span>Admin Registry Center</span>
+                </button>
+              </div>
             </div>
             </>
           </main>
@@ -6804,7 +6862,7 @@ ${advice}
           <section className="lg:col-span-5 flex flex-col gap-6 sticky top-6">
             
             {/* AI Assistant Chat Workstation */}
-            <div className="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+            <div id="ai-scraper-grounded-workspace" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
               
               {/* Box Header */}
               <div className="bg-gradient-to-r from-slate-900 to-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
@@ -6957,7 +7015,7 @@ ${advice}
             </div>
 
             {/* Grounded Source Indexes Card */}
-            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+            <div id="grounded-feed-indexes" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
               <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
               
               <div className="flex items-center gap-2 mb-3.5">
@@ -7030,7 +7088,7 @@ ${advice}
             </div>
 
             {/* Saved Intelligence Briefs Hub */}
-            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+            <div id="saved-intelligence-briefs" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
               <div className="absolute top-0 right-0 h-16 w-16 bg-amber-500/5 rounded-full blur-xl"></div>
               
               <div className="flex items-center justify-between mb-3.5">
@@ -7189,7 +7247,7 @@ ${advice}
             </div>
 
             {/* Watchlist Subscription Center Card */}
-            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+            <div id="intelligence-watchlist" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
               <div className="absolute top-0 right-0 h-16 w-16 bg-amber-500/5 rounded-full blur-xl"></div>
               
               <div className="flex items-center justify-between mb-3">
@@ -7286,7 +7344,7 @@ ${advice}
             </div>
 
             {/* Authoritative "About" Section - Lead Consultant Profile */}
-            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+            <div id="linkedin-connect-guth" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
               <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
               
               <div className="flex items-center gap-3 mb-4">
@@ -7351,6 +7409,7 @@ ${advice}
           </section>
 
         </div>
+      </div>
         )}
 
         {activeMainView === "partners" && (
