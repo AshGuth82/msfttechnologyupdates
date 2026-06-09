@@ -991,6 +991,7 @@ app.get("/api/scrape-ai-business", async (req, res) => {
         cyberShieldDetails: "Co-investing with the Australian Signals Directorate (ASD) to deliver the 'MACDS' (Microsoft-ASD Cyber Shield) initiative. Shared telemetry protects Australian national utility feeds, public health systems, and crown IT pipelines from persistent state-sponsored adversaries.",
         cloudRegions: "Fully localized sovereign data regions across NSW and Auckland, keeping commercial metadata safe from offshore jurisdictions under strict compliance controls.",
         retrievedSources: [
+          { title: "Microsoft Official AI Platform", url: "https://www.microsoft.com/en-us/ai" },
           { title: "Microsoft Australia Official Newsroom", url: "https://news.microsoft.com/en-au/" },
           { title: "Australian Trade and Investment Commission (Austrade) Briefing", url: "https://www.austrade.gov.au/" }
         ]
@@ -1061,6 +1062,12 @@ Format your final response in clean JSON matching this schema exactly. Do NOT pu
       return true;
     });
 
+    // Prepare sources with Microsoft Official AI Platform forced at top
+    const preparedSources = [
+      { title: "Microsoft Official AI Platform", url: "https://www.microsoft.com/en-us/ai" },
+      ...uniqueSources
+    ];
+
     res.json({
       success: true,
       isLive: true,
@@ -1070,9 +1077,7 @@ Format your final response in clean JSON matching this schema exactly. Do NOT pu
       customerSuccessStories: parsedData.customerSuccessStories || [],
       cyberShieldDetails: parsedData.cyberShieldDetails || "Collaborating with local national agencies to secure local cloud workloads.",
       cloudRegions: parsedData.cloudRegions || "Sovereign regions in Sydney and Auckland active.",
-      retrievedSources: uniqueSources.length > 0 ? uniqueSources : [
-        { title: "Microsoft Press Center", url: "https://news.microsoft.com/" }
-      ]
+      retrievedSources: preparedSources
     });
 
   } catch (error: any) {
@@ -1094,6 +1099,7 @@ Format your final response in clean JSON matching this schema exactly. Do NOT pu
       cyberShieldDetails: "Co-investing with the Australian Signals Directorate (ASD) to deliver the 'MACDS' (Microsoft-ASD Cyber Shield) initiative. Shared telemetry protects Australian national utility feeds, public health systems, and crown IT pipelines.",
       cloudRegions: "Fully localized sovereign data regions across NSW and Auckland, keeping commercial metadata safe from offshore jurisdictions under strict compliance controls.",
       retrievedSources: [
+        { title: "Microsoft Official AI Platform", url: "https://www.microsoft.com/en-us/ai" },
         { title: "Microsoft Australia Official Newsroom", url: "https://news.microsoft.com/en-au/" }
       ]
     });

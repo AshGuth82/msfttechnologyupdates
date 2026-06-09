@@ -3511,6 +3511,34 @@ ${advice}
 
         {activeMainView === "briefings" && (
           <>
+            {/* Executive Advisor Action Banner */}
+            <div className="bg-[#111827] border border-slate-850 rounded-2xl p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden animate-in fade-in duration-200" id="executive-advisor-report-panel">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/10 uppercase">
+                    Executive Advisor
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">• Advisory Snapshot Tools</span>
+                </div>
+                <h2 className="text-sm md:text-base font-extrabold text-white tracking-tight">
+                  Strategic Business Intelligence Snapshot
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-2xl">
+                  Extract and synthesize your currently filtered regional intelligence dataset. Clicking below generates a formal, professional PDF executive report customized to your active domains, search queries, and priority topics.
+                </p>
+              </div>
+              
+              <button
+                onClick={() => exportToPDF()}
+                className="px-4 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 font-sans font-semibold text-white rounded-xl flex items-center justify-center gap-2.5 transition shadow-[0_4px_12px_rgba(2,132,199,0.2)] text-xs border border-sky-400/20 active:scale-95 shrink-0 cursor-pointer w-full md:w-auto"
+                title="Export current filtered intelligence stream as a formal PDF Executive Report"
+              >
+                <FileText className="w-4 h-4 text-white hover:scale-110 transition duration-150" />
+                <span>Export Report to PDF</span>
+              </button>
+            </div>
+
             <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden">
             <div className="text-xs text-slate-400 font-medium">Active Briefing Stream</div>
