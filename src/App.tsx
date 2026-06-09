@@ -59,7 +59,9 @@ import {
   Building,
   Table,
   Linkedin,
-  MapPin
+  MapPin,
+  Lock,
+  Unlock
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -553,6 +555,20 @@ export default function App() {
   });
 
   const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor">("briefings");
+
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_admin_auth");
+      return stored === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
+  const [showAdminForm, setShowAdminForm] = useState<boolean>(false);
+  const [adminLoginEmail, setAdminLoginEmail] = useState<string>("");
+  const [adminLoginPasscode, setAdminLoginPasscode] = useState<string>("");
+  const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
 
   const [enableContractAuditor, setEnableContractAuditor] = useState<boolean>(() => {
     try {
@@ -5936,7 +5952,7 @@ ${advice}
                                               Cancel
                                             </button>
                                           </div>
-                                          {subscriptionsList.length > 0 && (
+                                          {subscriptionsList.length > 0 && isAdminAuthenticated && (
                                             <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
                                               <span className="text-slate-600">Shortcut:</span>
                                               {subscriptionsList.slice(0, 2).map((sub) => (
@@ -6355,7 +6371,7 @@ ${advice}
                                                         Cancel
                                                       </button>
                                                     </div>
-                                                    {subscriptionsList.length > 0 && (
+                                                    {subscriptionsList.length > 0 && isAdminAuthenticated && (
                                                       <div className="text-[9px] text-slate-500 font-mono flex flex-wrap gap-1.5">
                                                         <span className="text-slate-600">Shortcut:</span>
                                                         {subscriptionsList.slice(0, 2).map((sub) => (
@@ -6376,7 +6392,7 @@ ${advice}
                                                   <button
                                                     onClick={() => {
                                                       setActiveDispatchArticleId(article.id);
-                                                      setDispatchEmailInput(subscriptionsList[0]?.email || "");
+                                                      setDispatchEmailInput(isAdminAuthenticated ? (subscriptionsList[0]?.email || "") : "");
                                                     }}
                                                     className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0c101a] hover:bg-slate-905 border border-slate-800 hover:border-slate-700 hover:text-sky-455 font-mono rounded text-[10px] text-slate-350 cursor-pointer transition"
                                                     type="button"
@@ -6635,53 +6651,149 @@ ${advice}
               {/* Subscriptions Registry List Section (Transparency block) */}
               {subscriptionsList.length > 0 && (
                 <div className="mt-6 pt-5 border-t border-slate-800/60">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono block">
-                      Active Briefing Registry Index ({subscriptionsList.length})
-                    </span>
-                  </div>
-
-                  <div className="max-h-36 overflow-y-auto space-y-2 pr-1.5 custom-scrollbar">
-                    {subscriptionsList.map((sub) => (
-                      <div 
-                        key={sub.id}
-                        className="flex items-start justify-between bg-slate-950/40 border border-slate-900/80 p-2.5 rounded-lg text-xs text-slate-300"
-                      >
-                        <div className="min-w-0 pr-2">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <strong className="text-white font-medium truncate">{sub.name}</strong>
-                            <span className="text-[10px] text-sky-400 font-mono font-semibold">
-                              @{sub.username || sub.name.toLowerCase().replace(/\s+/g, "")}
-                            </span>
-                            <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1 py-0.5 rounded border border-slate-850">
-                              {sub.role}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{sub.email}</div>
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {sub.categories.map(cat => (
-                              <span 
-                                key={cat} 
-                                className="text-[8px] uppercase tracking-wider font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-850/60"
-                              >
-                                {cat.replace("_", " ")}
-                              </span>
-                            ))}
-                            <span className="text-[8px] uppercase tracking-wider font-mono text-sky-450 bg-sky-500/5 px-1.5 py-0.5 rounded border border-sky-500/10">
-                              {sub.frequency}
-                            </span>
-                          </div>
-                        </div>
+                  {isAdminAuthenticated ? (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-405 font-mono flex items-center gap-1.5">
+                          <Unlock className="w-3 h-3 text-sky-400 animate-pulse" />
+                          <span>Active Briefing Registry Index ({subscriptionsList.length})</span>
+                        </span>
                         <button
-                          onClick={() => handleRemoveSubscription(sub.id, sub.email)}
-                          className="text-[10px] text-rose-450 hover:text-rose-300 font-mono cursor-pointer bg-rose-500/5 border border-rose-500/10 hover:border-rose-500/30 px-2 py-1 rounded transition"
-                          title="Click to remove from directory state"
+                          onClick={() => {
+                            setIsAdminAuthenticated(false);
+                            localStorage.removeItem("microsoft_intel_admin_auth");
+                            addToast("licensing_pricing", "Admin Session Ended", "Secured registry directory files successfully.");
+                          }}
+                          className="text-[9px] text-slate-400 hover:text-rose-400 font-mono flex items-center gap-1 cursor-pointer bg-slate-900 hover:bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800 hover:border-slate-705 transition font-bold"
+                          title="Lock directory and slide away subscriber data"
                         >
-                          Revoke
+                          <Lock className="w-2.5 h-2.5 text-rose-500" />
+                          <span>Close Access</span>
                         </button>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="max-h-36 overflow-y-auto space-y-2 pr-1.5 custom-scrollbar">
+                        {subscriptionsList.map((sub) => (
+                          <div 
+                            key={sub.id}
+                            className="flex items-start justify-between bg-slate-950/40 border border-slate-900/80 p-2.5 rounded-lg text-xs text-slate-300"
+                          >
+                            <div className="min-w-0 pr-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <strong className="text-white font-medium truncate">{sub.name}</strong>
+                                <span className="text-[10px] text-sky-400 font-mono font-semibold font-mono">
+                                  @{sub.username || sub.name.toLowerCase().replace(/\s+/g, "")}
+                                </span>
+                                <span className="text-[9px] font-mono text-slate-500 bg-slate-900 px-1 py-0.5 rounded border border-slate-850">
+                                  {sub.role}
+                                </span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{sub.email}</div>
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {sub.categories.map(cat => (
+                                  <span 
+                                    key={cat} 
+                                    className="text-[8px] uppercase tracking-wider font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-850/60"
+                                  >
+                                    {cat.replace("_", " ")}
+                                  </span>
+                                ))}
+                                <span className="text-[8px] uppercase tracking-wider font-mono text-sky-450 bg-sky-500/5 px-1.5 py-0.5 rounded border border-sky-500/10">
+                                  {sub.frequency}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleRemoveSubscription(sub.id, sub.email)}
+                              className="text-[10px] text-rose-450 hover:text-rose-300 font-mono cursor-pointer bg-rose-500/5 border border-rose-500/10 hover:border-rose-500/30 px-2 py-1 rounded transition"
+                              title="Click to remove from directory state"
+                            >
+                              Revoke
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-slate-950/50 border border-slate-900 p-4.5 rounded-xl flex flex-col items-center justify-center text-center">
+                      <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center border border-slate-800 mb-2.5">
+                        <Lock className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider font-mono">Registry Secure Gate</h4>
+                      <p className="text-[10px] text-slate-500 max-w-xs mt-1 leading-normal mb-3">
+                        Active subscriber directory and email lookup endpoints are locked for non-administrative visitors.
+                      </p>
+
+                      {showAdminForm ? (
+                        <form 
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            if (adminLoginEmail.trim().toLowerCase() === "ashguth@gmail.com" && adminLoginPasscode.trim() === "ashguth2026") {
+                              setIsAdminAuthenticated(true);
+                              localStorage.setItem("microsoft_intel_admin_auth", "true");
+                              addToast("licensing_pricing", "Advisory Authorization Verified", "Access granted to Briefing Registry Index database.");
+                              setAdminLoginError(null);
+                              setAdminLoginPasscode("");
+                              setShowAdminForm(false);
+                            } else {
+                              setAdminLoginError("Invalid administrator credentials.");
+                              addToast("licensing_pricing", "Authentication High-Risk Alert", "Access request rejected.");
+                            }
+                          }}
+                          className="w-full space-y-2 mt-2"
+                        >
+                          <div>
+                            <input
+                              type="email"
+                              placeholder="Admin Email (e.g. ashguth@gmail.com)"
+                              value={adminLoginEmail}
+                              onChange={(e) => setAdminLoginEmail(e.target.value)}
+                              className="w-full bg-[#0a0d14] border border-slate-800 rounded px-2.5 py-1.5 text-[11px] text-slate-250 outline-none focus:border-indigo-500 font-mono"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <input
+                              type="password"
+                              placeholder="Access Passcode"
+                              value={adminLoginPasscode}
+                              onChange={(e) => setAdminLoginPasscode(e.target.value)}
+                              className="w-full bg-[#0a0d14] border border-slate-800 rounded px-2.5 py-1.5 text-[11px] text-slate-250 outline-none focus:border-indigo-500 font-mono"
+                              required
+                            />
+                          </div>
+                          {adminLoginError && (
+                            <p className="text-[9px] text-rose-450 font-mono text-left">{adminLoginError}</p>
+                          )}
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              type="submit"
+                              className="flex-1 py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-[10px] rounded hover:scale-102 transition cursor-pointer"
+                            >
+                              Authorize
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAdminForm(false);
+                                setAdminLoginError(null);
+                              }}
+                              className="py-1.5 px-2.5 bg-slate-850 hover:bg-slate-800 text-slate-400 font-mono text-[10px] rounded cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          onClick={() => setShowAdminForm(true)}
+                          className="px-3.5 py-1.5 bg-indigo-950/45 hover:bg-indigo-900/60 border border-indigo-900/40 text-indigo-300 text-[10px] font-mono font-bold rounded-lg transition duration-200 cursor-pointer"
+                        >
+                          Decrypt Registry Index
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
