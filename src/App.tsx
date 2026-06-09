@@ -583,6 +583,31 @@ export default function App() {
     }
   });
 
+  const [sydneyTime, setSydneyTime] = useState<string>(() => {
+    return new Date().toLocaleTimeString("en-AU", {
+      timeZone: "Australia/Sydney",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    });
+  });
+
+  useEffect(() => {
+    const clockTimer = setInterval(() => {
+      setSydneyTime(
+        new Date().toLocaleTimeString("en-AU", {
+          timeZone: "Australia/Sydney",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false
+        })
+      );
+    }, 1000);
+    return () => clearInterval(clockTimer);
+  }, []);
+
   const [partnerReviewer, setPartnerReviewer] = useState("");
   const [partnerRating, setPartnerRating] = useState(5);
   const [partnerComment, setPartnerComment] = useState("");
@@ -3674,152 +3699,7 @@ ${advice}
           </button>
         </div>
 
-        {activeMainView === "briefings" && (
-          <>
-            {/* Executive Advisor Action Banner */}
-            <div className="bg-[#111827] border border-slate-850 rounded-2xl p-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden animate-in fade-in duration-200" id="executive-advisor-report-panel">
-              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
-              <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/10 uppercase">
-                    Executive Advisor
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">• Advisory Snapshot Tools</span>
-                </div>
-                <h2 className="text-sm md:text-base font-extrabold text-white tracking-tight">
-                  Strategic Business Intelligence Snapshot
-                </h2>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-2xl">
-                  Extract and synthesize your currently filtered regional intelligence dataset. Clicking below generates a formal, professional PDF executive report customized to your active domains, search queries, and priority topics.
-                </p>
-              </div>
-              
-              <button
-                onClick={() => exportToPDF()}
-                className="px-4 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 font-sans font-semibold text-white rounded-xl flex items-center justify-center gap-2.5 transition shadow-[0_4px_12px_rgba(2,132,199,0.2)] text-xs border border-sky-400/20 active:scale-95 shrink-0 cursor-pointer w-full md:w-auto"
-                title="Export current filtered intelligence stream as a formal PDF Executive Report"
-              >
-                <FileText className="w-4 h-4 text-white hover:scale-110 transition duration-150" />
-                <span>Export Report to PDF</span>
-              </button>
-            </div>
 
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden">
-            <div className="text-xs text-slate-400 font-medium">Active Briefing Stream</div>
-            <div className="text-2xl font-bold mt-1 text-white">{articles.length}</div>
-            <div className="text-xs text-sky-400 font-mono mt-2 flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Covers 4 core segments</span>
-            </div>
-            <div className="absolute right-3.5 top-3.5 text-slate-700/50">
-              <FileText className="w-8 h-8" />
-            </div>
-          </div>
-
-          <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden flex flex-col justify-between">
-            <div>
-              <div className="text-xs text-slate-400 font-medium">Avg Market/Corporate Impact</div>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-2xl font-bold text-white">{avgImpact}</span>
-                <span className="text-xs text-slate-500">/ 10</span>
-                
-                {articles.length >= 2 && (() => {
-                  const trendInfo = getImpactTrend();
-                  if (trendInfo.trend === "up") {
-                    return (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400" title={`Current period average (${trendInfo.avgCurrent}) is higher than previous period (${trendInfo.avgPrev})`}>
-                        <ArrowUpRight className="w-3 h-3" />
-                        <span>{trendInfo.percent}</span>
-                      </span>
-                    );
-                  } else if (trendInfo.trend === "down") {
-                    return (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" title={`Current period average (${trendInfo.avgCurrent}) is lower than previous period (${trendInfo.avgPrev})`}>
-                        <ArrowDownRight className="w-3 h-3" />
-                        <span>{trendInfo.percent}</span>
-                      </span>
-                    );
-                  } else {
-                    return (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-500/10 border border-slate-500/20 text-slate-400">
-                        <span>Steady</span>
-                      </span>
-                    );
-                  }
-                })()}
-              </div>
-
-              {/* Sparkline visualization */}
-              {articles.length >= 2 && (
-                <div className="mt-2.5 h-6 flex items-end gap-0.5" title="Impact trend sparkline of recent articles (newest on right)">
-                  {(() => {
-                    // Try to get latest 8 articles in chronological order
-                    const recent = [...articles]
-                      .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
-                      .slice(0, 10)
-                      .reverse();
-                    
-                    return recent.map((art, idx) => {
-                      const heightPercent = Math.max(15, (art.impactScore / 10) * 100);
-                      const isHigh = art.impactScore >= 8;
-                      const isMedium = art.impactScore >= 5 && art.impactScore < 8;
-                      
-                      let bgClass = "bg-sky-500/40 hover:bg-sky-450";
-                      if (isHigh) bgClass = "bg-rose-500/50 hover:bg-rose-450";
-                      else if (isMedium) bgClass = "bg-amber-500/40 hover:bg-amber-450";
-
-                      return (
-                        <div
-                          key={art.id || idx}
-                          style={{ height: `${heightPercent}%` }}
-                          className={`flex-1 rounded-sm transition-all duration-200 cursor-help ${bgClass}`}
-                          title={`${art.title.slice(0, 35)}... (Impact: ${art.impactScore}/10)`}
-                        />
-                      );
-                    });
-                  })()}
-                </div>
-              )}
-            </div>
-
-            <div className="text-[10px] text-slate-500 font-mono mt-2.5 flex items-center justify-between">
-              <span>Scale 1-10 priority indexing</span>
-              {articles.length >= 2 && (
-                <span className="text-[9px] text-slate-500/80">Weekly Trend Sparkline</span>
-              )}
-            </div>
-            <div className="absolute right-3.5 top-3.5 text-slate-700/50">
-              <Briefcase className="w-8 h-8" />
-            </div>
-          </div>
-
-          <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden">
-            <div className="text-xs text-slate-400 font-medium">Positive Market Sentiment Ratio</div>
-            <div className="text-2xl font-bold mt-1 text-emerald-400">{positiveRatio}%</div>
-            <div className="text-xs text-emerald-500 font-mono mt-2">
-              Based on AI Sentiment Classifier
-            </div>
-            <div className="absolute right-3.5 top-3.5 text-slate-700/50">
-              <CheckCircle2 className="w-8 h-8 text-emerald-950/20" />
-            </div>
-          </div>
-
-          <div className="bg-[#111827] border border-slate-800/80 rounded-xl p-4.5 relative overflow-hidden">
-            <div className="text-xs text-slate-400 font-medium font-sans">Active AI Engine</div>
-            <div className="text-sm font-semibold mt-1 text-slate-200">
-              {hasApiKey ? "Gemini 3.5-Flash Active" : "Local Fallback Model"}
-            </div>
-            <div className="text-xs text-slate-400 font-mono mt-3">
-              Google Grounding Enabled: {hasApiKey ? "YES" : "NO"}
-            </div>
-            <div className="absolute right-3.5 top-3.5 text-slate-700/50">
-              <Sparkles className="w-8 h-8" />
-            </div>
-          </div>
-        </section>
-          </>
-        )}
 
         {activeMainView === "business" && (
           <>
@@ -5463,11 +5343,135 @@ ${advice}
                   </p>
                 </div>
                 
-                <div className="text-right font-mono hidden md:block">
-                  <div className="text-[10px] text-slate-500">SYSTEM TIME (UTC)</div>
-                  <div className="text-sm font-bold text-slate-350">{new Date().toISOString().slice(11, 19)}</div>
-                  <div className="text-[9px] text-sky-400 bg-sky-500/5 px-2 py-0.5 rounded border border-sky-500/10 mt-1 inline-block">
-                    ONLINE • GROUNDED
+                <div className="flex flex-col items-start md:items-end gap-3 font-mono shrink-0">
+                  <div className="md:text-right">
+                    <div className="text-[10px] text-slate-500">SYDNEY, AUSTRALIA TIME</div>
+                    <div className="text-sm font-bold text-slate-350">{sydneyTime}</div>
+                    <div className="text-[9px] text-sky-400 bg-sky-500/5 px-2 py-0.5 rounded border border-sky-500/10 mt-1 inline-block animate-pulse">
+                      LIVE • GROUNDED
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => exportToPDF()}
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-sky-500 to-indigo-650 hover:from-sky-400 hover:to-indigo-550 font-sans font-bold text-white rounded-lg flex items-center justify-center gap-2 transition hover:shadow-[0_4px_12px_rgba(2,132,199,0.25)] text-xs border border-sky-400/20 active:scale-95 cursor-pointer w-full md:w-auto"
+                    title="Export current filtered intelligence stream as a formal PDF Executive Report"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Export PDF Report</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Integrated 4 Stat Cards Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 border-b border-slate-800 pb-6">
+                
+                {/* Card 1: Active Briefing Stream */}
+                <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 relative overflow-hidden">
+                  <div className="text-[11px] text-slate-400 font-medium">Active Briefing Stream</div>
+                  <div className="text-2xl font-bold mt-0.5 text-white">{articles.length}</div>
+                  <div className="text-[10px] text-sky-400 font-mono mt-1.5 flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>4 Core Segments Monitored</span>
+                  </div>
+                  <div className="absolute right-3 top-3 text-slate-700/20">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                </div>
+
+                {/* Card 2: Impact Meter with Trend and Sparkline */}
+                <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 relative overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] text-slate-400 font-medium">Avg Market/Corporate Impact</div>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="text-2xl font-bold text-white">{avgImpact}</span>
+                      <span className="text-[10px] text-slate-500">/ 10</span>
+                      
+                      {articles.length >= 2 && (() => {
+                        const trendInfo = getImpactTrend();
+                        if (trendInfo.trend === "up") {
+                          return (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400" title={`Current segment average is up`}>
+                              <ArrowUpRight className="w-2.5 h-2.5" />
+                              <span>{trendInfo.percent}</span>
+                            </span>
+                          );
+                        } else if (trendInfo.trend === "down") {
+                          return (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" title={`Current segment average is down`}>
+                              <ArrowDownRight className="w-2.5 h-2.5" />
+                              <span>{trendInfo.percent}</span>
+                            </span>
+                          );
+                        } else {
+                          return (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.2 rounded bg-slate-500/10 border border-slate-500/20 text-slate-400">
+                              <span>Steady</span>
+                            </span>
+                          );
+                        }
+                      })()}
+                    </div>
+
+                    {/* Sparkline visualization */}
+                    {articles.length >= 2 && (
+                      <div className="mt-2 h-4 flex items-end gap-0.5" title="Historical intelligence priority index sparkline">
+                        {(() => {
+                          const recent = [...articles]
+                            .sort((a, b) => new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime())
+                            .slice(0, 10)
+                            .reverse();
+                          
+                          return recent.map((art, idx) => {
+                            const heightPercent = Math.max(15, (art.impactScore / 10) * 100);
+                            const isHigh = art.impactScore >= 8;
+                            const isMedium = art.impactScore >= 5 && art.impactScore < 8;
+                            
+                            let bgClass = "bg-sky-500/30 hover:bg-sky-400";
+                            if (isHigh) bgClass = "bg-rose-500/40 hover:bg-rose-450";
+                            else if (isMedium) bgClass = "bg-amber-500/30 hover:bg-amber-400";
+
+                            return (
+                              <div
+                                key={art.id || idx}
+                                style={{ height: `${heightPercent}%` }}
+                                className={`flex-1 rounded-sm transition-all duration-150 cursor-pointer ${bgClass}`}
+                                title={`${art.title.slice(0, 30)}... (Impact: ${art.impactScore})`}
+                              />
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute right-3 top-3 text-slate-700/20">
+                    <Briefcase className="w-6 h-6" />
+                  </div>
+                </div>
+
+                {/* Card 3: Sentiment Ratio */}
+                <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 relative overflow-hidden">
+                  <div className="text-[11px] text-slate-400 font-medium">Positive Market Sentiment Ratio</div>
+                  <div className="text-2xl font-bold mt-0.5 text-emerald-400">{positiveRatio}%</div>
+                  <div className="text-[10px] text-emerald-500 font-mono mt-1.5">
+                    AI Sentiment Classifier
+                  </div>
+                  <div className="absolute right-3 top-3 text-slate-700/20">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                </div>
+
+                {/* Card 4: Active AI Framework */}
+                <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 relative overflow-hidden">
+                  <div className="text-[11px] text-slate-400 font-medium">Active AI Core Engine</div>
+                  <div className="text-xs font-semibold mt-1 text-slate-205 truncate">
+                    {hasApiKey ? "Gemini 3.5-Flash Active" : "Local Model Core"}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono mt-1.5">
+                    Grounding: {hasApiKey ? "ENABLED" : "LOCAL"}
+                  </div>
+                  <div className="absolute right-3 top-3 text-slate-700/20">
+                    <Sparkles className="w-6 h-6" />
                   </div>
                 </div>
               </div>
