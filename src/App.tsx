@@ -775,6 +775,49 @@ export default function App() {
     });
   };
 
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      if (activeElement) {
+        const tagName = activeElement.tagName.toUpperCase();
+        if (
+          tagName === "INPUT" ||
+          tagName === "TEXTAREA" ||
+          activeElement.hasAttribute("contenteditable")
+        ) {
+          return;
+        }
+      }
+
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        const key = e.key.toLowerCase();
+        if (key === "b" || key === "f" || key === "p" || key === "a") {
+          e.preventDefault();
+          if (key === "b") {
+            setActiveMainView("briefings");
+            addToast("technology_updates", "Shortcut Triggered: Alt + B", "Navigated to Executive Advisor Dashboard.");
+          } else if (key === "f") {
+            setActiveMainView("business");
+            addToast("licensing_pricing", "Shortcut Triggered: Alt + F", "Navigated to Microsoft Corporate Financials.");
+          } else if (key === "p") {
+            setActiveMainView("partners");
+            addToast("anz_strategy", "Shortcut Triggered: Alt + P", "Navigated to ANZ Microsoft Partner Hub.");
+          } else if (key === "a") {
+            setActiveMainView("ai-business");
+            setActiveReviewId(null);
+            addToast("cloud_transformations", "Shortcut Triggered: Alt + A", "Navigated to Microsoft's AI Business.");
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [addToast]);
+
   // Bookmarking / Saved Articles state (Persisted in localStorage)
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
     try {
@@ -3453,27 +3496,33 @@ ${advice}
           <button
             id="global-nav-briefings"
             onClick={() => setActiveMainView("briefings")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               activeMainView === "briefings"
                 ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
             }`}
           >
             <FileText className="w-4 h-4 text-inherit" />
-            <span>Executive Advisor Dashboard</span>
+            <span className="flex items-center gap-1.5">
+              <span>Executive Advisor Dashboard</span>
+              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+B</kbd>
+            </span>
           </button>
           
           <button
             id="global-nav-business"
             onClick={() => setActiveMainView("business")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               activeMainView === "business"
                 ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
             }`}
           >
             <TrendingUp className="w-4 h-4 text-inherit" />
-            <span>Microsoft Business Financials</span>
+            <span className="flex items-center gap-1.5">
+              <span>Microsoft Business Financials</span>
+              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+F</kbd>
+            </span>
           </button>
 
           <button
@@ -3482,14 +3531,17 @@ ${advice}
               setActiveMainView("partners");
               setActiveReviewId(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               activeMainView === "partners"
                 ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
             }`}
           >
             <Users className="w-4 h-4 text-inherit" />
-            <span>ANZ Microsoft Partner Hub</span>
+            <span className="flex items-center gap-1.5">
+              <span>ANZ Microsoft Partner Hub</span>
+              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+P</kbd>
+            </span>
           </button>
 
           <button
@@ -3498,14 +3550,17 @@ ${advice}
               setActiveMainView("ai-business");
               setActiveReviewId(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
               activeMainView === "ai-business"
                 ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
             }`}
           >
             <Sparkles className="w-4 h-4 text-inherit" />
-            <span>Microsoft's AI Business</span>
+            <span className="flex items-center gap-1.5">
+              <span>Microsoft's AI Business</span>
+              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+A</kbd>
+            </span>
           </button>
         </div>
 
