@@ -64,6 +64,7 @@ import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartne
 import { jsPDF } from "jspdf";
 import { db, collection, getDocs, doc, setDoc, deleteDoc } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
+import { MicrosoftAIBusiness } from "./components/MicrosoftAIBusiness";
 
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -549,7 +550,7 @@ export default function App() {
     }
   });
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business">("briefings");
 
   const [partnerReviewer, setPartnerReviewer] = useState("");
   const [partnerRating, setPartnerRating] = useState(5);
@@ -3448,7 +3449,7 @@ ${advice}
 
 
         {/* Global Navigation Hub */}
-        <div className="flex flex-col sm:flex-row bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans max-w-full sm:max-w-2xl lg:max-w-3xl mb-8 shadow-lg gap-1.5 sm:gap-1">
+        <div className="flex flex-col sm:flex-row bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans max-w-full sm:max-w-3xl lg:max-w-4xl mb-8 shadow-lg gap-1.5 sm:gap-1">
           <button
             id="global-nav-briefings"
             onClick={() => setActiveMainView("briefings")}
@@ -3489,6 +3490,22 @@ ${advice}
           >
             <Users className="w-4 h-4 text-inherit" />
             <span>ANZ Microsoft Partner Hub</span>
+          </button>
+
+          <button
+            id="global-nav-ai-business"
+            onClick={() => {
+              setActiveMainView("ai-business");
+              setActiveReviewId(null);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              activeMainView === "ai-business"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-inherit" />
+            <span>Microsoft's AI Business</span>
           </button>
         </div>
 
@@ -8212,6 +8229,36 @@ ${advice}
 
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {activeMainView === "ai-business" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Header Banner */}
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 animate-in slide-in-from-left duration-200">
+                    <span className="text-xs font-mono font-bold tracking-wider text-sky-455 uppercase bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      Sovereign AI Strategy
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Regional Cloud & LLM Footprint</span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+                    Microsoft's AI Business
+                  </h2>
+                  <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                    Track the multi-billion-dollar sovereign IT investments, cybersecurity protective shields, enterprise Copilot rollout metrics, and regional data hubs in ANZ.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Scraper Dashboard Component */}
+            <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6">
+              <MicrosoftAIBusiness addToast={addToast} />
             </div>
           </div>
         )}
