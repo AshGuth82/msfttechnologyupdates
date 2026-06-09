@@ -5684,7 +5684,7 @@ ${advice}
                                   <span className="text-slate-400">{calculateReadTime(article)}</span>
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -6103,7 +6103,7 @@ ${advice}
                                             <span className="text-slate-400">{calculateReadTime(article)}</span>
                                           </span>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2">
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
