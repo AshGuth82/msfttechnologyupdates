@@ -7038,7 +7038,12 @@ ${advice}
                 The intelligence system is explicitly configured to scrape, prioritize, and ground all strategic advisory insights utilizing these primary source platforms:
               </p>
 
-              <div className="space-y-2.5">
+              <div className="max-h-[380px] overflow-y-auto space-y-2.5 pr-1.5 custom-scrollbar">
+                {/* Section header: Core Market Channels */}
+                <div className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono pt-1 mb-1">
+                  Core Market Channels
+                </div>
+
                 {/* Source 1 */}
                 <a 
                   href="https://news.microsoft.com/source/view-all/" 
@@ -7058,7 +7063,7 @@ ${advice}
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
                       <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
-                      <span>Target</span>
+                      <span>Active</span>
                     </span>
                     <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
                   </div>
@@ -7078,6 +7083,161 @@ ${advice}
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono block truncate">
                       geekwire.com/microsoft/
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Active</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* Section header: Partner Announcements & Blogs */}
+                <div className="text-[9px] uppercase font-bold tracking-wider text-slate-500 font-mono pt-2 mb-1">
+                  Partner announcements & blogs
+                </div>
+
+                {/* New Source 1 */}
+                <a 
+                  href="https://learn.microsoft.com/en-us/partner-center/announcements/" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Official Microsoft Partner Center Announcements"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Partner Center Announcements
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      learn.microsoft.com/en-us/partner-center/...
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* New Source 2 */}
+                <a 
+                  href="https://techcommunity.microsoft.com/category/partnercommunity/blog/partnernews" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Microsoft Partner Community Blog"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Partner Community Blog
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      techcommunity.microsoft.com/.../partnernews
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* New Source 3 */}
+                <a 
+                  href="https://techcommunity.microsoft.com/category/mcpp/discussions/cloudservicesproviderspartners" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Cloud Solution Provider Discussions"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Cloud Solution Provider Discussions
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      techcommunity.microsoft.com/.../discussions
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* New Source 4 */}
+                <a 
+                  href="https://partner.microsoft.com/en-au/blog/category/csp/" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Microsoft Australia CSP Blog"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Australia CSP Blog
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      partner.microsoft.com/en-au/blog/category/csp/
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* New Source 5 */}
+                <a 
+                  href="https://techcommunity.microsoft.com/category/partnercommunity" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Microsoft Partner Community Hub"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Partner Community Hub
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      techcommunity.microsoft.com/.../partnercommunity
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* New Source 6 */}
+                <a 
+                  href="https://partner.microsoft.com/en-au/blog" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Microsoft Australia Partner Blog"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Australia Partner Blog
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      partner.microsoft.com/en-au/blog
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
