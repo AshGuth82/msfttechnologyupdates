@@ -4134,7 +4134,7 @@ ${advice}
                     {/* Precise Floating Price Point Label that follows the cursor on hover */}
                     {hoveredPoint && (
                       <div 
-                        className="absolute pointer-events-none transition-all duration-75 ease-out select-none font-mono"
+                        className="absolute pointer-events-auto transition-all duration-75 ease-out font-mono animate-in fade-in zoom-in-95 duration-150"
                         style={{
                           left: Math.max(40, Math.min(hoveredPoint.chartX - 60, 480)),
                           top: Math.max(10, Math.min(hoveredPoint.chartY - 80, 240)),
@@ -4181,22 +4181,35 @@ ${advice}
                                   <span>🚀 Major Briefing Event</span>
                                 </div>
                                 {getArticlesForChartPoint(hoveredPoint.time).map((art) => (
-                                  <div key={art.id} className="max-w-[260px] whitespace-normal bg-slate-50/10 dark:bg-slate-900/40 p-1.5 rounded-lg border border-slate-200/10 dark:border-slate-800/20">
-                                    <p className="font-semibold text-[10px] text-slate-900 dark:text-slate-100 line-clamp-2">
+                                  <a 
+                                    key={art.id}
+                                    href={art.url || "https://news.microsoft.com/en-au/"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="group block max-w-[260px] whitespace-normal bg-slate-50/10 dark:bg-slate-900/40 p-1.5 rounded-lg border border-slate-200/10 dark:border-slate-800/20 hover:border-sky-500/40 hover:bg-slate-55/20 dark:hover:bg-slate-900/80 transition-all duration-150"
+                                    title={`Click to read full article at ${art.source}`}
+                                  >
+                                    <p className={`font-semibold text-[10px] line-clamp-2 leading-snug transition-colors ${
+                                      isDark ? "text-slate-200 group-hover:text-sky-400" : "text-slate-900 group-hover:text-sky-600"
+                                    }`}>
                                       {art.title}
                                     </p>
-                                    <div className="flex items-center gap-2 mt-1 text-[8px] text-slate-500">
-                                      <span className="font-mono">{art.source}</span>
-                                      <span>•</span>
-                                      <span className={`px-1 py-0.2 rounded font-semibold ${
-                                        art.impactScore >= 8 
-                                          ? "bg-rose-500/10 text-rose-500" 
-                                          : "bg-sky-500/10 text-sky-500"
-                                      }`}>
-                                        Impact: {art.impactScore}/10
-                                      </span>
+                                    <div className="flex items-center justify-between gap-2 mt-1 text-[8px] text-slate-500">
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-mono">{art.source}</span>
+                                        <span>•</span>
+                                        <span className={`px-1 py-0.2 rounded font-semibold ${
+                                          art.impactScore >= 8 
+                                            ? "bg-rose-500/10 text-rose-500" 
+                                            : "bg-sky-500/10 text-sky-500"
+                                        }`}>
+                                          Impact: {art.impactScore}/10
+                                        </span>
+                                      </div>
+                                      <ExternalLink className="w-2.5 h-2.5 text-slate-400 dark:text-slate-500 group-hover:text-sky-450 transition-colors shrink-0" />
                                     </div>
-                                  </div>
+                                  </a>
                                 ))}
                               </div>
                             )}
@@ -4232,12 +4245,16 @@ ${advice}
                         {getActiveEventMarkers().map((marker, idx) => {
                           const isHigh = marker.article.impactScore >= 8;
                           return (
-                            <div 
+                            <a 
                               key={`ledger-event-${marker.article.id}-${idx}`}
-                              className={`p-2.5 rounded-lg border transition-all duration-150 text-left ${
+                              href={marker.article.url || "https://news.microsoft.com/en-au/"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Click to read full article at ${marker.article.source}`}
+                              className={`group p-2.5 rounded-lg border transition-all duration-150 text-left block hover:scale-[1.005] ${
                                 isDark 
-                                  ? "bg-slate-950/40 border-slate-800/80 hover:border-slate-75 hover:bg-slate-950/75" 
-                                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/40"
+                                  ? "bg-slate-950/40 border-slate-800/80 hover:border-sky-500/40 hover:bg-slate-950/75 text-inherit" 
+                                  : "bg-white border-slate-200 hover:border-sky-500/30 hover:bg-slate-50/20 text-inherit"
                               }`}
                             >
                               <div className="flex items-start justify-between gap-2">
@@ -4248,23 +4265,25 @@ ${advice}
                                   }`}>
                                   {marker.time}
                                 </span>
-                                <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono shrink-0">
-                                  Impact: {marker.article.impactScore}/10
-                                </span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono">
+                                    Impact: {marker.article.impactScore}/10
+                                  </span>
+                                  <ExternalLink className="w-2.5 h-2.5 text-slate-400 dark:text-slate-500 group-hover:text-sky-500 transition-colors" />
+                                </div>
                               </div>
-                              <h5 className={`text-[11px] font-bold mt-1.5 line-clamp-2 leading-snug cursor-help ${
-                                isDark ? "text-slate-200 hover:text-sky-400" : "text-slate-800 hover:text-sky-600"
+                              <h5 className={`text-[11px] font-bold mt-1.5 line-clamp-2 leading-snug ${
+                                isDark ? "text-slate-200 group-hover:text-sky-400" : "text-slate-800 group-hover:text-sky-600"
                               }`}
-                              title={marker.article.summary}
                               >
                                 {marker.article.title}
                               </h5>
-                              <div className="flex items-center gap-2 mt-1.5 text-[9px] text-slate-400 dark:text-slate-500">
-                                <span className="font-medium shrink-0">{marker.article.source}</span>
+                              <div className="flex items-center gap-2 mt-1.5 text-[9px] text-slate-405 dark:text-slate-500">
+                                <span className="font-medium shrink-0 group-hover:text-sky-400 transition-colors">{marker.article.source}</span>
                                 <span>•</span>
                                 <span className="truncate">{marker.article.category.replace(/_/g, " ")}</span>
                               </div>
-                            </div>
+                            </a>
                           );
                         })}
                       </div>
