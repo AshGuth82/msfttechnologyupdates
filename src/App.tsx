@@ -5481,7 +5481,7 @@ ${advice}
                 <span className="text-[10px] uppercase font-bold tracking-wider text-slate-450 font-mono block mb-3">
                   Unified Hub Navigation Directory (Click segment to jump)
                 </span>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                   
                   {/* Segment 1: Briefings Hub */}
                   <button
@@ -5550,7 +5550,7 @@ ${advice}
                     className="bg-slate-900/60 hover:bg-slate-950 border border-slate-850 hover:border-slate-700 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <Bell className="w-4 h-4 text-rose-400" />
+                      <Bell className="w-4 h-4 text-rose-450" />
                       <span className="text-[9px] font-mono bg-rose-500/10 text-rose-400 px-1.5 py-0.2 rounded border border-rose-500/20 font-bold">
                         {watchlist.length}
                       </span>
@@ -5595,6 +5595,25 @@ ${advice}
                     </div>
                     <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">Ash Guth Advisor</div>
                     <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">ANZ profile connect</div>
+                  </button>
+
+                  {/* Segment 7: Briefing Ledger Subscription */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("briefing-ledger-subscription");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="bg-[#1e293b]/40 hover:bg-slate-950 border border-slate-800/80 hover:border-emerald-500/30 p-3 rounded-xl text-left transition duration-150 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <Mail className="w-4 h-4 text-emerald-450" />
+                      <span className="text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20 font-bold">
+                        {subscriptionsList ? subscriptionsList.length : 0}
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-200 group-hover:text-white truncate">Briefing Subscription</div>
+                    <div className="text-[9px] text-slate-500 font-mono mt-0.5 truncate">Monthly updates</div>
                   </button>
 
                 </div>
@@ -6630,7 +6649,7 @@ ${advice}
             </div>
 
             {/* Interactive Intelligence Subscription & Contact Form Hub */}
-            <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden transition duration-300">
+            <div id="briefing-ledger-subscription" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden transition duration-300">
               <div className="absolute top-0 right-0 h-24 w-24 bg-sky-500/5 rounded-full blur-2xl"></div>
               <div className="absolute bottom-0 left-0 h-24 w-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
 
