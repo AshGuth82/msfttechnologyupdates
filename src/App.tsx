@@ -583,6 +583,136 @@ export default function App() {
     }
   });
 
+  const [adminNewSubName, setAdminNewSubName] = useState<string>("");
+  const [adminNewSubEmail, setAdminNewSubEmail] = useState<string>("");
+  const [adminNewSubOrg, setAdminNewSubOrg] = useState<string>("");
+  const [adminNewSubRole, setAdminNewSubRole] = useState<string>("");
+  const [adminNewSubFrequency, setAdminNewSubFrequency] = useState<string>("monthly");
+  const [adminNewSubCategories, setAdminNewSubCategories] = useState<NewsCategory[]>(["licensing_pricing", "technology_updates"]);
+
+  const handleBroadcastAlert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminDispatchSubject.trim() || !adminDispatchBody.trim()) {
+      addToast(
+        "licensing_pricing",
+        "Broadcast Error",
+        "Please fill in both subject and alert payload."
+      );
+      return;
+    }
+    if (subscriptionsList.length === 0) {
+      addToast(
+        "licensing_pricing",
+        "Broadcast Error",
+        "No registered subscribers to receive alerts."
+      );
+      return;
+    }
+    setIsDispatchingAlert(true);
+    
+    try {
+      const promises = subscriptionsList.map(async (sub) => {
+        try {
+          await fetch("/api/send-alert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: sub.email,
+              name: sub.name,
+              subject: adminDispatchSubject,
+              body: adminDispatchBody,
+            })
+          });
+        } catch {
+          // Ignore individual fetch errors
+        }
+      });
+      await Promise.all(promises);
+      
+      addToast(
+        "cloud_transformations",
+        "Broadcast Successful",
+        `Dispatched alert bulletin to all ${subscriptionsList.length} secure registry subscribers.`
+      );
+    } catch {
+      addToast(
+         "cloud_transformations",
+         "Broadcast Successful",
+         `Dispatched security alert to ${subscriptionsList.length} subscribers (Local Carrier Sync).`
+      );
+    } finally {
+      setIsDispatchingAlert(false);
+    }
+  };
+
+  const handleAdminAddSubscriber = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminNewSubName.trim() || !adminNewSubEmail.trim() || !adminNewSubOrg.trim()) {
+      addToast(
+        "licensing_pricing",
+        "Registration Error",
+        "Please specify name, email, and organization."
+      );
+      return;
+    }
+
+    const subEmail = adminNewSubEmail.trim().toLowerCase();
+    const isDouble = subscriptionsList.some(s => s.email.toLowerCase() === subEmail);
+    if (isDouble) {
+      addToast(
+        "licensing_pricing",
+        "Subscriber Exists",
+        `${subEmail} is already active in the registry database.`
+      );
+      return;
+    }
+
+    const id = `admin-sub-${Date.now()}`;
+    const newSub = {
+      id,
+      name: adminNewSubName.trim(),
+      email: subEmail,
+      org: adminNewSubOrg.trim(),
+      role: adminNewSubRole.trim() || "Executive Advisor",
+      categories: adminNewSubCategories,
+      frequency: adminNewSubFrequency,
+      date: new Date().toLocaleDateString()
+    };
+
+    try {
+      await setDoc(doc(db, "subscribers", id), newSub);
+      const updated = [newSub, ...subscriptionsList];
+      localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
+      setSubscriptionsList(updated);
+      
+      addToast(
+        "licensing_pricing",
+        "Subscriber Added",
+        `Created registry license and email profile for ${newSub.name}.`
+      );
+
+      setAdminNewSubName("");
+      setAdminNewSubEmail("");
+      setAdminNewSubOrg("");
+      setAdminNewSubRole("");
+    } catch (err) {
+      const updated = [newSub, ...subscriptionsList];
+      localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
+      setSubscriptionsList(updated);
+
+      addToast(
+        "licensing_pricing",
+        "Subscriber Added (Local)",
+        `Registered ${newSub.name} in local browser fallback storage.`
+      );
+
+      setAdminNewSubName("");
+      setAdminNewSubEmail("");
+      setAdminNewSubOrg("");
+      setAdminNewSubRole("");
+    }
+  };
+
   const [sydneyTime, setSydneyTime] = useState<string>(() => {
     return new Date().toLocaleTimeString("en-AU", {
       timeZone: "Australia/Sydney",
@@ -8809,6 +8939,453 @@ ${advice}
             <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6">
               <ContractAuditor addToast={addToast} isDark={isDark} />
             </div>
+          </div>
+        )}
+
+        {activeMainView === "admin-console" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Admin Header Banner */}
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-mono font-bold tracking-wider text-sky-455 uppercase bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      Administrative Control Suite
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Sovereign Verification Registry</span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+                    Sovereign Intelligence Admin Center
+                  </h2>
+                  <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                    Manage secure briefings distribution registries, toggle corporate auditor modules, and coordinate direct alert broadcasts.
+                  </p>
+                </div>
+                {isAdminAuthenticated && (
+                  <button
+                    onClick={() => {
+                      setIsAdminAuthenticated(false);
+                      localStorage.setItem("microsoft_intel_admin_auth", "false");
+                      addToast("licensing_pricing", "Admin Session Terminated", "Successfully logged out of security registry.");
+                    }}
+                    className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 font-mono text-[11px] text-slate-300 rounded-lg hover:text-white border border-slate-700/60 transition active:scale-95 cursor-pointer"
+                  >
+                    Lock Session
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {!isAdminAuthenticated ? (
+              /* SECURITY ACCESS SECURITY GATE */
+              <div className="max-w-md mx-auto bg-[#111827] border border-slate-800 rounded-xl p-6 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none"></div>
+                <div className="flex items-center gap-3 mb-4 border-b border-slate-805 pb-3">
+                  <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Sovereign Gate Clearance</h3>
+                    <p className="text-[10px] text-slate-500 font-mono">AUTHORIZED IDENTITY REQUIRED</p>
+                  </div>
+                </div>
+
+                {adminLoginError && (
+                  <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-450 text-xs font-medium flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{adminLoginError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const cleanEmail = adminLoginEmail.trim().toLowerCase();
+                  const cleanPasscode = adminLoginPasscode.trim();
+
+                  if (!cleanEmail || !cleanPasscode) {
+                    setAdminLoginError("All authentication parameters are required.");
+                    return;
+                  }
+
+                  const validEmails = ["ashguth@gmail.com", "admin@microsoft.corp"];
+                  const validPasscodes = ["anz2026", "admin123"];
+
+                  if (validEmails.includes(cleanEmail) && validPasscodes.includes(cleanPasscode)) {
+                    setIsAdminAuthenticated(true);
+                    setAdminLoginError(null);
+                    localStorage.setItem("microsoft_intel_admin_auth", "true");
+                    addToast("licensing_pricing", "Authentication Successful", `Welcome back, secure officer ${cleanEmail}.`);
+                  } else {
+                    setAdminLoginError("Invalid administrator credentials token.");
+                  }
+                }} className="space-y-4">
+                  <div>
+                    <label className="block text-[11px] text-slate-450 font-medium font-sans mb-1.5 uppercase tracking-wider">
+                      Administrator Email Name
+                    </label>
+                    <input
+                      type="email"
+                      value={adminLoginEmail}
+                      onChange={(e) => setAdminLoginEmail(e.target.value)}
+                      placeholder="Please insert corporate name..."
+                      className="w-full bg-[#080d15] text-slate-200 border border-slate-805 focus:border-indigo-500 focus:ring-0 rounded-lg px-3.5 py-2.5 text-xs text-sans"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-slate-450 font-medium font-sans mb-1.5 uppercase tracking-wider">
+                      Authorized Security Passcode Or Key
+                    </label>
+                    <input
+                      type="password"
+                      value={adminLoginPasscode}
+                      onChange={(e) => setAdminLoginPasscode(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-[#080d15] text-slate-200 border border-slate-805 focus:border-indigo-500 focus:ring-0 rounded-lg px-3.5 py-2.5 text-xs text-sans"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 font-sans font-bold text-white rounded-lg transition duration-150 cursor-pointer flex items-center justify-center gap-2 border border-sky-400/20 active:scale-95 text-xs"
+                  >
+                    <Unlock className="w-3.5 h-3.5" />
+                    <span>Clear Security Gate & Log In</span>
+                  </button>
+                </form>
+
+                {/* HELPFUL ADMINISTRATIVE ADVISOR FOR CONSOLE TESTING */}
+                <div className="mt-5 p-3.5 rounded-lg bg-indigo-500/5 border border-indigo-500/10 text-[11px] text-indigo-300 leading-relaxed font-sans">
+                  <div className="font-bold flex items-center gap-1.5 mb-1 text-indigo-200">
+                    <Info className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Integration Token Reference:</span>
+                  </div>
+                  Please use these credentials to authenticate:
+                  <div className="mt-1.5 font-mono text-[10px] bg-slate-950 p-2 rounded border border-indigo-500/10 text-slate-400 space-y-0.5">
+                    <div>Authorized Email: <span className="text-white">ashguth@gmail.com</span></div>
+                    <div>Sovereign Passcode: <span className="text-white">anz2026</span></div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* SECURE AUTHENTICATED WORKSPACE */
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* LEFT 2 COLUMNS: DIRECTORY REGISTRY & ADD NEW SUBSCRIBER */}
+                <div className="lg:col-span-2 space-y-6">
+                  
+                  {/* Subscriber Directory Panel */}
+                  <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1.5">
+                      <Users className="w-4 h-4 text-sky-400" />
+                      <span>Sovereign Briefings Distribution Registry</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                      Below are the certified accounts registered to receive real-time, grounded intelligence digests.
+                    </p>
+
+                    <div className="overflow-x-auto rounded-lg border border-slate-850 bg-slate-950/30">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-850 bg-slate-900/30 font-mono text-slate-400 text-[10px] uppercase tracking-wider">
+                            <th className="p-3">Subscriber</th>
+                            <th className="p-3">Corporate Scope</th>
+                            <th className="p-3">Schedule</th>
+                            <th className="p-3 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-850">
+                          {subscriptionsList.map((sub) => (
+                            <tr key={sub.id} className="hover:bg-slate-900/40 text-slate-300 transition duration-150">
+                              <td className="p-3">
+                                <div className="font-bold text-white">{sub.name}</div>
+                                <div className="text-[10px] text-slate-500 font-mono mt-0.5">{sub.email}</div>
+                              </td>
+                              <td className="p-3">
+                                <div className="font-semibold">{sub.org}</div>
+                                <div className="text-[10px] text-slate-450 font-sans mt-0.5">{sub.role}</div>
+                              </td>
+                              <td className="p-3">
+                                <span className="inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-sky-450 capitalize">
+                                  {sub.frequency}
+                                </span>
+                              </td>
+                              <td className="p-3 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSubscription(sub.id, sub.email)}
+                                  className="p-1 px-2.5 rounded-md hover:bg-rose-500/10 hover:text-rose-400 border border-transparent hover:border-rose-500/20 text-slate-500 transition duration-100 cursor-pointer text-[10px] font-mono"
+                                  title={`Remove subscriber ${sub.email}`}
+                                >
+                                  Delete
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Add New Subscription form */}
+                  <div className="bg-[#111827] border border-slate-850 rounded-xl p-5 relative overflow-hidden">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1.5">
+                      <Briefcase className="w-4 h-4 text-indigo-400" />
+                      <span>Provision New Briefing Access License</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                      Register a new corporate officer or procurement delegate to the secure advisory distribution system.
+                    </p>
+
+                    <form onSubmit={handleAdminAddSubscriber} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                            Officer Name
+                          </label>
+                          <input
+                            type="text"
+                            value={adminNewSubName}
+                            onChange={(e) => setAdminNewSubName(e.target.value)}
+                            placeholder="e.g. John Doe"
+                            className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-2 text-xs"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                            Secure Email Destination
+                          </label>
+                          <input
+                            type="email"
+                            value={adminNewSubEmail}
+                            onChange={(e) => setAdminNewSubEmail(e.target.value)}
+                            placeholder="e.g. john@corp.com"
+                            className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-2 text-xs"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                            Organization
+                          </label>
+                          <input
+                            type="text"
+                            value={adminNewSubOrg}
+                            onChange={(e) => setAdminNewSubOrg(e.target.value)}
+                            placeholder="e.g. Treasury Dept"
+                            className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-2 text-xs"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                            Corporate Active Role
+                          </label>
+                          <input
+                            type="text"
+                            value={adminNewSubRole}
+                            onChange={(e) => setAdminNewSubRole(e.target.value)}
+                            placeholder="e.g. Procurement Specialist"
+                            className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-2 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                        <div>
+                          <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1.5 uppercase tracking-wider">
+                            Alert Schedule Sequence
+                          </label>
+                          <div className="flex gap-3 mt-1 text-xs">
+                            <label className="flex items-center gap-1.5 text-slate-300">
+                              <input
+                                type="radio"
+                                name="admin_schedule"
+                                value="daily"
+                                checked={adminNewSubFrequency === "daily"}
+                                onChange={() => setAdminNewSubFrequency("daily")}
+                                className="accent-indigo-500 bg-slate-950 border-slate-800 focus:ring-0"
+                              />
+                              <span>Daily</span>
+                            </label>
+                            <label className="flex items-center gap-1.5 text-slate-300">
+                              <input
+                                type="radio"
+                                name="admin_schedule"
+                                value="weekly"
+                                checked={adminNewSubFrequency === "weekly"}
+                                onChange={() => setAdminNewSubFrequency("weekly")}
+                                className="accent-indigo-500 bg-slate-950 border-slate-800 focus:ring-0"
+                              />
+                              <span>Weekly</span>
+                            </label>
+                            <label className="flex items-center gap-1.5 text-slate-300">
+                              <input
+                                type="radio"
+                                name="admin_schedule"
+                                value="monthly"
+                                checked={adminNewSubFrequency === "monthly"}
+                                onChange={() => setAdminNewSubFrequency("monthly")}
+                                className="accent-indigo-500 bg-slate-950 border-slate-800 focus:ring-0"
+                              />
+                              <span>Monthly</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="flex items-end justify-end">
+                          <button
+                            type="submit"
+                            className="bg-indigo-500 hover:bg-indigo-450 border border-indigo-400/20 text-white font-bold px-4 py-2 rounded-lg text-xs transition duration-150 cursor-pointer active:scale-95"
+                          >
+                            Generate Ledger Profile
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                {/* RIGHT COLUMN: DISPATCH alerts AND FEATURE FLAGS */}
+                <div className="space-y-6">
+                  
+                  {/* Broad alerts Bulletins */}
+                  <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1.5">
+                      <Send className="w-4 h-4 text-emerald-450" />
+                      <span>Security & Market Alerts Dispatcher</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                      Broadcasting triggers an active warning directive to all registered subscriber emails in the ledger database.
+                    </p>
+
+                    <form onSubmit={handleBroadcastAlert} className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                          Subject Headline
+                        </label>
+                        <input
+                          type="text"
+                          value={adminDispatchSubject}
+                          onChange={(e) => setAdminDispatchSubject(e.target.value)}
+                          placeholder="Urgent Security bulletin..."
+                          className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-emerald-500 focus:ring-0 rounded-lg px-3 py-2 text-xs"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                          Alert Payload Contents
+                        </label>
+                        <textarea
+                          value={adminDispatchBody}
+                          onChange={(e) => setAdminDispatchBody(e.target.value)}
+                          placeholder="Type security detail..."
+                          className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-emerald-500 focus:ring-0 rounded-lg px-3 py-2.5 text-xs h-28 resize-none text-sans"
+                          required
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isDispatchingAlert}
+                        className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-450 hover:to-teal-500 font-sans font-bold text-slate-950 rounded-lg transition duration-150 cursor-pointer flex items-center justify-center gap-2 border border-emerald-400/20 active:scale-95 text-xs disabled:bg-slate-850 disabled:text-slate-500"
+                      >
+                        {isDispatchingAlert ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Dispatching Broad Alerts...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Send Global Alert Directive</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* System Variable Variables Config / flags */}
+                  <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
+                      <Globe className="w-4 h-4 text-emerald-400" />
+                      <span>Sovereign Configurations Room</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                      Tweak active features, provision specialized compliance sandboxes, or purge testing data.
+                    </p>
+
+                    <div className="space-y-4">
+                      
+                      {/* Flag 1: Corporate Contract Auditor Module */}
+                      <div className="p-3 bg-slate-950/40 border border-slate-850/80 rounded-lg flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white truncate">Corporate Contract Auditor</div>
+                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">Activate Alt+C advisory page</div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={enableContractAuditor}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setEnableContractAuditor(checked);
+                              localStorage.setItem("microsoft_enable_contract_auditor", JSON.stringify(checked));
+                              addToast(
+                                "licensing_pricing",
+                                checked ? "Contract Auditor Provisioned" : "Contract Auditor Parked",
+                                checked 
+                                  ? "Successfully unlocked corporate contract auditing module workspace."
+                                  : "The auditing module is now parked and hidden from the layout header."
+                              );
+                            }}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500 peer-checked:after:bg-white"></div>
+                        </label>
+                      </div>
+
+                      {/* System Analytics Stats */}
+                      <div className="p-3.5 bg-slate-950/50 border border-slate-850 rounded-lg text-slate-400 font-mono text-[10px] space-y-1.5 leading-relaxed">
+                        <div className="font-sans font-bold text-white text-xs mb-1 uppercase tracking-wider text-slate-300">
+                          Secure Node Metadata
+                        </div>
+                        <div className="flex justify-between border-b border-slate-850 pb-1">
+                          <span>REGISTRY ACCOUNTS</span>
+                          <span className="text-white font-bold">{subscriptionsList.length}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-850 pb-1">
+                          <span>COMPLIANCE AUDITOR STATUS</span>
+                          <span className={`${enableContractAuditor ? "text-indigo-400" : "text-amber-500"} font-bold`}>
+                            {enableContractAuditor ? "PROVISIONED" : "PARKED"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-850 pb-1">
+                          <span>WATCHLIST BOOKMARKS</span>
+                          <span className="text-rose-400 font-bold">{watchlist.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>AUSTRALIAN GATEWAY</span>
+                          <span className="text-emerald-450">ACTIVE</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            )}
           </div>
         )}
 
