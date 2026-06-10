@@ -61,7 +61,8 @@ import {
   Linkedin,
   MapPin,
   Lock,
-  Unlock
+  Unlock,
+  Zap
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -381,6 +382,121 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
         date: "2026-05-20"
       }
     ]
+  },
+  {
+    id: "partner-datacom",
+    name: "Datacom",
+    location: "Auckland, New Zealand & Regional",
+    rating: 4.8,
+    ratingCount: 142,
+    promoted: false,
+    specialization: ["Sovereign Cloud NZ", "Azure Public Sector", "Managed IT Services"],
+    description: "One of the largest home-grown technology solutions providers in ANZ. Datacom specializes in government cloud operations, sovereign compliance (NZ ISM structures), and large-scale citizen-facing service migrations on Microsoft Azure.",
+    caseStudyTitle: "Auckland Transport Sovereign Cloud Integration",
+    caseStudyContext: "Successfully migrated metropolitan transit routing databases onto secure local NZ Azure instances under Auckland jurisdiction, lowering operational lag and reducing cloud hosting fees by 32%.",
+    contactEmail: "sovereign-systems@datacom.co.nz",
+    websiteUrl: "https://datacom.com",
+    reviews: [
+      {
+        id: "rev-datacom-1",
+        reviewer: "Sarah Jenkins",
+        rating: 5,
+        comment: "Outstanding integrity in government-approved sovereign cloud configurations. Absolute peace of mind.",
+        date: "2026-06-05"
+      }
+    ]
+  },
+  {
+    id: "partner-data3",
+    name: "Data#3 Limited",
+    location: "Brisbane, QLD",
+    rating: 4.9,
+    ratingCount: 167,
+    promoted: false,
+    specialization: ["Licensing Optimization", "Copilot Transformation", "Modern Workplace"],
+    description: "An elite Microsoft Gold Specialist. Data#3 is recognized for premium enterprise software asset advisory, customized corporate Microsoft 365 licensing structures, and comprehensive personnel Copilot-readiness enablement.",
+    caseStudyTitle: "Resource Group 12,000-seat Copilot Enablement",
+    caseStudyContext: "Coordinated licensing architecture audits to prune idle licenses while preparing security configurations for M365 Copilot rollout, recapturing A$950K in baseline licensing credits.",
+    contactEmail: "licensing@data3.com.au",
+    websiteUrl: "https://www.data3.com",
+    reviews: [
+      {
+        id: "rev-data3-1",
+        reviewer: "Timothy O'Neill",
+        rating: 5,
+        comment: "Superb licensing advice that simplified our enterprise agreement transition immensely.",
+        date: "2026-05-18"
+      }
+    ]
+  },
+  {
+    id: "partner-avanade",
+    name: "Avanade Australia",
+    location: "Sydney, NSW",
+    rating: 4.9,
+    ratingCount: 210,
+    promoted: false,
+    specialization: ["Azure Cloud Migration", "AI Engine Development", "Dynamics 365 Enterprise"],
+    description: "The leading global joint venture between Microsoft and Accenture. Avanade delivers industry-defining software architecture, deep enterprise Azure migrations, and cutting-edge generative AI models on Microsoft platforms.",
+    caseStudyTitle: "Transit Hub Real-time AI Operations Platform",
+    caseStudyContext: "Constructed high-security private GPT models on Azure Cloud to analyze real-time metropolitan operations logs, reducing service interruptions by 22% during peak commutes.",
+    contactEmail: "solutions-au@avanade.com",
+    websiteUrl: "https://www.avanade.com/en-au",
+    reviews: [
+      {
+        id: "rev-avanade-1",
+        reviewer: "Gregory Vance",
+        rating: 5,
+        comment: "Unparalleled tech capability; implemented our corporate AI safety sandbox boundary in 3 weeks.",
+        date: "2026-05-29"
+      }
+    ]
+  },
+  {
+    id: "partner-velrada",
+    name: "Velrada",
+    location: "Perth, WA",
+    rating: 4.8,
+    ratingCount: 78,
+    promoted: false,
+    specialization: ["Dynamics 365 Enterprise", "Power Platform Solutions", "M365 Security"],
+    description: "A premier Microsoft Gold Partner specializing in organizational agility. Velrada is a global leader in planning, deploying, and supporting enterprise field asset management tools and custom Power App pipelines.",
+    caseStudyTitle: "Utility Grid Automated Dispatch App",
+    caseStudyContext: "Engineered high-performance field allocation tools inside Microsoft Power Apps and Teams, mapping remote utility technicians to electrical asset failures for a 15% faster turnaround.",
+    contactEmail: "info@velrada.com",
+    websiteUrl: "https://velrada.com",
+    reviews: [
+      {
+        id: "rev-velrada-1",
+        reviewer: "Fiona Sterling",
+        rating: 4.8,
+        comment: "Exceptionally smart power apps workflow design. Transformed our remote dispatch process.",
+        date: "2026-04-22"
+      }
+    ]
+  },
+  {
+    id: "partner-lab3",
+    name: "Lab3",
+    location: "Melbourne, VIC",
+    rating: 4.9,
+    ratingCount: 64,
+    promoted: false,
+    specialization: ["Azure Cloud Migration", "Azure FinOps", "DevOps & SRE Systems"],
+    description: "A fast-scaling, cloud-native technology innovator. Lab3 is renowned for its automated environment engines to safely migrate legacy databases into sovereign, resilient, high-speed Azure containers.",
+    caseStudyTitle: "Sovereign FinOps Warehouse Modernization",
+    caseStudyContext: "Migrated legacy SQL database stacks to secure Azure Cosmos DB under extreme regulatory SLA constraints, increasing check-out processing capacity to 10,000 requests per second.",
+    contactEmail: "hello@lab3.com.au",
+    websiteUrl: "https://lab3.com.au",
+    reviews: [
+      {
+        id: "rev-lab3-1",
+        reviewer: "Daniel Craig",
+        rating: 5,
+        comment: "Brilliant FinOps engineering. Real-time cost dashboards saved us 35% on underutilized instances.",
+        date: "2026-06-01"
+      }
+    ]
   }
 ];
 
@@ -524,18 +640,14 @@ export default function App() {
       const stored = localStorage.getItem("microsoft_intel_partners");
       let parsed = stored ? JSON.parse(stored) : DEFAULT_PARTNERS;
       if (Array.isArray(parsed)) {
-        if (!parsed.some((p: any) => p.id === "partner-brennan")) {
-          const brennan = DEFAULT_PARTNERS.find(p => p.id === "partner-brennan");
-          if (brennan) {
-            parsed.push(brennan);
+        // Automatically merge all missing default partners to preserve user local storage while incorporating new defaults
+        DEFAULT_PARTNERS.forEach(defPartner => {
+          if (!parsed.some((p: any) => p.id === defPartner.id)) {
+            parsed.push(defPartner);
           }
-        }
-        if (!parsed.some((p: any) => p.id === "partner-codify")) {
-          const codify = DEFAULT_PARTNERS.find(p => p.id === "partner-codify");
-          if (codify) {
-            parsed.push(codify);
-          }
-        }
+        });
+      } else {
+        parsed = DEFAULT_PARTNERS;
       }
       const cleaned = parsed.filter((p: any) => p.name !== "Sydney Unified Systems" && p.name !== "Melbourne Cloud Scaling" && p.name !== "Auckland Sovereign AI");
       
@@ -759,6 +871,19 @@ export default function App() {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
   const [partnerSortBy, setPartnerSortBy] = useState<"name" | "rating" | "reviews">("rating");
 
+  // Search and Advanced Filters states
+  const [partnerSearchText, setPartnerSearchText] = useState("");
+  const [partnerSpecializationFilter, setPartnerSpecializationFilter] = useState("all");
+  const [partnerLocationFilter, setPartnerLocationFilter] = useState("all");
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+
+  // RFP simulated consultation request states
+  const [rfpContactName, setRfpContactName] = useState("");
+  const [rfpContactEmail, setRfpContactEmail] = useState("");
+  const [rfpEstimatedSeats, setRfpEstimatedSeats] = useState("25");
+  const [isSubmittingRfp, setIsSubmittingRfp] = useState(false);
+  const [rfpSubmittedPartnerId, setRfpSubmittedPartnerId] = useState<string | null>(null);
+
   // Dynamic geospatial mapper helpers
   const getPartnersForCity = (cityId: string) => {
     return partners.filter(p => {
@@ -778,23 +903,66 @@ export default function App() {
   };
 
   const filteredPartnersList = (() => {
-    const list = selectedCityFilter
-      ? partners.filter(p => {
-          const loc = (p.location || "").toLowerCase();
-          if (selectedCityFilter === "sydney") return loc.includes("sydney") || loc.includes("nsw");
-          if (selectedCityFilter === "melbourne") return loc.includes("melbourne") || loc.includes("vic");
-          if (selectedCityFilter === "brisbane") return loc.includes("brisbane") || loc.includes("qld");
-          if (selectedCityFilter === "perth") return loc.includes("perth") || loc.includes("wa");
-          if (selectedCityFilter === "adelaide") return loc.includes("adelaide") || loc.includes("sa");
-          if (selectedCityFilter === "canberra") return loc.includes("canberra") || loc.includes("act");
-          if (selectedCityFilter === "darwin") return loc.includes("darwin") || loc.includes("nt");
-          if (selectedCityFilter === "hobart") return loc.includes("hobart") || loc.includes("tas") || loc.includes("tasmania");
-          if (selectedCityFilter === "auckland") return loc.includes("auckland");
-          if (selectedCityFilter === "wellington") return loc.includes("wellington");
-          return false;
-        })
-      : partners;
+    let list = partners;
 
+    // 1. Filter by map city selection
+    if (selectedCityFilter) {
+      list = list.filter(p => {
+        const loc = (p.location || "").toLowerCase();
+        if (selectedCityFilter === "sydney") return loc.includes("sydney") || loc.includes("nsw");
+        if (selectedCityFilter === "melbourne") return loc.includes("melbourne") || loc.includes("vic");
+        if (selectedCityFilter === "brisbane") return loc.includes("brisbane") || loc.includes("qld");
+        if (selectedCityFilter === "perth") return loc.includes("perth") || loc.includes("wa");
+        if (selectedCityFilter === "adelaide") return loc.includes("adelaide") || loc.includes("sa");
+        if (selectedCityFilter === "canberra") return loc.includes("canberra") || loc.includes("act");
+        if (selectedCityFilter === "darwin") return loc.includes("darwin") || loc.includes("nt");
+        if (selectedCityFilter === "hobart") return loc.includes("hobart") || loc.includes("tas") || loc.includes("tasmania");
+        if (selectedCityFilter === "auckland") return loc.includes("auckland");
+        if (selectedCityFilter === "wellington") return loc.includes("wellington");
+        return false;
+      });
+    }
+
+    // 2. Filter by Search Text (Name, Location, Specialization tags, description or bio)
+    if (partnerSearchText.trim()) {
+      const q = partnerSearchText.toLowerCase();
+      list = list.filter(p => {
+        return (
+          p.name.toLowerCase().includes(q) ||
+          p.location.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.specialization.some(s => s.toLowerCase().includes(q)) ||
+          (p.caseStudyTitle || "").toLowerCase().includes(q) ||
+          (p.caseStudyContext || "").toLowerCase().includes(q)
+        );
+      });
+    }
+
+    // 3. Filter by Solution Competency Category Selector
+    if (partnerSpecializationFilter !== "all") {
+      const specFilter = partnerSpecializationFilter.toLowerCase();
+      list = list.filter(p => {
+        return p.specialization.some(s => s.toLowerCase().includes(specFilter));
+      });
+    }
+
+    // 4. Filter by Dropdown Region Location Filter
+    if (partnerLocationFilter !== "all") {
+      const locFilter = partnerLocationFilter.toLowerCase();
+      list = list.filter(p => {
+        const loc = (p.location || "").toLowerCase();
+        if (locFilter === "nsw") return loc.includes("nsw") || loc.includes("sydney");
+        if (locFilter === "vic") return loc.includes("vic") || loc.includes("melbourne");
+        if (locFilter === "wa") return loc.includes("wa") || loc.includes("perth");
+        if (locFilter === "qld") return loc.includes("qld") || loc.includes("brisbane");
+        if (locFilter === "sa") return loc.includes("sa") || loc.includes("adelaide");
+        if (locFilter === "act") return loc.includes("act") || loc.includes("canberra");
+        if (locFilter === "nz") return loc.includes("nz") || loc.includes("auckland") || loc.includes("wellington") || loc.includes("zealand");
+        return loc.includes(locFilter);
+      });
+    }
+
+    // 5. Sort the records
     return [...list].sort((a, b) => {
       if (partnerSortBy === "name") {
         return a.name.localeCompare(b.name);
@@ -927,6 +1095,7 @@ export default function App() {
   };
 
   const spotlightPartner = partners.find(p => p.promoted) || partners[0];
+  const activeSelectedPartner = partners.find(p => p.id === selectedPartnerId) || spotlightPartner;
 
   const [toasts, setToasts] = useState<{
     id: string;
@@ -8479,16 +8648,142 @@ ${advice}
 
             {/* Split view Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              
+
               {/* LEFT COLUMN: Partners directory (7 col) */}
               <div className="lg:col-span-7 flex flex-col gap-4">
+                
+                {/* ADVANCED LIVE PARTNER FINDER (Matching partner.microsoft.com style) */}
+                <div className={`p-4 rounded-xl border ${isDark ? "bg-[#0b0c13] border-slate-800" : "bg-slate-50 border-slate-200 shadow-sm"}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Search className="w-4 h-4 text-sky-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-widest font-mono text-slate-300 dark:text-slate-800">
+                      Partner Capability Finder & Index Search
+                    </h4>
+                  </div>
+                  
+                  {/* Search input and advanced dropdowns */}
+                  <div className="flex flex-col gap-2.5">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={partnerSearchText}
+                        onChange={(e) => setPartnerSearchText(e.target.value)}
+                        placeholder="Search partners by name, specialization, case study, city..."
+                        className="w-full text-xs bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-8 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 font-sans transition-all"
+                      />
+                      <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                      {partnerSearchText && (
+                        <button
+                          type="button"
+                          onClick={() => setPartnerSearchText("")}
+                          className="absolute right-2 top-2 p-0.5 text-slate-500 hover:text-white rounded-full transition cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Advanced filter dropdowns */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Competency Filter */}
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                          Capability Competency Specialist
+                        </label>
+                        <select
+                          value={partnerSpecializationFilter}
+                          onChange={(e) => setPartnerSpecializationFilter(e.target.value)}
+                          className="w-full text-xs bg-slate-950/80 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono transition"
+                        >
+                          <option value="all">All Specialities & Competencies</option>
+                          <option value="Azure Cloud Migration">Azure Cloud Migration & Systems</option>
+                          <option value="Licensing Optimization">Licensing & EA Optimization</option>
+                          <option value="Copilot Transformation">Copilot AI Transformation</option>
+                          <option value="Dynamics 365 Enterprise">Dynamics 365 Enterprise</option>
+                          <option value="Power Platform Solutions">Power Platform Solutions</option>
+                          <option value="Managed IT Services">Managed IT Services (MSP)</option>
+                          <option value="Software Asset Management (SAM)">Software Asset Management (SAM)</option>
+                          <option value="M365 Security">M365 Security & Cyber Guard</option>
+                          <option value="Azure FinOps">Azure FinOps & Economics</option>
+                        </select>
+                      </div>
+
+                      {/* State Location Filter */}
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-400 mb-1">
+                          Metropolitan State / Region
+                        </label>
+                        <select
+                          value={partnerLocationFilter}
+                          onChange={(e) => setPartnerLocationFilter(e.target.value)}
+                          className="w-full text-xs bg-slate-950/80 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono transition"
+                        >
+                          <option value="all">All HQ Offices & Cities</option>
+                          <option value="nsw">New South Wales (Sydney)</option>
+                          <option value="vic">Victoria (Melbourne)</option>
+                          <option value="wa">Western Australia (Perth)</option>
+                          <option value="qld">Queensland (Brisbane)</option>
+                          <option value="sa">South Australia (Adelaide)</option>
+                          <option value="act">Australian Capital Territory (Canberra)</option>
+                          <option value="nz">New Zealand (Auckland / Wellington)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Active Filter Badges status bar */}
+                    {(partnerSearchText || partnerSpecializationFilter !== "all" || partnerLocationFilter !== "all" || selectedCityFilter) && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-900/60 text-[10px]">
+                        <div className="flex flex-wrap items-center gap-1.5 font-mono text-slate-400">
+                          <span className="text-slate-500">Live Filters:</span>
+                          {partnerSearchText && (
+                            <span className="inline-flex items-center gap-1 bg-sky-500/10 text-sky-400 border border-sky-500/25 px-1.5 py-0.5 rounded text-[9px]">
+                              "{partnerSearchText}"
+                              <span className="cursor-pointer font-bold hover:text-white ml-0.5" onClick={() => setPartnerSearchText("")}>×</span>
+                            </span>
+                          )}
+                          {partnerSpecializationFilter !== "all" && (
+                            <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 px-1.5 py-0.5 rounded text-[9px]">
+                              {partnerSpecializationFilter}
+                              <span className="cursor-pointer font-bold hover:text-white ml-0.5" onClick={() => setPartnerSpecializationFilter("all")}>×</span>
+                            </span>
+                          )}
+                          {partnerLocationFilter !== "all" && (
+                            <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-450 border border-amber-500/25 px-1.5 py-0.5 rounded text-[9px]">
+                              {partnerLocationFilter.toUpperCase()}
+                              <span className="cursor-pointer font-bold hover:text-white ml-0.5" onClick={() => setPartnerLocationFilter("all")}>×</span>
+                            </span>
+                          )}
+                          {selectedCityFilter && (
+                            <span className="inline-flex items-center gap-1 bg-rose-500/10 text-rose-450 border border-rose-500/25 px-1.5 py-0.5 rounded text-[9px]">
+                              map: {selectedCityFilter.toUpperCase()}
+                              <span className="cursor-pointer font-bold hover:text-white ml-0.5" onClick={() => setSelectedCityFilter(null)}>×</span>
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPartnerSearchText("");
+                            setPartnerSpecializationFilter("all");
+                            setPartnerLocationFilter("all");
+                            setSelectedCityFilter(null);
+                          }}
+                          className="font-mono text-rose-450 hover:text-rose-400 font-bold transition cursor-pointer"
+                        >
+                          Reset Filters
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-850">
                   <div>
                     <h3 className="text-xs font-bold tracking-wider text-slate-200 uppercase font-mono">
                       Authorized Partner Registry Feed ({filteredPartnersList.length})
                     </h3>
                     <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">
-                      {selectedCityFilter ? `Filtered by city: ${CITIES_HQ.find(c => c.id === selectedCityFilter)?.name}` : "Select a partner to audit reviews"}
+                      {selectedCityFilter ? `Filtered by city: ${CITIES_HQ.find(c => c.id === selectedCityFilter)?.name}` : "Select a partner cards to audit details, reviews & write RFPs"}
                     </span>
                   </div>
 
@@ -8533,13 +8828,14 @@ ${advice}
                 <div className="grid grid-cols-1 gap-4">
                   {filteredPartnersList.length === 0 ? (
                     <div className={`p-8 text-center rounded-xl border border-dashed font-mono text-xs ${isDark ? "border-slate-800 text-slate-500" : "border-slate-200 text-slate-500 bg-slate-50"}`}>
-                      No certified partners registered under the {CITIES_HQ.find(c => c.id === selectedCityFilter)?.name} hub.
+                      No certified partners registered matching your active find search criteria or map filter.
                     </div>
                   ) : (
                     <AnimatePresence mode="popLayout">
                       {filteredPartnersList.map((partner) => {
                         const isSpotlight = spotlightPartner.id === partner.id;
                         const isReviewsSelected = activeReviewId === partner.id;
+                        const isSelected = selectedPartnerId === partner.id || (selectedPartnerId === null && isSpotlight);
                         
                         return (
                           <motion.div
@@ -8554,14 +8850,19 @@ ${advice}
                               opacity: { duration: 0.18 }
                             }}
                             key={partner.id}
-                            className={`p-4 rounded-xl border relative flex flex-col justify-between transition-colors duration-150 ${
+                            onClick={() => setSelectedPartnerId(partner.id)}
+                            className={`p-4 rounded-xl border relative flex flex-col justify-between transition-colors duration-150 cursor-pointer text-left ${
                               isDark 
-                                ? isSpotlight 
-                                  ? "bg-slate-950/90 border-emerald-500/30 ring-1 ring-emerald-500/10"
-                                  : "bg-[#111827] border-slate-800/80 hover:border-slate-700"
-                                : isSpotlight
-                                  ? "bg-emerald-500/5 border-emerald-500/30 shadow-sm"
-                                  : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
+                                ? isSelected
+                                  ? "bg-slate-905/95 border-sky-500/60 ring-2 ring-sky-500/10"
+                                  : isSpotlight 
+                                    ? "bg-slate-950/90 border-emerald-500/30 ring-1 ring-emerald-500/10"
+                                    : "bg-[#111827] border-slate-800/85 hover:border-slate-700"
+                                : isSelected
+                                  ? "bg-sky-500/5 border-sky-400 shadow-md ring-1 ring-sky-450/15"
+                                  : isSpotlight
+                                    ? "bg-emerald-500/5 border-emerald-500/30 shadow-sm"
+                                    : "bg-white border-slate-200 hover:border-slate-300 shadow-sm"
                             }`}
                           >
                             <div>
@@ -8578,8 +8879,14 @@ ${advice}
                                         <span>Spotlight</span>
                                       </span>
                                     )}
+                                    {isSelected && (!isSpotlight || selectedPartnerId !== null) && (
+                                      <span className="inline-flex items-center gap-0.5 text-[8px] font-bold font-mono tracking-wide px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-450 dark:text-sky-400 border border-sky-500/20 uppercase shrink-0">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-sky-450 animate-pulse inline-block shrink-0"></span>
+                                        <span>Selected</span>
+                                      </span>
+                                    )}
                                   </div>
-                                  <span className="text-[10px] text-slate-400 font-mono mt-1 block">
+                                  <span className="text-[10px] text-slate-405 font-mono mt-1 block">
                                     {partner.location}
                                   </span>
                                 </div>
@@ -8624,6 +8931,7 @@ ${advice}
                                     href={partner.websiteUrl}
                                     target="_blank"
                                     rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
                                     className="inline-flex items-center gap-1 text-xs font-bold font-mono text-sky-400 hover:text-sky-305 hover:underline transition duration-150"
                                     title={`Navigate to official homepage of ${partner.name}`}
                                   >
@@ -8639,12 +8947,15 @@ ${advice}
                               {/* Management Controls */}
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => {
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setActiveReviewId(isReviewsSelected ? null : partner.id);
+                                    setSelectedPartnerId(partner.id);
                                   }}
                                   className={`p-1.5 px-3 rounded-lg border text-[11px] font-bold transition flex items-center gap-1 cursor-pointer ${
                                     isReviewsSelected
-                                      ? "bg-slate-800 border-slate-705 text-white"
+                                      ? "bg-slate-805 border-slate-700 text-white"
                                       : isDark
                                         ? "bg-slate-900 border-slate-800 text-slate-350 hover:bg-slate-800"
                                         : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-xs"
@@ -8657,7 +8968,12 @@ ${advice}
 
                                 {!isSpotlight && (
                                   <button
-                                    onClick={() => handlePromotePartner(partner.id)}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePromotePartner(partner.id);
+                                      setSelectedPartnerId(partner.id);
+                                    }}
                                     className="p-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] cursor-pointer transition shadow"
                                   >
                                     Spotlight
@@ -8677,20 +8993,30 @@ ${advice}
               {/* RIGHT COLUMN: Active reviews & Spotlight Panel details (5 col) */}
               <div className="lg:col-span-5 flex flex-col gap-6">
                 
-                {/* Active Spotlight Card */}
-                <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-full blur-xl"></div>
+                {/* Active Spotlight / Selected Partner Card */}
+                <div className={`border rounded-2xl p-5 relative overflow-hidden transition-all duration-250 ${
+                  activeSelectedPartner.id === spotlightPartner.id 
+                    ? "bg-[#111827] border-emerald-500/25 ring-1 ring-emerald-500/5" 
+                    : "bg-[#0d1425] border-sky-500/35 ring-1 ring-sky-550/5"
+                }`}>
+                  <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
                   
                   <div className="pb-3 mb-4 border-b border-slate-800 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="p-1 px-1.5 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/25 shrink-0">
+                      <div className={`p-1 px-1.5 rounded border shrink-0 ${
+                        activeSelectedPartner.id === spotlightPartner.id 
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25" 
+                          : "bg-sky-500/10 text-sky-450 border-sky-500/25"
+                      }`}>
                         <Award className="w-3.5 h-3.5" />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono leading-none">
-                          Featured Partner Spotlight
+                          {activeSelectedPartner.id === spotlightPartner.id ? "Featured Partner Spotlight" : "Selected Partner Dossier"}
                         </h4>
-                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">Top-performing strategic integrator</p>
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                          {activeSelectedPartner.id === spotlightPartner.id ? "Top-performing strategic integrator" : "Currently inspected directory selection"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -8699,41 +9025,43 @@ ${advice}
                     <div className="flex items-start justify-between gap-1.5">
                       <div>
                         <h3 className="text-base font-extrabold text-white leading-normal">
-                          {spotlightPartner.name}
+                          {activeSelectedPartner.name}
                         </h3>
                         <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
-                          {spotlightPartner.location}
+                          {activeSelectedPartner.location}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 bg-slate-950/60 p-1.5 px-2.5 rounded-xl border border-slate-900 shrink-0">
                         <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                        <span className="text-xs font-extrabold text-slate-100">{spotlightPartner.rating.toFixed(1)}</span>
+                        <span className="text-xs font-extrabold text-slate-100">{activeSelectedPartner.rating.toFixed(1)}</span>
                         <span className="text-[10px] text-slate-555">/5</span>
                       </div>
                     </div>
 
                     <p className="text-xs text-slate-350 leading-relaxed max-w-xl">
-                      {spotlightPartner.description}
+                      {activeSelectedPartner.description}
                     </p>
 
                     {/* Spotlight Case Study Box */}
-                    <div className="bg-[#0c101a] border-l-2 border-sky-400 p-3.5 rounded-r-lg">
-                      <div className="text-[9px] font-mono uppercase tracking-widest text-sky-400 font-bold mb-1 block">
-                        Enterprise Deployment Case Study
+                    {activeSelectedPartner.caseStudyTitle && (
+                      <div className="bg-[#0c101a] border-l-2 border-sky-400 p-3.5 rounded-r-lg">
+                        <span className="text-[9px] font-mono uppercase tracking-widest text-sky-400 font-bold mb-1 block">
+                          Enterprise Deployment Case Study
+                        </span>
+                        <h5 className="text-xs font-bold text-slate-200 mb-1">
+                          {activeSelectedPartner.caseStudyTitle}
+                        </h5>
+                        <p className="text-[11px] text-slate-400 leading-normal">
+                          {activeSelectedPartner.caseStudyContext}
+                        </p>
                       </div>
-                      <h5 className="text-xs font-bold text-slate-200 mb-1">
-                        {spotlightPartner.caseStudyTitle}
-                      </h5>
-                      <p className="text-[11px] text-slate-400 leading-normal">
-                        {spotlightPartner.caseStudyContext}
-                      </p>
-                    </div>
+                    )}
 
                     {/* Spotlight URLs and Email */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                      {spotlightPartner.websiteUrl ? (
+                      {activeSelectedPartner.websiteUrl ? (
                         <a
-                          href={spotlightPartner.websiteUrl}
+                          href={activeSelectedPartner.websiteUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg border border-slate-800 hover:border-slate-700 bg-slate-950 hover:bg-slate-900 text-xs font-bold text-sky-400 hover:text-sky-305 transition duration-150"
@@ -8749,7 +9077,7 @@ ${advice}
                       )}
 
                       <a
-                        href={`mailto:${spotlightPartner.contactEmail}`}
+                        href={`mailto:${activeSelectedPartner.contactEmail}`}
                         className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition duration-150"
                       >
                         <Mail className="w-4 h-4" />
@@ -8764,8 +9092,8 @@ ${advice}
                   {(() => {
                     // Decide target partner for reviews listing and review addition
                     const reviewsTargetPartner = activeReviewId 
-                      ? partners.find(p => p.id === activeReviewId) || spotlightPartner
-                      : spotlightPartner;
+                      ? partners.find(p => p.id === activeReviewId) || activeSelectedPartner
+                      : activeSelectedPartner;
 
                     return (
                       <div>
@@ -8874,6 +9202,127 @@ ${advice}
                       </div>
                     );
                   })()}
+                </div>
+
+                {/* Simulated RFP Co-Innovation / Advisory Brief Request */}
+                <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 relative">
+                  <div className="pb-3 border-b border-slate-800 mb-4 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-sky-400 animate-pulse" />
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+                        Direct Advisory Engagement Request
+                      </h4>
+                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                        Submit pilot briefing project parameters directly to <strong className="text-sky-400">{activeSelectedPartner.name}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  {rfpSubmittedPartnerId === activeSelectedPartner.id ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-4 rounded-xl bg-sky-500/5 border border-sky-500/20 text-center space-y-3"
+                    >
+                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                        <Check className="w-5 h-5 animate-bounce" />
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-200">Advisory Engagement Request Created!</h5>
+                      <p className="text-[11px] text-slate-405 leading-normal">
+                        Your pilot parameters (<strong>{rfpEstimatedSeats} users</strong>) have been routed to the regional hub of <strong>{activeSelectedPartner.name}</strong>. Their ANZ cloud advisors will review and contact you at:
+                        <span className="block mt-1 font-mono text-sky-400 text-[10px]">{rfpContactEmail}</span>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setRfpSubmittedPartnerId(null)}
+                        className="text-[10.5px] font-mono text-slate-400 hover:text-white underline cursor-pointer"
+                      >
+                        Submit another brief
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-550 mb-1">
+                          Enterprise Lead Contact Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Sarah Connor"
+                          value={rfpContactName}
+                          onChange={(e) => setRfpContactName(e.target.value)}
+                          className="w-full text-xs font-sans font-bold bg-slate-950 border border-slate-800 text-white rounded-lg py-1.5 px-2.5 focus:outline-none focus:border-sky-500 transition"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-550 mb-1">
+                            Contact Email Address
+                          </label>
+                          <input
+                            type="email"
+                            required
+                            placeholder="s.connor@enterprise.au"
+                            value={rfpContactEmail}
+                            onChange={(e) => setRfpContactEmail(e.target.value)}
+                            className="w-full text-xs font-sans font-bold bg-slate-950 border border-slate-800 text-white rounded-lg py-1.5 px-2.5 focus:outline-none focus:border-sky-500 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-550 mb-1">
+                            Modernization Scope Seats
+                          </label>
+                          <select
+                            value={rfpEstimatedSeats}
+                            onChange={(e) => setRfpEstimatedSeats(e.target.value)}
+                            className="w-full text-xs font-sans font-bold bg-slate-950 border border-slate-800 text-slate-200 rounded-lg py-1.5 px-2 focus:outline-none transition"
+                          >
+                            <option value="10-50">10-50 users (SMB)</option>
+                            <option value="50-250">50-250 users (Mid-Market)</option>
+                            <option value="250-1000">250-1000 users (Corporate)</option>
+                            <option value="1000+">1000+ users (Enterprise Scale)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={isSubmittingRfp}
+                        onClick={() => {
+                          if (!rfpContactName.trim() || !rfpContactEmail.trim()) {
+                            addToast("anz_strategy", "Parameters Incomplete", "Please supply parameters for Contact Name and Contact Email.");
+                            return;
+                          }
+                          setIsSubmittingRfp(true);
+                          setTimeout(() => {
+                            setIsSubmittingRfp(false);
+                            setRfpSubmittedPartnerId(activeSelectedPartner.id);
+                            addToast(
+                              "anz_strategy",
+                              "Engagement Request Dispatched",
+                              `Modernization project details successfully registered to ${activeSelectedPartner.name}'s active dispatch queue.`
+                            );
+                          }, 1205);
+                        }}
+                        className="w-full py-2 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-550 hover:to-indigo-550 text-white font-sans font-bold text-xs rounded-lg cursor-pointer text-center shadow transition flex items-center justify-center gap-1.5"
+                      >
+                        {isSubmittingRfp ? (
+                          <>
+                            <span className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                            <span>Dispatching Engagement Brief...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse" />
+                            <span>Request Pilot Consultation from {activeSelectedPartner.name}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
               </div>
