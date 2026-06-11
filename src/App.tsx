@@ -666,15 +666,8 @@ export default function App() {
     }
   });
 
-  // Coming Soon Gateway State
-  const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem("coming_soon_bypassed");
-      return stored === "true";
-    } catch {
-      return false;
-    }
-  });
+  // Coming Soon Gateway State (Starts as false so visitors landing here see the teaser first, entering email unlocks)
+  const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(false);
 
   const [teaserEmail, setTeaserEmail] = useState<string>("");
   const [teaserEmailSubmitted, setTeaserEmailSubmitted] = useState<boolean>(false);
@@ -4207,6 +4200,24 @@ ${advice}
             <span className="text-slate-500 font-mono">
               Updated: {new Date(lastUpdated).toLocaleTimeString()}
             </span>
+
+            {/* Lock Back to Coming Soon (Demo Control) */}
+            <button
+              onClick={() => {
+                setIsComingSoonBypassed(false);
+                setTeaserEmailSubmitted(false);
+                addToast(
+                  "cloud_transformations",
+                  "Returned to Gateway",
+                  "Demonstration mode reset: returned to the initial Coming Soon registry gateway."
+                );
+              }}
+              className="flex items-center gap-1.5 bg-rose-505/10 hover:bg-[#ffebeb]/10 text-rose-400 px-3 py-1.5 rounded-lg border border-rose-500/25 hover:border-rose-400 transition duration-150 cursor-pointer text-xs"
+              title="Return to the first 'Coming Soon' registry screen for feedback testing"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Show Launch Screen</span>
+            </button>
 
             {/* Manual Action Button */}
             <button
