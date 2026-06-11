@@ -523,9 +523,22 @@ const CITIES_HQ: CityHQ[] = [
 ];
 
 export default function App() {
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_intel_admin_auth");
+      return stored === "true";
+    } catch {
+      return false;
+    }
+  });
+
   // Theme Select Configuration (High Contrast, Accessible Microsoft Corporate Aesthetic with Solar & System Auto Sync)
   const [themeMode, setThemeMode] = useState<"dark" | "light" | "system" | "solar">(() => {
     try {
+      const isAuthStatus = localStorage.getItem("microsoft_intel_admin_auth") === "true";
+      if (!isAuthStatus) {
+        return "dark"; // Locked on dark for first-time/unauthenticated users
+      }
       const stored = localStorage.getItem("microsoft_intel_theme_mode");
       if (stored === "light" || stored === "dark" || stored === "system" || stored === "solar") {
         return stored;
@@ -536,7 +549,7 @@ export default function App() {
       }
       return "solar"; // Default to Solar (sunrise/sunset) auto-toggle
     } catch {
-      return "solar";
+      return "dark";
     }
   });
 
@@ -556,6 +569,12 @@ export default function App() {
   }, [themeMode]);
 
   useEffect(() => {
+    if (!isAdminAuthenticated) {
+      setTheme("dark");
+      setThemeMode("dark");
+      return;
+    }
+
     if (themeMode === "solar") {
       const updateThemeSolar = () => {
         const isDay = isTimeDaylight();
@@ -581,7 +600,7 @@ export default function App() {
     } else {
       setTheme(themeMode);
     }
-  }, [themeMode]);
+  }, [themeMode, isAdminAuthenticated]);
 
   useEffect(() => {
     if (theme === "light") {
@@ -718,14 +737,6 @@ export default function App() {
 
   const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console">("briefings");
 
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem("microsoft_intel_admin_auth");
-      return stored === "true";
-    } catch {
-      return false;
-    }
-  });
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [showAdminForm, setShowAdminForm] = useState<boolean>(false);
   const [adminLoginEmail, setAdminLoginEmail] = useState<string>("");
@@ -3877,12 +3888,12 @@ ${advice}
                   </div>
 
                   <div className={`p-4 border rounded-xl transition duration-150 ${isDark ? "bg-[#111827]/80 hover:bg-[#111827] border-slate-800" : "bg-white hover:bg-slate-50 border-slate-200 shadow-sm"}`}>
-                    <FileText className="w-5 h-5 text-emerald-500 dark:text-emerald-400 mb-2" />
+                    <ShieldCheck className="w-5 h-5 text-emerald-500 dark:text-emerald-400 mb-2" />
                     <h4 className={`text-xs font-bold uppercase tracking-wide font-mono mb-1 ${isDark ? "text-slate-200" : "text-slate-900"}`}>
-                      AI Contract Audit
+                      Sovereign Compliance Tracker
                     </h4>
                     <p className={`text-[11px] leading-normal ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-                      Instant file ingestion to securely parse Microsoft Enterprise Agreements against ECIF co-sell requirements & Azure FinOps.
+                      Assess and map local Azure workloads against APRA, NZISM, and regional sovereign compliance guidelines for secure migrations.
                     </p>
                   </div>
 
@@ -4363,15 +4374,28 @@ ${advice}
               <select
                 id="theme-select"
                 value={themeMode}
-                onChange={(e) => setThemeMode(e.target.value as any)}
-                className={`bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none border-none py-0 pl-1 pr-6 ring-0 focus:ring-0`}
+                onChange={(e) => {
+                  if (!isAdminAuthenticated) {
+                    addToast("licensing_pricing", "Access Restricted", "Please authorize/log in via the SOW gate to switch layout themes.");
+                    return;
+                  }
+                  setThemeMode(e.target.value as any);
+                }}
+                disabled={!isAdminAuthenticated}
+                className={`bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none border-none py-0 pl-1 pr-6 ring-0 focus:ring-0 ${!isAdminAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
                 style={{ outline: "none", boxShadow: "none" }}
-                title="Select Theme Mode: Solar Synced Sunrise/Sunset, System OS preference, or Manual"
+                title={!isAdminAuthenticated ? "Administrator session authorization required to change themes." : "Select Theme Mode: Solar Synced Sunrise/Sunset, System OS preference, or Manual"}
               >
-                <option value="solar" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Solar Auto (Sunrise/Sunset)</option>
-                <option value="system" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">System (OS Prefs)</option>
-                <option value="light" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Light</option>
-                <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark</option>
+                {!isAdminAuthenticated ? (
+                  <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark Mode (Locked)</option>
+                ) : (
+                  <>
+                    <option value="solar" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Solar Auto (Sunrise/Sunset)</option>
+                    <option value="system" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">System (OS Prefs)</option>
+                    <option value="light" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Light</option>
+                    <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark</option>
+                  </>
+                )}
               </select>
             </div>
           </div>
