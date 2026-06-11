@@ -678,29 +678,41 @@ export default function App() {
   const [teaserCloudSpend, setTeaserCloudSpend] = useState<number>(240000); // monthly cloud spend in AUD
   const [copiedPasscode, setCopiedPasscode] = useState<boolean>(false);
 
-  // Dynamic remaining countdown indicators (T-Minus 7 Days)
+  // Dynamic remaining countdown indicators target: Thursday, 18 June 2026 at 4:00 PM Sydney Time (AEST / UTC+10)
+  const TARGET_LAUNCH_DATE = new Date("2026-06-18T16:00:00+10:00");
+
   const [countdownDays, setCountdownDays] = useState<number>(7);
   const [countdownHours, setCountdownHours] = useState<number>(0);
   const [countdownMinutes, setCountdownMinutes] = useState<number>(0);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      // Countdown simulation - count down seconds slowly for dynamic visual feedback
-      setCountdownSeconds((prevSec) => {
-        if (prevSec > 0) return prevSec - 1;
-        setCountdownMinutes((prevMin) => {
-          if (prevMin > 0) return prevMin - 1;
-          setCountdownHours((prevHour) => {
-            if (prevHour > 0) return prevHour - 1;
-            setCountdownDays((prevDay) => (prevDay > 0 ? prevDay - 1 : 7));
-            return 23;
-          });
-          return 59;
-        });
-        return 59;
-      });
-    }, 1000);
+    const calculateTimeRemaining = () => {
+      const now = new Date();
+      const diffMs = TARGET_LAUNCH_DATE.getTime() - now.getTime();
+      
+      if (diffMs <= 0) {
+        setCountdownDays(0);
+        setCountdownHours(0);
+        setCountdownMinutes(0);
+        setCountdownSeconds(0);
+        return;
+      }
+
+      const totalSecs = Math.floor(diffMs / 1000);
+      const days = Math.floor(totalSecs / (3600 * 24));
+      const hours = Math.floor((totalSecs % (3600 * 24)) / 3600);
+      const minutes = Math.floor((totalSecs % 3600) / 60);
+      const seconds = totalSecs % 60;
+
+      setCountdownDays(days);
+      setCountdownHours(hours);
+      setCountdownMinutes(minutes);
+      setCountdownSeconds(seconds);
+    };
+
+    calculateTimeRemaining();
+    const timer = setInterval(calculateTimeRemaining, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -3799,7 +3811,7 @@ ${advice}
                   </p>
 
                   <p className="text-xs text-slate-455 font-mono">
-                    *Platform undergoes final compliance audit under Microsoft Partner Security Agreement standards. Official regional release slated in exactly 7 days.
+                    *Platform undergoes final compliance audit under Microsoft Partner Security Agreement standards. Official regional release: Thursday, 18 June 2026 at 4:00 PM Sydney Time.
                   </p>
                 </div>
 
@@ -8283,6 +8295,49 @@ ${advice}
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
                 Toggle interest in specific corporate domains. You will receive active toast alerts and telemetry indicators when new bulletins are fetched.
               </p>
+
+              {/* Category Filter Quick-Toggle All Action Block */}
+              <div id="watchlist-bulk-controls" className="flex items-center justify-between gap-2 p-2 bg-[#0c101a] border border-slate-800/80 rounded-xl mb-4 font-mono text-[11px] select-none">
+                <span className="text-slate-400 pl-1">
+                  Active Filters: <strong className="text-amber-400">{watchlist.length} / 4</strong>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    id="watchlist-toggle-all-on"
+                    onClick={() => {
+                      const allCats: NewsCategory[] = ["technology_updates", "licensing_pricing", "anz_strategy", "cloud_transformations"];
+                      setWatchlist(allCats);
+                      localStorage.setItem("microsoft_intel_watchlist", JSON.stringify(allCats));
+                      addToast(
+                        "anz_strategy",
+                        "Watchlist Config Updated",
+                        "Subscribed to all 4 corporate advisory intelligence categories."
+                      );
+                    }}
+                    className="px-2 py-1 rounded bg-[#111827] border border-amber-500/20 text-amber-400 hover:bg-amber-500/15 hover:border-amber-500/45 text-[10px] font-bold cursor-pointer transition duration-150"
+                  >
+                    Watch All
+                  </button>
+                  <button
+                    type="button"
+                    id="watchlist-toggle-all-off"
+                    onClick={() => {
+                      const emptyList: NewsCategory[] = [];
+                      setWatchlist(emptyList);
+                      localStorage.setItem("microsoft_intel_watchlist", JSON.stringify(emptyList));
+                      addToast(
+                        "anz_strategy",
+                        "Watchlist Config Cleared",
+                        "All filters disabled. Active toast alerts and notifications are temporarily muted."
+                      );
+                    }}
+                    className="px-2 py-1 rounded bg-[#111827] border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 text-[10px] font-bold cursor-pointer transition duration-150"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
 
               <div className="space-y-2 border-t border-slate-800/60 pt-3.5">
                 {Object.entries(categoryMap).map(([catKey, val]) => {
