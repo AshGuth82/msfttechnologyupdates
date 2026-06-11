@@ -4085,20 +4085,96 @@ ${advice}
                         />
                         <button
                           type="button"
-                          onClick={() => {
-                            if (!teaserEmail.trim() || !teaserEmail.includes("@")) {
+                          onClick={async () => {
+                            const trimmedEmail = teaserEmail.trim();
+                            if (!trimmedEmail || !trimmedEmail.includes("@")) {
                               addToast("licensing_pricing", "Registration Error", "Please provide a valid corporate email address.");
                               return;
                             }
-                            setTeaserEmailSubmitted(true);
-                            setIsComingSoonBypassed(true);
-                            localStorage.setItem("coming_soon_bypassed", "true");
-                            localStorage.setItem("teaser_registered_email", teaserEmail);
-                            addToast(
-                              "licensing_pricing",
-                              "Preview Access Unlocked",
-                              `Added ${teaserEmail} to registry queue! Welcome to the full corporate intelligence hub.`
-                            );
+
+                            try {
+                              // Derive registration parameters matching isValidSubscriber rule schema
+                              const emailParts = trimmedEmail.split("@");
+                              const prefix = emailParts[0] || "visitor";
+                              let derivedUsername = prefix.toLowerCase().replace(/[^a-zA-Z0-9_\-]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+                              if (!derivedUsername || !/^[a-zA-Z0-9_\-]+$/.test(derivedUsername)) {
+                                derivedUsername = "user_" + Math.random().toString(36).substring(2, 7);
+                              }
+
+                              let finalUsername = derivedUsername;
+                              let suffix = 1;
+                              while (subscriptionsList.some(s => s?.username?.toLowerCase() === finalUsername)) {
+                                finalUsername = `${derivedUsername}${suffix}`;
+                                suffix++;
+                              }
+
+                              let capitalizedName = prefix
+                                .split(/[\._\-]+/)
+                                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                                .join(" ");
+                              if (!capitalizedName) {
+                                capitalizedName = "Priority Viewer";
+                              }
+
+                              const subId = "sub-" + Math.random().toString(36).substring(2, 9);
+                              const newSub = {
+                                id: subId,
+                                username: finalUsername,
+                                name: capitalizedName,
+                                email: trimmedEmail.toLowerCase(),
+                                org: "Priority Web Gateway",
+                                role: "Beta Preview Participant",
+                                categories: [
+                                  "technology_updates",
+                                  "licensing_pricing",
+                                  "anz_strategy",
+                                  "cloud_transformations"
+                                ] as NewsCategory[],
+                                frequency: "monthly",
+                                date: new Date().toLocaleDateString()
+                              };
+
+                              // 1. Direct persistent Firestore database registration
+                              await setDoc(doc(db, "subscribers", subId), newSub);
+
+                              // 2. Local State & Cache Refresh
+                              const updated = [newSub, ...subscriptionsList.filter(s => s.email.toLowerCase() !== trimmedEmail.toLowerCase())];
+                              localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
+                              setSubscriptionsList(updated);
+
+                              // 3. Mirror/Sync payload with the Express container server backup
+                              try {
+                                await fetch("/api/subscribers", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify(newSub)
+                                });
+                              } catch (serverSyncErr) {
+                                console.warn("Could not sync preview registration with server backups:", serverSyncErr);
+                              }
+
+                              setTeaserEmailSubmitted(true);
+                              setIsComingSoonBypassed(true);
+                              localStorage.setItem("coming_soon_bypassed", "true");
+                              localStorage.setItem("teaser_registered_email", trimmedEmail);
+                              addToast(
+                                "licensing_pricing",
+                                "Preview Access Unlocked",
+                                `Added ${trimmedEmail} to corporate subscriber list! Welcome to the full live platform.`
+                              );
+                            } catch (err: any) {
+                              console.error("Firestore registry bypass write failure:", err);
+                              // Fallback so users aren't locked out in offline or sandbox state issues
+                              setTeaserEmailSubmitted(true);
+                              setIsComingSoonBypassed(true);
+                              localStorage.setItem("coming_soon_bypassed", "true");
+                              localStorage.setItem("teaser_registered_email", trimmedEmail);
+                              addToast(
+                                "licensing_pricing",
+                                "Temporary Session Unlocked",
+                                "Corporate database syncer is buffered. Granting temporary offline-access profile."
+                              );
+                            }
                           }}
                           className="bg-orange-600 hover:bg-orange-500 text-white font-sans font-bold text-xs px-4 py-1.5 rounded-lg cursor-pointer transition shadow shrink-0"
                         >
