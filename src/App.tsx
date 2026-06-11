@@ -724,14 +724,7 @@ export default function App() {
   const [adminDispatchBody, setAdminDispatchBody] = useState<string>("Our web monitoring grounded indexing engine has flagged several key shifts in ANZ Azure Hub sovereign alignments. Please review the live Microsoft Business financials and partner status logs immediately.");
   const [isDispatchingAlert, setIsDispatchingAlert] = useState<boolean>(false);
 
-  const [enableContractAuditor, setEnableContractAuditor] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem("microsoft_enable_contract_auditor");
-      return stored ? JSON.parse(stored) : false; // Defaults to false ("Parked" / Hidden by default)
-    } catch {
-      return false;
-    }
-  });
+  const [enableContractAuditor, setEnableContractAuditor] = useState<boolean>(true);
 
   const [adminNewSubName, setAdminNewSubName] = useState<string>("");
   const [adminNewSubEmail, setAdminNewSubEmail] = useState<string>("");
@@ -4231,33 +4224,6 @@ ${advice}
               <span>{refreshing ? "Scraping..." : "Re-Scrape Web"}</span>
             </button>
 
-            {/* Parking / Activating Contract Auditor Add-on Toggle */}
-            <button
-              id="park-addon-toggle-btn"
-              onClick={() => {
-                const newValue = !enableContractAuditor;
-                setEnableContractAuditor(newValue);
-                localStorage.setItem("microsoft_enable_contract_auditor", JSON.stringify(newValue));
-                addToast(
-                  "licensing_pricing",
-                  newValue ? "Contract Auditor Enabled" : "Contract Auditor Parked",
-                  newValue ? "Advanced contract advisory system and SOW ledger now unparked." : "Contract auditor parked successfully. Toggle back on anytime to resume setup."
-                );
-                if (!newValue && activeMainView === "contract-auditor") {
-                  setActiveMainView("briefings");
-                }
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition duration-150 cursor-pointer text-xs font-semibold ${
-                enableContractAuditor 
-                  ? "bg-indigo-550/15 border-indigo-500 text-indigo-400 hover:bg-indigo-550/25" 
-                  : "bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-250 border-slate-700"
-              }`}
-              title="Park / Unpark the experimental Contract Document Auditor Hub"
-            >
-              <FileCheck className="w-3.5 h-3.5" />
-              <span>{enableContractAuditor ? "Add-on: Active" : "Add-on: Parked"}</span>
-            </button>
-
             {/* Theme Preference Selection dropdown */}
             <div 
               id="theme-select-container"
@@ -4438,26 +4404,24 @@ ${advice}
             </span>
           </button>
 
-          {enableContractAuditor && (
-            <button
-              id="global-nav-contract-auditor"
-              onClick={() => {
-                setActiveMainView("contract-auditor");
-                setActiveReviewId(null);
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-                activeMainView === "contract-auditor"
-                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-              }`}
-            >
-              <FileCheck className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
-                <span>Corporate Contract Auditor</span>
-                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
-              </span>
-            </button>
-          )}
+          <button
+            id="global-nav-contract-auditor"
+            onClick={() => {
+              setActiveMainView("contract-auditor");
+              setActiveReviewId(null);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              activeMainView === "contract-auditor"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            <FileCheck className="w-4 h-4 text-inherit" />
+            <span className="flex items-center gap-1.5">
+              <span>Corporate Contract Auditor</span>
+              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
+            </span>
+          </button>
 
           <button
             id="global-nav-admin-console"
@@ -10260,34 +10224,6 @@ ${advice}
 
                     <div className="space-y-4">
                       
-                      {/* Flag 1: Corporate Contract Auditor Module */}
-                      <div className="p-3 bg-slate-950/40 border border-slate-850/80 rounded-lg flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-white truncate">Corporate Contract Auditor</div>
-                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">Activate Alt+C advisory page</div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={enableContractAuditor}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setEnableContractAuditor(checked);
-                              localStorage.setItem("microsoft_enable_contract_auditor", JSON.stringify(checked));
-                              addToast(
-                                "licensing_pricing",
-                                checked ? "Contract Auditor Provisioned" : "Contract Auditor Parked",
-                                checked 
-                                  ? "Successfully unlocked corporate contract auditing module workspace."
-                                  : "The auditing module is now parked and hidden from the layout header."
-                              );
-                            }}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500 peer-checked:after:bg-white"></div>
-                        </label>
-                      </div>
-
                       {/* System Analytics Stats */}
                       <div className="p-3.5 bg-slate-950/50 border border-slate-850 rounded-lg text-slate-400 font-mono text-[10px] space-y-1.5 leading-relaxed">
                         <div className="font-sans font-bold text-white text-xs mb-1 uppercase tracking-wider text-slate-300">
@@ -10297,12 +10233,7 @@ ${advice}
                           <span>REGISTRY ACCOUNTS</span>
                           <span className="text-white font-bold">{subscriptionsList.length}</span>
                         </div>
-                        <div className="flex justify-between border-b border-slate-850 pb-1">
-                          <span>COMPLIANCE AUDITOR STATUS</span>
-                          <span className={`${enableContractAuditor ? "text-indigo-400" : "text-amber-500"} font-bold`}>
-                            {enableContractAuditor ? "PROVISIONED" : "PARKED"}
-                          </span>
-                        </div>
+
                         <div className="flex justify-between border-b border-slate-850 pb-1">
                           <span>WATCHLIST BOOKMARKS</span>
                           <span className="text-rose-400 font-bold">{watchlist.length}</span>
