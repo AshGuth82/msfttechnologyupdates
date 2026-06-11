@@ -736,7 +736,14 @@ export default function App() {
   const [adminDispatchBody, setAdminDispatchBody] = useState<string>("Our web monitoring grounded indexing engine has flagged several key shifts in ANZ Azure Hub sovereign alignments. Please review the live Microsoft Business financials and partner status logs immediately.");
   const [isDispatchingAlert, setIsDispatchingAlert] = useState<boolean>(false);
 
-  const [enableContractAuditor, setEnableContractAuditor] = useState<boolean>(true);
+  const [enableContractAuditor, setEnableContractAuditor] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("microsoft_enable_contract_auditor");
+      return stored ? JSON.parse(stored) : false; // Defaults to false (Parked for later release)
+    } catch {
+      return false;
+    }
+  });
 
   const [adminNewSubName, setAdminNewSubName] = useState<string>("");
   const [adminNewSubEmail, setAdminNewSubEmail] = useState<string>("");
@@ -1206,9 +1213,13 @@ export default function App() {
             setActiveReviewId(null);
             addToast("cloud_transformations", "Shortcut Triggered: Alt + A", "Navigated to Microsoft's AI Business.");
           } else if (key === "c") {
-            setActiveMainView("contract-auditor");
-            setActiveReviewId(null);
-            addToast("licensing_pricing", "Shortcut Triggered: Alt + C", "Navigated to Corporate Contract Auditor.");
+            if (enableContractAuditor) {
+              setActiveMainView("contract-auditor");
+              setActiveReviewId(null);
+              addToast("licensing_pricing", "Shortcut Triggered: Alt + C", "Navigated to Corporate Contract Auditor.");
+            } else {
+              addToast("licensing_pricing", "Module Restricted", "The Corporate Contract Auditor module is currently parked for a future release.");
+            }
           } else if (key === "m") {
             setActiveMainView("admin-console");
             setActiveReviewId(null);
@@ -1222,7 +1233,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [addToast]);
+  }, [addToast, enableContractAuditor]);
 
   // Bookmarking / Saved Articles state (Persisted in localStorage)
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
@@ -3815,8 +3826,19 @@ ${advice}
                   </p>
                 </div>
 
+                {/* Countdown Grid Label */}
+                <div className="flex items-center justify-between mt-6 px-1">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Dynamic Countdown Engine
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-500">
+                    Syd (AEST UTC+10) Live Track
+                  </span>
+                </div>
+
                 {/* Countdown Grid */}
-                <div className={`grid grid-cols-4 gap-3 p-4 rounded-2xl border mt-6 font-mono text-center ${isDark ? "bg-slate-950/60 border-slate-900/80" : "bg-slate-50 border-slate-200"}`}>
+                <div className={`grid grid-cols-4 gap-3 p-4 rounded-2xl border mt-2 font-mono text-center ${isDark ? "bg-slate-950/60 border-slate-900/80" : "bg-slate-50 border-slate-200"}`}>
                   <div>
                     <div className="text-2xl md:text-3xl font-extrabold text-sky-500 dark:text-sky-400 select-none">{countdownDays}</div>
                     <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Days</div>
@@ -4492,24 +4514,26 @@ ${advice}
             </span>
           </button>
 
-          <button
-            id="global-nav-contract-auditor"
-            onClick={() => {
-              setActiveMainView("contract-auditor");
-              setActiveReviewId(null);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-              activeMainView === "contract-auditor"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-            }`}
-          >
-            <FileCheck className="w-4 h-4 text-inherit" />
-            <span className="flex items-center gap-1.5">
-              <span>Corporate Contract Auditor</span>
-              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
-            </span>
-          </button>
+          {enableContractAuditor && (
+            <button
+              id="global-nav-contract-auditor"
+              onClick={() => {
+                setActiveMainView("contract-auditor");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "contract-auditor"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+              }`}
+            >
+              <FileCheck className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>Corporate Contract Auditor</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
+              </span>
+            </button>
+          )}
 
           <button
             id="global-nav-admin-console"
@@ -10373,6 +10397,37 @@ ${advice}
                           <span>AUSTRALIAN GATEWAY</span>
                           <span className="text-emerald-450">ACTIVE</span>
                         </div>
+                      </div>
+
+                      {/* Flag 1: Corporate Contract Auditor Module */}
+                      <div className="p-3 bg-slate-950/40 border border-slate-850/80 rounded-lg flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white truncate">Corporate Contract Auditor</div>
+                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">Toggle Active Alt+C advisory page</div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={enableContractAuditor}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setEnableContractAuditor(checked);
+                              localStorage.setItem("microsoft_enable_contract_auditor", JSON.stringify(checked));
+                              addToast(
+                                "licensing_pricing",
+                                checked ? "Contract Auditor Provisioned" : "Contract Auditor Parked",
+                                checked 
+                                  ? "Successfully unlocked corporate contract auditing module workspace."
+                                  : "The auditing module is now parked and hidden from primary site navigation."
+                              );
+                              if (!checked && activeMainView === "contract-auditor") {
+                                setActiveMainView("briefings");
+                              }
+                            }}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500 peer-checked:after:bg-white"></div>
+                        </label>
                       </div>
 
                     </div>
