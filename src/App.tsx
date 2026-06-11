@@ -3770,18 +3770,21 @@ ${advice}
               </span>
               <button
                 onClick={() => {
-                  setIsComingSoonBypassed(true);
-                  localStorage.setItem("coming_soon_bypassed", "true");
-                  addToast(
-                    "cloud_transformations",
-                    "Direct Gateway Access Granted",
-                    "Entered the full live corporate intelligence workspace in administrative sandbox preview mode."
-                  );
+                  const element = document.getElementById("teaser-email-input");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "center" });
+                    element.focus();
+                    addToast(
+                      "cloud_transformations",
+                      "Email Registration Required",
+                      "Please register your corporate email below to instantly unlock the live preview."
+                    );
+                  }
                 }}
                 className={`text-xs font-sans font-bold px-4 py-2 hover:opacity-90 transition duration-150 rounded-lg cursor-pointer shadow-md flex items-center gap-1.5 shrink-0 ${isDark ? "bg-white text-slate-950" : "bg-slate-900 text-white"}`}
               >
-                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500 animate-pulse" />
-                <span>Bypass Gate (Direct Preview)</span>
+                <Mail className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
+                <span>Unlock Preview with Email</span>
               </button>
             </div>
           </div>
@@ -4087,6 +4090,7 @@ ${advice}
                       </label>
                       <div className="flex gap-2">
                         <input
+                          id="teaser-email-input"
                           type="email"
                           placeholder="e.g. strategic-partner@enterprise.au"
                           value={teaserEmail}
@@ -4101,15 +4105,18 @@ ${advice}
                               return;
                             }
                             setTeaserEmailSubmitted(true);
+                            setIsComingSoonBypassed(true);
+                            localStorage.setItem("coming_soon_bypassed", "true");
+                            localStorage.setItem("teaser_registered_email", teaserEmail);
                             addToast(
                               "licensing_pricing",
-                              "Bulletin Registered",
-                              `Added ${teaserEmail} to ANZ Priority Launch Registry list.`
+                              "Preview Access Unlocked",
+                              `Added ${teaserEmail} to registry queue! Welcome to the full corporate intelligence hub.`
                             );
                           }}
                           className="bg-orange-600 hover:bg-orange-500 text-white font-sans font-bold text-xs px-4 py-1.5 rounded-lg cursor-pointer transition shadow shrink-0"
                         >
-                          Register
+                          Unlock Preview
                         </button>
                       </div>
                     </div>
