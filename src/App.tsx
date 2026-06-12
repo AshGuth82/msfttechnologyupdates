@@ -62,7 +62,9 @@ import {
   MapPin,
   Lock,
   Unlock,
-  Zap
+  Zap,
+  Smartphone,
+  QrCode
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -687,6 +689,10 @@ export default function App() {
 
   // Coming Soon Gateway State (Starts as false so visitors landing here see the teaser first, entering email unlocks)
   const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(false);
+
+  // Mobile App Simulation Workspace (PWA Simulator)
+  const [isMobileSimulated, setIsMobileSimulated] = useState<boolean>(false);
+  const [simulatedDevice, setSimulatedDevice] = useState<"iphone" | "android">("iphone");
 
   const [teaserEmail, setTeaserEmail] = useState<string>("");
   const [teaserEmailSubmitted, setTeaserEmailSubmitted] = useState<boolean>(false);
@@ -4280,7 +4286,72 @@ ${advice}
           </div>
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div id="pwa-mobile-simulator-wrapper" className={
+          isMobileSimulated
+            ? "relative w-full px-2 py-4 sm:py-8 flex flex-col items-center justify-center min-h-[900px] bg-slate-950/40"
+            : ""
+        }>
+          {isMobileSimulated && (
+            /* Smartphone simulator frame controls */
+            <div className="text-center mb-5 font-mono text-xs text-slate-400 select-none flex flex-wrap items-center justify-center gap-3 bg-[#0f172a] border border-slate-800 px-4 py-2 rounded-xl shadow-md">
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span> Mobile Sim: <strong className="text-sky-400 capitalize">{simulatedDevice} Pro Max</strong></span>
+              <span className="text-slate-700">|</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSimulatedDevice(simulatedDevice === "iphone" ? "android" : "iphone");
+                  addToast("cloud_transformations", "Bezel Theme Updated", `Switched design mockup to ${simulatedDevice === "iphone" ? "Android Material" : "Apple iOS"}.`);
+                }}
+                className="text-amber-400 font-bold hover:text-amber-300 cursor-pointer transition font-mono"
+              >
+                [Toggle iOS/Android Bezel]
+              </button>
+              <span className="text-slate-700">|</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileSimulated(false);
+                  addToast("cloud_transformations", "Desktop View Reset", "Returned to primary wide-screen workspace layout.");
+                }}
+                className="text-rose-450 font-bold hover:text-rose-400 cursor-pointer transition font-mono"
+              >
+                [Exit Simulator]
+              </button>
+            </div>
+          )}
+
+          <div 
+            id="main-app-inner-scaler"
+            className={
+              isMobileSimulated
+                ? `w-[390px] h-[780px] border-[12px] border-slate-900/95 rounded-[44px] shadow-2xl relative overflow-y-auto overflow-x-hidden flex flex-col bg-[#0b0f19] custom-scrollbar focus:outline-none ring-4 ring-slate-800/40`
+                : `max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8`
+            }
+          >
+            {isMobileSimulated && (
+              /* Inside the screen top status bar */
+              <div className="sticky top-0 bg-[#0b0f19]/95 backdrop-blur-md border-b border-slate-900/40 z-[100] px-6 py-2 pb-2.5 flex items-center justify-between text-[10px] font-mono font-bold text-slate-300 select-none">
+                {/* Simulated Time */}
+                <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                
+                {/* Notch / Dynamic Island */}
+                {simulatedDevice === "iphone" ? (
+                  <div className="w-24 h-4.5 bg-black rounded-full flex items-center justify-between px-2.5 shrink-0 select-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-900"></span>
+                    <span className="text-[7.5px] text-sky-450 tracking-tighter opacity-15">HUB PWA</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#111] border border-blue-900/40"></span>
+                  </div>
+                ) : (
+                  <div className="w-3 h-3 bg-black rounded-full border border-slate-800 shrink-0 select-none"></div>
+                )}
+
+                {/* Status Network indicators */}
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[8.5px] text-emerald-400 tracking-wider">5G</span>
+                  <span>🔋 98%</span>
+                </span>
+              </div>
+            )}
         
         {/* Top Header Bar */}
         <header className={`mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b ${isDark ? "border-slate-800" : "border-slate-200"} pb-6 gap-4`}>
@@ -8453,6 +8524,126 @@ ${advice}
               </ul>
             </div>
 
+            {/* PWA & Mobile App Hub Card */}
+            <div id="mobile-app-pwa-hub" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden shadow-xl">
+              <div className="absolute top-0 right-0 h-16 w-16 bg-sky-505/5 rounded-full blur-xl"></div>
+              
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="bg-sky-500/10 p-1.5 rounded-lg border border-sky-500/20 animate-pulse">
+                  <Smartphone className="w-4 h-4 text-sky-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200 font-mono">
+                      Mobile App Gateway
+                    </h4>
+                    <span className="text-[8.5px] font-mono bg-sky-500/15 text-sky-455 border border-sky-500/25 px-1 rounded-sm font-bold">PWA LIVE</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-mono">Run on Android, iOS or simulate device layout</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-350 leading-relaxed mb-4">
+                This enterprise portal is built as a fully-compliant Progressive Web App. You can install it directly onto your physical phone or trigger our live interactive viewport simulator.
+              </p>
+
+              {/* Action buttons */}
+              <div className="space-y-2 mb-4">
+                <button
+                  type="button"
+                  id="toggle-mobile-simulator-btn"
+                  onClick={() => {
+                    setIsMobileSimulated(!isMobileSimulated);
+                    if (!isMobileSimulated) {
+                      addToast("cloud_transformations", "Smartphone Simulator ON", "Viewport restricted to standard portrait device proportions and native-feel status headers.");
+                      // Smooth scroll back to top of main frame so they see the device
+                      window.scrollTo({ top: 120, behavior: "smooth" });
+                    } else {
+                      addToast("cloud_transformations", "Smartphone Simulator OFF", "Returned to primary wide-screen workspace layout.");
+                    }
+                  }}
+                  className={`w-full flex items-center justify-center gap-2 py-1.5 rounded-lg font-mono font-bold text-xs cursor-pointer transition shadow border ${
+                    isMobileSimulated 
+                      ? "bg-rose-500/15 border-rose-500/30 text-rose-400 hover:bg-rose-500/20" 
+                      : "bg-[#0284c7] border-[#0284c7] hover:bg-[#0369a1] text-white hover:border-[#0369a1] shadow-sky-900/10"
+                  }`}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>{isMobileSimulated ? "Exit Mobile Simulator" : "Simulate Smartphone Layout"}</span>
+                </button>
+              </div>
+
+              {/* Tabs for Installation Instructions & Physical Loading (QR) */}
+              <div className="border-t border-slate-800/60 pt-3.5 space-y-4">
+                <div id="qr-scannable-block" className="flex gap-3 bg-slate-950/60 p-2.5 rounded-xl border border-slate-850/80 items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="block text-[10px] uppercase font-bold tracking-wider text-slate-400 font-mono">
+                      Physical Device Direct Sync
+                    </span>
+                    <p className="text-[10.5px] text-slate-400 leading-normal font-sans">
+                      Scan the secure token to load this full live workspace onto your corporate handset.
+                    </p>
+                  </div>
+                  
+                  {/* Simulated Quad Microsoft Center QR code */}
+                  <div className="shrink-0 group relative cursor-pointer" title="Sovereign QR Access Link">
+                    <svg className="w-16 h-16 bg-white p-1 rounded-lg border border-slate-700/50" viewBox="0 0 100 100">
+                      <rect x="10" y="10" width="25" height="25" fill="#0b0f19" />
+                      <rect x="15" y="15" width="15" height="15" fill="#fff" />
+                      <rect x="18" y="18" width="9" height="9" fill="#0b0f19" />
+                      
+                      <rect x="65" y="10" width="25" height="25" fill="#0b0f19" />
+                      <rect x="70" y="15" width="15" height="15" fill="#fff" />
+                      <rect x="73" y="18" width="9" height="9" fill="#0b0f19" />
+
+                      <rect x="10" y="65" width="25" height="25" fill="#0b0f19" />
+                      <rect x="15" y="70" width="15" height="15" fill="#fff" />
+                      <rect x="18" y="73" width="9" height="9" fill="#0b0f19" />
+
+                      <rect x="75" y="75" width="15" height="15" fill="#0b0f19" />
+                      <rect x="80" y="80" width="5" height="5" fill="#fff" />
+
+                      <rect x="42" y="15" width="6" height="6" fill="#0b0f19" />
+                      <rect x="52" y="22" width="6" height="6" fill="#0b0f19" />
+                      <rect x="45" y="35" width="6" height="4" fill="#0b0f19" />
+                      <rect x="15" y="45" width="6" height="6" fill="#0b0f19" />
+                      <rect x="25" y="52" width="4" height="6" fill="#0b0f19" />
+                      <rect x="52" y="45" width="8" height="6" fill="#0b0f19" />
+                      <rect x="42" y="65" width="6" height="6" fill="#0b0f19" />
+                      <rect x="52" y="75" width="8" height="6" fill="#0b0f19" />
+                      <rect x="65" y="42" width="6" height="6" fill="#0b0f19" />
+                      <rect x="72" y="52" width="6" height="8" fill="#0b0f19" />
+
+                      <g transform="translate(42, 42)">
+                        <rect x="1" y="1" width="6" height="6" fill="#f25022" />
+                        <rect x="9" y="1" width="6" height="6" fill="#7fba00" />
+                        <rect x="1" y="9" width="6" height="6" fill="#00a4ef" />
+                        <rect x="9" y="9" width="6" height="6" fill="#ffb900" />
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-[11px] font-mono select-none">
+                  <div className="text-slate-500 font-bold uppercase tracking-wider text-[9px] mb-1">
+                    Installation Guides & Hardware Syncing:
+                  </div>
+                  <div className="p-2 bg-slate-950/40 rounded border border-slate-900 flex items-start gap-2">
+                    <span className="text-amber-400 font-bold">iOS</span>
+                    <span className="text-slate-450 leading-relaxed font-sans">
+                      Tap <strong className="text-slate-350">Share</strong> (Safari bottom arrow) then <strong className="text-slate-200">"Add to Home Screen"</strong>.
+                    </span>
+                  </div>
+                  <div className="p-2 bg-slate-950/40 rounded border border-slate-900 flex items-start gap-2">
+                    <span className="text-emerald-400 font-bold">And</span>
+                    <span className="text-slate-450 leading-relaxed font-sans">
+                      Tap <strong className="text-slate-350">menu (⋮)</strong> in Chrome/Edge, then <strong className="text-slate-200">"Install App"</strong>.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Authoritative "About" Section - Lead Consultant Profile */}
             <div id="linkedin-connect-guth" className="scroll-mt-6 bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
               <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
@@ -10464,7 +10655,12 @@ ${advice}
           </div>
         )}
 
-      </div>
+          </div>
+          {isMobileSimulated && (
+            /* Bottom Home Indicator Bar for smartphones */
+            <div className="mt-3 w-32 h-1 bg-slate-700 rounded-full mx-auto select-none opacity-60"></div>
+          )}
+        </div>
       )}
 
       {/* Footer */}

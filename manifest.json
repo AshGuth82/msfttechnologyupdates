@@ -1,0 +1,27 @@
+{
+  "short_name": "IntelHub",
+  "name": "Microsoft Corporate Intelligence Hub",
+  "icons": [
+    {
+      "src": "/AppLogo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/AppLogo.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/AppLogo.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "ANZ Regional Strategy, Sovereign Compliance, and Microsoft Enterprise Intelligence Tracker."
+}
