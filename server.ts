@@ -787,20 +787,24 @@ function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { 
 
 // 2. Custom Intelligence query endpoint
 app.post("/api/query", async (req, res) => {
-  const { query } = req.body;
-  if (!query || query.trim() === "") {
-    return res.status(400).json({ error: "Query is required" });
-  }
-
-  const ai = getGeminiClient();
-  if (!ai) {
-    // Elegant local fallback QA model with authoritative ANZ country leader tone
-    console.log(`Local static ANZ Expert QA executing for query: "${query}"`);
-    const fallbackData = generateLocalExpertResponse(query, "*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*");
-    return res.json(fallbackData);
-  }
-
+  let queryText = "General Query";
   try {
+    const { query } = req.body;
+    if (query) {
+      queryText = query;
+    }
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ error: "Query is required" });
+    }
+
+    const ai = getGeminiClient();
+    if (!ai) {
+      // Elegant local fallback QA model with authoritative ANZ country leader tone
+      console.log(`Local static ANZ Expert QA executing for query: "${query}"`);
+      const fallbackData = generateLocalExpertResponse(query, "*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*");
+      return res.json(fallbackData);
+    }
+
     console.log(`Running grounded web search query for user: "${query}"`);
     const systemPrompt = `You are a Senior Expert Advisor in Microsoft Cloud Transformation, Licensing Strategy, and IT sales for the Australia & New Zealand (ANZ) market.
 You speak with the authoritative, strategic, and professional tone of a Country Manager with 12+ years of experience bridging the gap between IT, Finance, and Procurement.
@@ -847,11 +851,11 @@ Guidelines for your response:
       sources: uniqueSources
     });
   } catch (error: any) {
-    console.log("Telemetry check: Copilot assistance query successfully transitioned to backup knowledge base matching.");
+    console.error("Telemetry check: Copilot assistance query successfully transitioned to backup knowledge base matching. Error:", error);
     
     // Deliver seamless seamless expert fallback with a gentle note about the Gemini quota limit, avoiding a broken interface
     const fallbackNote = "*(Note: Our online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines because the live API key is currently experiencing API load/quota limit adjustments.)*";
-    const fallbackData = generateLocalExpertResponse(query, fallbackNote);
+    const fallbackData = generateLocalExpertResponse(queryText, fallbackNote);
     res.json(fallbackData);
   }
 });
