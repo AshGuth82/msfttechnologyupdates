@@ -10384,12 +10384,17 @@ ${advice}
                 onClick={() => setAuditorSubView("tutorials")}
                 className={`px-5 py-3 text-xs font-bold border-b-2 transition duration-200 flex items-center gap-2 cursor-pointer ${
                   auditorSubView === "tutorials"
-                    ? "border-indigo-500 text-indigo-400 font-extrabold bg-slate-900/40 rounded-t-xl"
-                    : "border-transparent text-slate-300 hover:text-white hover:bg-slate-900/20"
+                    ? "border-amber-500 text-amber-400 font-extrabold bg-slate-900/40 rounded-t-xl"
+                    : "border-transparent text-slate-400 hover:text-white hover:bg-slate-900/20"
                 }`}
               >
                 <ShieldCheck className="w-4 h-4 text-inherit" />
-                <span>Sovereign Setup Tutorials</span>
+                <span className="flex items-center gap-1.5">
+                  <span>Sovereign Setup Tutorials</span>
+                  <span className="text-[9px] font-mono tracking-wider text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 uppercase font-bold">
+                    Parked
+                  </span>
+                </span>
               </button>
             </div>
 
@@ -10398,8 +10403,39 @@ ${advice}
                 <ContractAuditor addToast={addToast} isDark={isDark} />
               </div>
             ) : (
-              <div className="animate-in fade-in duration-300">
-                <DynamicSetupTutorials addToast={addToast} isDark={isDark} />
+              <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-8 max-w-2xl mx-auto text-center space-y-6 animate-in fade-in duration-300 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 h-24 w-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none"></div>
+                <div className="w-14 h-14 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto text-amber-500 border border-amber-500/20">
+                  <Lock className="w-6 h-6 animate-bounce" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-white tracking-tight">Sovereign Setup Tutorials Module is Parked</h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span className="text-[10px] text-amber-400 font-mono tracking-wider uppercase">Inactive Deployment Shelve</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+                  The live cloud guidebooks, dynamic search and compliance checklists have been parked & deactivated to prioritize the active development of the high-impact <span className="text-sky-400 font-semibold">Corporate Contract Auditor</span>. 
+                </p>
+                <div className="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 max-w-sm mx-auto flex items-center gap-3">
+                  <span className="text-amber-500 text-lg">⚠️</span>
+                  <p className="text-left leading-normal font-sans">
+                    This module remains physically bundled in the Hub directory for future enterprise licensing sync, but is not live.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuditorSubView("auditor");
+                      addToast("licensing_pricing", "Auditor Restored", "Navigated back to Interactive Clause Auditor.");
+                    }}
+                    className="px-5 py-2.5 text-xs font-bold bg-[#00a4ef] hover:bg-[#00a4ef]/90 text-white rounded-xl transition duration-150 cursor-pointer shadow-lg shadow-sky-500/10 inline-flex items-center gap-1.5"
+                  >
+                    Return to Live Auditor Workspace
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -10952,14 +10988,17 @@ ${advice}
                       }}
                       className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
                         activeMainView === "contract-auditor" && auditorSubView === "tutorials"
-                          ? "bg-slate-800 border-indigo-500/50 text-white"
-                          : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                          ? "bg-slate-800 border-amber-500/50 text-white"
+                          : "bg-slate-900/50 border-slate-800 text-slate-400 hover:bg-slate-900"
                       }`}
                     >
-                      <ShieldCheck className="w-4 h-4 text-indigo-400" />
-                      <div className="text-left">
-                        <div className="text-[11px] font-bold">Sovereign Setup Tutorials</div>
-                        <div className="text-[9px] text-slate-500">Live ANZ Cloud guidebooks (Auditing Center)</div>
+                      <ShieldCheck className="w-4 h-4 text-amber-500 animate-pulse" />
+                      <div className="text-left flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold truncate">Sovereign Setup Tutorials</span>
+                          <span className="text-[8px] font-mono text-amber-500 bg-amber-500/10 px-1 rounded border border-amber-500/20 uppercase font-bold">Parked</span>
+                        </div>
+                        <div className="text-[9px] text-slate-500 truncate">Sovereign learning series (Inactive/Parked)</div>
                       </div>
                     </button>
                   )}
