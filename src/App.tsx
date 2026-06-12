@@ -64,7 +64,8 @@ import {
   Unlock,
   Zap,
   Smartphone,
-  QrCode
+  QrCode,
+  Menu
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -694,6 +695,8 @@ export default function App() {
   // Mobile App Simulation Workspace (PWA Simulator)
   const [isMobileSimulated, setIsMobileSimulated] = useState<boolean>(false);
   const [simulatedDevice, setSimulatedDevice] = useState<"iphone" | "android">("iphone");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isMobileMoreMenuOpen, setIsMobileMoreMenuOpen] = useState<boolean>(false);
 
   const [teaserEmail, setTeaserEmail] = useState<string>("");
   const [teaserEmailSubmitted, setTeaserEmailSubmitted] = useState<boolean>(false);
@@ -3096,7 +3099,23 @@ ${advice}
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to consult AI Intelligence Engine (Status: ${response.status})`);
+        let errMsg = `Failed to consult AI Intelligence Engine (Status: ${response.status})`;
+        try {
+          const errData = await response.json();
+          if (errData && errData.error) {
+            errMsg += ` - ${errData.error}`;
+          } else if (errData && errData.message) {
+            errMsg += ` - ${errData.message}`;
+          }
+        } catch (_) {
+          try {
+            const errText = await response.text();
+            if (errText && errText.trim().length < 200) {
+              errMsg += ` - ${errText.trim()}`;
+            }
+          } catch (___) {}
+        }
+        throw new Error(errMsg);
       }
 
       const data = await response.json();
@@ -4359,324 +4378,454 @@ ${advice}
             )}
         
         {/* Top Header Bar */}
-        <header className={`mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b ${isDark ? "border-slate-800" : "border-slate-200"} pb-6 gap-4`}>
-          <div>
-            <div className="flex items-center gap-3">
-              <AppLogo size="md" />
-              <div>
-                <h1 id="main-title" className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-sky-400 bg-clip-text text-transparent">
-                  Microsoft Corporate Intelligence Hub
-                </h1>
-                <p className="text-xs text-slate-400 font-mono mt-0.5">
-                  Secure Document Ingestion & Strategic Advisory Intelligence
-                </p>
+        {isMobileSimulated ? (
+          <header className={`mb-4 border-b pb-3 ${isDark ? "border-slate-800" : "border-slate-200"} flex flex-col gap-2`}>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <AppLogo size="sm" />
+                <div>
+                  <h1 id="main-title" className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-205 to-sky-450 bg-clip-text text-transparent leading-tight">
+                    Corporate Intel Hub
+                  </h1>
+                  <span className="text-[9px] font-mono text-slate-500 block leading-none">Australia & NZ Portal</span>
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* Diagnostic & Operations Panel */}
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            {/* API Status Badge */}
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
-              isLive 
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
-                : "bg-amber-500/10 border-amber-500/20 text-amber-300"
-            }`}>
-              <span className={`h-2 w-2 rounded-full ${isLive ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`}></span>
-              <span className="font-medium">{isLive ? "AI Live Scraped (Google Grounding)" : "Seeded Intelligence Archive"}</span>
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-1 px-2.5 bg-slate-850 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700/60 rounded-lg text-[10px] font-semibold cursor-pointer select-none transition"
+              >
+                {isMobileMenuOpen ? "Hide Ops" : "Show Ops"}
+              </button>
             </div>
 
-            {/* Last Scraped timestamp */}
-            <span className="text-slate-500 font-mono">
-              Updated: {new Date(lastUpdated).toLocaleTimeString()}
-            </span>
+            {/* Collapsible Mobile Diagnostic Panel */}
+            {isMobileMenuOpen && (
+              <div className="bg-[#111827] border border-slate-800 p-2.5 rounded-xl space-y-2 text-[10px] animate-in slide-in-from-top-1 duration-150">
+                <div className="flex items-center justify-between gap-1">
+                  {/* API Status Badge */}
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border ${
+                    isLive 
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                      : "bg-amber-500/10 border-amber-500/20 text-amber-300"
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${isLive ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`}></span>
+                    <span className="font-semibold text-[8.5px]">{isLive ? "AI Live Scraped" : "Seeded Archive"}</span>
+                  </div>
 
-            {/* Lock Back to Coming Soon (Demo Control) */}
-            <button
-              onClick={() => {
-                setIsComingSoonBypassed(false);
-                setTeaserEmailSubmitted(false);
-                addToast(
-                  "cloud_transformations",
-                  "Returned to Gateway",
-                  "Demonstration mode reset: returned to the initial Coming Soon registry gateway."
-                );
-              }}
-              className="flex items-center gap-1.5 bg-rose-505/10 hover:bg-[#ffebeb]/10 text-rose-400 px-3 py-1.5 rounded-lg border border-rose-500/25 hover:border-rose-400 transition duration-150 cursor-pointer text-xs"
-              title="Return to the first 'Coming Soon' registry screen for feedback testing"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Show Launch Screen</span>
-            </button>
+                  {/* Theme Select */}
+                  <div className="flex items-center gap-1">
+                    <select
+                      id="theme-select-mobile-sim"
+                      value={themeMode}
+                      onChange={(e) => {
+                        if (!isAdminAuthenticated) {
+                          addToast("licensing_pricing", "Access Restricted", "Please authorize/log in via the SOW gate to switch layout themes.");
+                          return;
+                        }
+                        setThemeMode(e.target.value as any);
+                      }}
+                      disabled={!isAdminAuthenticated}
+                      className="bg-[#0f172a] text-[10px] font-bold text-slate-300 cursor-pointer focus:outline-none border border-slate-800 rounded px-1.5 py-0.5"
+                    >
+                      {!isAdminAuthenticated ? (
+                        <option value="dark">Always Dark File</option>
+                      ) : (
+                        <>
+                          <option value="solar">Solar Auto</option>
+                          <option value="system">System</option>
+                          <option value="light">Light</option>
+                          <option value="dark">Dark</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
 
-            {/* Manual Action Button */}
-            <button
-              id="refresh-news-btn"
-              onClick={() => loadNews(true)}
-              disabled={refreshing || loading}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 transition duration-150 cursor-pointer text-xs"
-              title="Execute Web Scrapers & Query Grounded Gemini Indexes"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-              <span>{refreshing ? "Scraping..." : "Re-Scrape Web"}</span>
-            </button>
-
-            {/* Theme Preference Selection dropdown */}
-            <div 
-              id="theme-select-container"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition duration-150 select-none ${
-                isDark 
-                  ? "bg-slate-850 border-slate-700 text-slate-200" 
-                  : "bg-white border-slate-300 text-slate-700 shadow-sm"
-              }`}
-            >
-              <div className="flex items-center gap-1 shrink-0">
-                {themeMode === "light" && <Sun className="w-3.5 h-3.5 text-amber-500" />}
-                {themeMode === "dark" && <Moon className="w-3.5 h-3.5 text-sky-450" />}
-                {themeMode === "system" && <Laptop className="w-3.5 h-3.5 text-indigo-400" />}
-                {themeMode === "solar" && (
-                  isTimeDaylight() 
-                    ? <Sunrise className="w-3.5 h-3.5 text-amber-400 animate-pulse" title="Solar Sync: Daylight" />
-                    : <Sunset className="w-3.5 h-3.5 text-orange-400 animate-pulse" title="Solar Sync: Night" />
-                )}
+                <div className="flex items-center justify-between gap-1 pt-1 border-t border-slate-850">
+                  <span className="text-slate-500 font-mono text-[9px]">
+                    Updated: {new Date(lastUpdated).toLocaleTimeString()}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsComingSoonBypassed(false);
+                        setTeaserEmailSubmitted(false);
+                      }}
+                      className="p-1 px-1.5 bg-rose-500/10 text-rose-450 border border-rose-500/25 rounded hover:bg-rose-500/20 text-[9px] font-medium cursor-pointer"
+                    >
+                      Bypass Limit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => loadNews(true)}
+                      disabled={refreshing || loading}
+                      className="p-1 px-1.5 bg-slate-800 text-slate-200 border border-slate-750 rounded hover:bg-slate-700 text-[9px] font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-2 h-2 ${refreshing ? "animate-spin" : ""}`} />
+                      <span>Sync Feed</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              
-              <span className={`text-[10px] uppercase tracking-wider font-bold font-mono opacity-60 shrink-0 ${
-                isDark ? "text-slate-400" : "text-slate-500"
+            )}
+          </header>
+        ) : (
+          <header className={`mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b ${isDark ? "border-slate-800" : "border-slate-200"} pb-6 gap-4`}>
+            <div>
+              <div className="flex items-center gap-3">
+                <AppLogo size="md" />
+                <div>
+                  <h1 id="main-title" className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-sky-400 bg-clip-text text-transparent">
+                    Microsoft Corporate Intelligence Hub
+                  </h1>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">
+                    Secure Document Ingestion & Strategic Advisory Intelligence
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Diagnostic & Operations Panel */}
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              {/* API Status Badge */}
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                isLive 
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                  : "bg-amber-500/10 border-amber-500/20 text-amber-300"
               }`}>
-                {themeMode === "solar" ? (isTimeDaylight() ? "Solar Day" : "Solar Night") : "Theme"}
+                <span className={`h-2 w-2 rounded-full ${isLive ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`}></span>
+                <span className="font-medium">{isLive ? "AI Live Scraped (Google Grounding)" : "Seeded Intelligence Archive"}</span>
+              </div>
+
+              {/* Last Scraped timestamp */}
+              <span className="text-slate-500 font-mono">
+                Updated: {new Date(lastUpdated).toLocaleTimeString()}
               </span>
 
-              <select
-                id="theme-select"
-                value={themeMode}
-                onChange={(e) => {
-                  if (!isAdminAuthenticated) {
-                    addToast("licensing_pricing", "Access Restricted", "Please authorize/log in via the SOW gate to switch layout themes.");
-                    return;
-                  }
-                  setThemeMode(e.target.value as any);
+              {/* Lock Back to Coming Soon (Demo Control) */}
+              <button
+                onClick={() => {
+                  setIsComingSoonBypassed(false);
+                  setTeaserEmailSubmitted(false);
+                  addToast(
+                    "cloud_transformations",
+                    "Returned to Gateway",
+                    "Demonstration mode reset: returned to the initial Coming Soon registry gateway."
+                  );
                 }}
-                disabled={!isAdminAuthenticated}
-                className={`bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none border-none py-0 pl-1 pr-6 ring-0 focus:ring-0 ${!isAdminAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
-                style={{ outline: "none", boxShadow: "none" }}
-                title={!isAdminAuthenticated ? "Administrator session authorization required to change themes." : "Select Theme Mode: Solar Synced Sunrise/Sunset, System OS preference, or Manual"}
+                className="flex items-center gap-1.5 bg-rose-505/10 hover:bg-[#ffebeb]/10 text-rose-400 px-3 py-1.5 rounded-lg border border-rose-500/25 hover:border-rose-400 transition duration-150 cursor-pointer text-xs"
+                title="Return to the first 'Coming Soon' registry screen for feedback testing"
               >
-                {!isAdminAuthenticated ? (
-                  <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark Mode (Locked)</option>
-                ) : (
-                  <>
-                    <option value="solar" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Solar Auto (Sunrise/Sunset)</option>
-                    <option value="system" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">System (OS Prefs)</option>
-                    <option value="light" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Light</option>
-                    <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark</option>
-                  </>
-                )}
-              </select>
+                <Lock className="w-3.5 h-3.5" />
+                <span>Show Launch Screen</span>
+              </button>
+
+              {/* Manual Action Button */}
+              <button
+                id="refresh-news-btn"
+                onClick={() => loadNews(true)}
+                disabled={refreshing || loading}
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 transition duration-150 cursor-pointer text-xs"
+                title="Execute Web Scrapers & Query Grounded Gemini Indexes"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                <span>{refreshing ? "Scraping..." : "Re-Scrape Web"}</span>
+              </button>
+
+              {/* Theme Preference Selection dropdown */}
+              <div 
+                id="theme-select-container"
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition duration-150 select-none ${
+                  isDark 
+                    ? "bg-slate-850 border-slate-700 text-slate-200" 
+                    : "bg-white border-slate-300 text-slate-700 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-1 shrink-0">
+                  {themeMode === "light" && <Sun className="w-3.5 h-3.5 text-amber-500" />}
+                  {themeMode === "dark" && <Moon className="w-3.5 h-3.5 text-sky-450" />}
+                  {themeMode === "system" && <Laptop className="w-3.5 h-3.5 text-indigo-400" />}
+                  {themeMode === "solar" && (
+                    isTimeDaylight() 
+                      ? <Sunrise className="w-3.5 h-3.5 text-amber-400 animate-pulse" title="Solar Sync: Daylight" />
+                      : <Sunset className="w-3.5 h-3.5 text-orange-400 animate-pulse" title="Solar Sync: Night" />
+                  )}
+                </div>
+                
+                <span className={`text-[10px] uppercase tracking-wider font-bold font-mono opacity-60 shrink-0 ${
+                  isDark ? "text-slate-400" : "text-slate-500"
+                }`}>
+                  {themeMode === "solar" ? (isTimeDaylight() ? "Solar Day" : "Solar Night") : "Theme"}
+                </span>
+
+                <select
+                  id="theme-select"
+                  value={themeMode}
+                  onChange={(e) => {
+                    if (!isAdminAuthenticated) {
+                      addToast("licensing_pricing", "Access Restricted", "Please authorize/log in via the SOW gate to switch layout themes.");
+                      return;
+                    }
+                    setThemeMode(e.target.value as any);
+                  }}
+                  disabled={!isAdminAuthenticated}
+                  className={`bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none border-none py-0 pl-1 pr-6 ring-0 focus:ring-0 ${!isAdminAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
+                  style={{ outline: "none", boxShadow: "none" }}
+                  title={!isAdminAuthenticated ? "Administrator session authorization required to change themes." : "Select Theme Mode: Solar Synced Sunrise/Sunset, System OS preference, or Manual"}
+                >
+                  {!isAdminAuthenticated ? (
+                    <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark Mode (Locked)</option>
+                  ) : (
+                    <>
+                      <option value="solar" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Solar Auto (Sunrise/Sunset)</option>
+                      <option value="system" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">System (OS Prefs)</option>
+                      <option value="light" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Light</option>
+                      <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark</option>
+                    </>
+                  )}
+                </select>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Quick Topic Filter Tab Bar */}
-        <div className={`mb-6 p-4 rounded-2xl border ${
-          isDark 
-            ? "bg-[#0c101d]/65 border-slate-800" 
-            : "bg-slate-50 border-slate-200 shadow-xs"
-        }`}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-bold font-mono tracking-wider text-sky-450 uppercase block mb-1">
-                ⚡ LIVE TOPIC STREAMING
-              </span>
-              <h3 className="text-xs font-semibold text-slate-400">
-                Quick-filter corporate announcements, technical intelligence, and regulatory briefings
-              </h3>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {[
-                { id: "all", label: "All Topics", icon: Globe },
-                { id: "Security", label: "Security & Trust", icon: ShieldCheck },
-                { id: "Hardware", label: "Hardware & Infra", icon: Cpu },
-                { id: "Leadership", label: "Leadership & Strategy", icon: Briefcase }
-              ].map((topic) => {
-                const isSelected = selectedTopic === topic.id;
-                const IconComponent = topic.icon;
-                return (
-                  <button
-                    key={topic.id}
-                    id={`topic-tab-${topic.id}`}
-                    onClick={() => {
-                      setSelectedTopic(topic.id as any);
-                      // Auto route to briefings to display the filtered result
-                      if (activeMainView !== "briefings") {
-                        setActiveMainView("briefings");
-                        addToast(
-                          "anz_strategy",
-                          "Filtered News Feed Loaded",
-                          `Switched to Executive Insights to view "${topic.label}" bulletins.`
-                        );
-                      }
-                    }}
-                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold font-sans transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? "bg-sky-600 text-white shadow-[0_2px_10px_rgba(2,132,199,0.3)] border border-sky-500"
-                        : isDark
-                          ? "bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-305"
-                          : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-xs"
-                    }`}
-                  >
-                    <IconComponent className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-sky-400"}`} />
-                    <span>{topic.label}</span>
-                    {isSelected && (
-                      <motion.div
-                        layoutId="activeTopicGlow"
-                        className="absolute inset-0 rounded-xl bg-sky-500/10 -z-10"
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
+        {isMobileSimulated ? (
+          <div className="mb-4 overflow-x-auto whitespace-nowrap scrollbar-none flex items-center gap-2 py-1 select-none">
+            {[
+              { id: "all", label: "All Topics", icon: Globe },
+              { id: "Security", label: "Security & Trust", icon: ShieldCheck },
+              { id: "Hardware", label: "Hardware & Infra", icon: Cpu },
+              { id: "Leadership", label: "Leadership & Strategy", icon: Briefcase }
+            ].map((topic) => {
+              const isSelected = selectedTopic === topic.id;
+              const IconComponent = topic.icon;
+              return (
+                <button
+                  key={topic.id}
+                  id={`topic-tab-mobile-${topic.id}`}
+                  onClick={() => {
+                    setSelectedTopic(topic.id as any);
+                    if (activeMainView !== "briefings") {
+                      setActiveMainView("briefings");
+                    }
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold font-sans transition-all duration-155 cursor-pointer shrink-0 ${
+                    isSelected
+                      ? "bg-sky-600 text-white shadow-sm border border-sky-500"
+                      : "bg-[#111827] border border-slate-800 text-slate-300 hover:bg-slate-900"
+                  }`}
+                >
+                  <IconComponent className={`w-3 h-3 ${isSelected ? "text-white" : "text-sky-400"}`} />
+                  <span>{topic.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={`mb-6 p-4 rounded-2xl border ${
+            isDark 
+              ? "bg-[#0c101d]/65 border-slate-800" 
+              : "bg-slate-50 border-slate-200 shadow-xs"
+          }`}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-bold font-mono tracking-wider text-sky-450 uppercase block mb-1">
+                  ⚡ LIVE TOPIC STREAMING
+                </span>
+                <h3 className="text-xs font-semibold text-slate-400">
+                  Quick-filter corporate announcements, technical intelligence, and regulatory briefings
+                </h3>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: "all", label: "All Topics", icon: Globe },
+                  { id: "Security", label: "Security & Trust", icon: ShieldCheck },
+                  { id: "Hardware", label: "Hardware & Infra", icon: Cpu },
+                  { id: "Leadership", label: "Leadership & Strategy", icon: Briefcase }
+                ].map((topic) => {
+                  const isSelected = selectedTopic === topic.id;
+                  const IconComponent = topic.icon;
+                  return (
+                    <button
+                      key={topic.id}
+                      id={`topic-tab-${topic.id}`}
+                      onClick={() => {
+                        setSelectedTopic(topic.id as any);
+                        // Auto route to briefings to display the filtered result
+                        if (activeMainView !== "briefings") {
+                          setActiveMainView("briefings");
+                          addToast(
+                            "anz_strategy",
+                            "Filtered News Feed Loaded",
+                            `Switched to Executive Insights to view "${topic.label}" bulletins.`
+                          );
+                        }
+                      }}
+                      className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold font-sans transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? "bg-sky-600 text-white shadow-[0_2px_10px_rgba(2,132,199,0.3)] border border-sky-500"
+                          : isDark
+                            ? "bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-305"
+                            : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-xs"
+                      }`}
+                    >
+                      <IconComponent className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-sky-400"}`} />
+                      <span>{topic.label}</span>
+                      {isSelected && (
+                        <motion.div
+                          layoutId="activeTopicGlow"
+                          className="absolute inset-0 rounded-xl bg-sky-500/10 -z-10"
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-
+        )}
 
         {/* Global Navigation Hub */}
-        <div className="flex flex-col sm:flex-row bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans max-w-full sm:max-w-3xl lg:max-w-4xl mb-8 shadow-lg gap-1.5 sm:gap-1">
-          <button
-            id="global-nav-briefings"
-            onClick={() => setActiveMainView("briefings")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-              activeMainView === "briefings"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-            }`}
-          >
-            <FileText className="w-4 h-4 text-inherit" />
-            <span className="flex items-center gap-1.5">
-              <span>Executive Advisor Dashboard</span>
-              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+B</kbd>
-            </span>
-          </button>
-          
-          <button
-            id="global-nav-business"
-            onClick={() => setActiveMainView("business")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-              activeMainView === "business"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-            }`}
-          >
-            <TrendingUp className="w-4 h-4 text-inherit" />
-            <span className="flex items-center gap-1.5">
-              <span>Microsoft Business Financials</span>
-              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+F</kbd>
-            </span>
-          </button>
-
-          <button
-            id="global-nav-partners"
-            onClick={() => {
-              setActiveMainView("partners");
-              setActiveReviewId(null);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-              activeMainView === "partners"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-            }`}
-          >
-            <Users className="w-4 h-4 text-inherit" />
-            <span className="flex items-center gap-1.5">
-              <span>ANZ Microsoft Partner Hub</span>
-              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+P</kbd>
-            </span>
-          </button>
-
-          <button
-            id="global-nav-ai-business"
-            onClick={() => {
-              setActiveMainView("ai-business");
-              setActiveReviewId(null);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-              activeMainView === "ai-business"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-inherit" />
-            <span className="flex items-center gap-1.5">
-              <span>Microsoft's AI Business</span>
-              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+A</kbd>
-            </span>
-          </button>
-
-          {enableContractAuditor && (
+        {!isMobileSimulated && (
+          <div className="flex flex-col sm:flex-row bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans max-w-full sm:max-w-3xl lg:max-w-4xl mb-8 shadow-lg gap-1.5 sm:gap-1">
             <button
-              id="global-nav-contract-auditor"
-              onClick={() => {
-                setActiveMainView("contract-auditor");
-                setActiveReviewId(null);
-              }}
+              id="global-nav-briefings"
+              onClick={() => setActiveMainView("briefings")}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-                activeMainView === "contract-auditor"
+                activeMainView === "briefings"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
               }`}
             >
-              <FileCheck className="w-4 h-4 text-inherit" />
+              <FileText className="w-4 h-4 text-inherit" />
               <span className="flex items-center gap-1.5">
-                <span>Corporate Contract Auditor</span>
-                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
+                <span>Executive Advisor Dashboard</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+B</kbd>
               </span>
             </button>
-          )}
+            
+            <button
+              id="global-nav-business"
+              onClick={() => setActiveMainView("business")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "business"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>Microsoft Business Financials</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+F</kbd>
+              </span>
+            </button>
 
-          <button
-            id="global-nav-tutorials"
-            onClick={() => {
-              setActiveMainView("tutorials");
-              setActiveReviewId(null);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-              activeMainView === "tutorials"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4 text-inherit" />
-            <span className="flex items-center gap-1.5">
-              <span>Sovereign Setup Tutorials</span>
-              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+T</kbd>
-            </span>
-          </button>
+            <button
+              id="global-nav-partners"
+              onClick={() => {
+                setActiveMainView("partners");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "partners"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+              }`}
+            >
+              <Users className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>ANZ Microsoft Partner Hub</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+P</kbd>
+              </span>
+            </button>
 
-          <button
-            id="global-nav-admin-console"
-            onClick={() => {
-              setActiveMainView("admin-console");
-              setActiveReviewId(null);
-            }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-              activeMainView === "admin-console"
-                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
-            }`}
-          >
-            {isAdminAuthenticated ? (
-              <Unlock className="w-3.5 h-3.5 text-sky-400" />
-            ) : (
-              <Lock className="w-3.5 h-3.5 text-slate-450" />
+            <button
+              id="global-nav-ai-business"
+              onClick={() => {
+                setActiveMainView("ai-business");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "ai-business"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-205 hover:bg-slate-900/50"
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>Microsoft's AI Business</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+A</kbd>
+              </span>
+            </button>
+
+            {enableContractAuditor && (
+              <button
+                id="global-nav-contract-auditor"
+                onClick={() => {
+                  setActiveMainView("contract-auditor");
+                  setActiveReviewId(null);
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                  activeMainView === "contract-auditor"
+                    ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                    : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+                }`}
+              >
+                <FileCheck className="w-4 h-4 text-inherit" />
+                <span className="flex items-center gap-1.5">
+                  <span>Corporate Contract Auditor</span>
+                  <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
+                </span>
+              </button>
             )}
-            <span className="flex items-center gap-1.5">
-              <span>Admin Center</span>
-              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+M</kbd>
-            </span>
-          </button>
-        </div>
+
+            <button
+              id="global-nav-tutorials"
+              onClick={() => {
+                setActiveMainView("tutorials");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "tutorials"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>Sovereign Setup Tutorials</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+T</kbd>
+              </span>
+            </button>
+
+            <button
+              id="global-nav-admin-console"
+              onClick={() => {
+                setActiveMainView("admin-console");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "admin-console"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+              }`}
+            >
+              {isAdminAuthenticated ? (
+                <Unlock className="w-3.5 h-3.5 text-sky-400" />
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-slate-450" />
+              )}
+              <span className="flex items-center gap-1.5">
+                <span>Admin Center</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+M</kbd>
+              </span>
+            </button>
+          </div>
+        )}
 
 
 
@@ -10685,9 +10834,164 @@ ${advice}
           </div>
         )}
 
+            {isMobileSimulated && (
+              <div className="sticky bottom-0 left-0 right-0 z-[110] bg-[#0c1122]/98 backdrop-blur-md border-t border-slate-800 px-2 py-1.5 flex items-center justify-around text-slate-400 select-none">
+                {/* 1. briefings */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMainView("briefings");
+                    setIsMobileMoreMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition cursor-pointer ${
+                    activeMainView === "briefings" ? "text-sky-400 font-extrabold" : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span className="text-[10px] scale-90">Briefing</span>
+                </button>
+
+                {/* 2. business */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMainView("business");
+                    setIsMobileMoreMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition cursor-pointer ${
+                    activeMainView === "business" ? "text-sky-400 font-extrabold" : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="text-[10px] scale-90">Finance</span>
+                </button>
+
+                {/* 3. ai-business */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMainView("ai-business");
+                    setIsMobileMoreMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition cursor-pointer ${
+                    activeMainView === "ai-business" ? "text-sky-400 font-extrabold" : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-[10px] scale-90 text-center truncate w-full">AI Scraper</span>
+                </button>
+
+                {/* 4. partners */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMainView("partners");
+                    setIsMobileMoreMenuOpen(false);
+                  }}
+                  className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition cursor-pointer ${
+                    activeMainView === "partners" ? "text-sky-400 font-extrabold" : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="text-[10px] scale-90 text-center truncate w-full">Partners</span>
+                </button>
+
+                {/* 5. More menu */}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMoreMenuOpen(!isMobileMoreMenuOpen)}
+                  className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition cursor-pointer ${
+                    isMobileMoreMenuOpen || ["tutorials", "contract-auditor", "admin-console"].includes(activeMainView)
+                      ? "text-indigo-400 font-extrabold"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Menu className="w-4 h-4" />
+                  <span className="text-[10px] scale-90">More</span>
+                </button>
+              </div>
+            )}
+
+            {isMobileSimulated && isMobileMoreMenuOpen && (
+              <div className="sticky bottom-[50px] left-0 right-0 z-[120] bg-[#0c1122] border-t border-slate-800 p-3.5 space-y-3.5 animate-in slide-in-from-bottom duration-200 shadow-xl rounded-t-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                  <span className="text-xs font-bold text-white tracking-wide">Enterprise Suite Hub</span>
+                  <button 
+                    type="button"
+                    onClick={() => setIsMobileMoreMenuOpen(false)}
+                    className="text-[10px] text-slate-500 hover:text-slate-300 font-mono font-bold"
+                  >
+                    [Close]
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {/* Tutorials */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMainView("tutorials");
+                      setIsMobileMoreMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                      activeMainView === "tutorials"
+                        ? "bg-slate-800 border-indigo-500/50 text-white"
+                        : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 text-indigo-400" />
+                    <div className="text-left">
+                      <div className="text-[11px] font-bold">Sovereign Setup Tutorials</div>
+                      <div className="text-[9px] text-slate-500">Live ANZ Cloud guidebooks</div>
+                    </div>
+                  </button>
+
+                  {/* Contract Auditor */}
+                  {enableContractAuditor && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMainView("contract-auditor");
+                        setIsMobileMoreMenuOpen(false);
+                      }}
+                      className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                        activeMainView === "contract-auditor"
+                          ? "bg-slate-800 border-indigo-500/50 text-white"
+                          : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                      }`}
+                    >
+                      <FileCheck className="w-4 h-4 text-emerald-400" />
+                      <div className="text-left">
+                        <div className="text-[11px] font-bold">Contract Auditor</div>
+                        <div className="text-[9px] text-slate-500">Secure automated audits</div>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Admin Console */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMainView("admin-console");
+                      setIsMobileMoreMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                      activeMainView === "admin-console"
+                        ? "bg-slate-800 border-indigo-500/50 text-white"
+                        : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                    }`}
+                  >
+                    <Lock className="w-4 h-4 text-sky-400" />
+                    <div className="text-left">
+                      <div className="text-[11px] font-bold">Admin Center & Registry</div>
+                      <div className="text-[9px] text-slate-500">Manage registries & keys</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
           </div>
           {isMobileSimulated && (
-            /* Bottom Home Indicator Bar for smartphones */
             <div className="mt-3 w-32 h-1 bg-slate-700 rounded-full mx-auto select-none opacity-60"></div>
           )}
         </div>

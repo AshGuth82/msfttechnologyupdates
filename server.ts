@@ -1237,6 +1237,16 @@ app.delete("/api/subscribers/:id", async (req, res) => {
   }
 });
 
+// Global Error Handler Middleware
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("CRITICAL UNHANDLED EXPRESS ERROR:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: err.message || String(err),
+    stack: err.stack || null
+  });
+});
+
 // Configure Vite integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
