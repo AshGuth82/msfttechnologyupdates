@@ -741,11 +741,12 @@ CRITICAL: Return ONLY raw JSON starting with { and ending with }. No markdown co
 });
 
 // Helper to generate a high-quality static expert briefing when offline or key is restricted
-function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { answer: string; sources: { title: string; url: string }[] } {
+function generateLocalExpertResponse(query: any, noteSuffix: string = ""): { answer: string; sources: { title: string; url: string }[] } {
   let answer = "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\n";
   answer += "As a senior specialist with 12+ years of experience bridging the gap between IT, Finance, and Procurement (including role active as ANZ Country Manager), here is a direct strategic assessment tailored specifically to local business structures:\n\n";
   
-  const lowerQuery = query.toLowerCase();
+  const queryStr = typeof query === "string" ? query : String(queryTextRaw(query));
+  const lowerQuery = queryStr.toLowerCase();
   if (lowerQuery.includes("finance") || lowerQuery.includes("earning") || lowerQuery.includes("cloud") || lowerQuery.includes("sover") || lowerQuery.includes("sydney") || lowerQuery.includes("melbourne") || lowerQuery.includes("apra")) {
     answer += "#### **1. Azure & Cloud Transformation Momentum in ANZ**\n";
     answer += "*   **APRA & NZISM Compliance:** With local expansion of clean-energy AI high-density computing clusters in Sydney and Melbourne, regional cloud tenancy is transitioning to fully sovereign frameworks. This eliminates historical legal boundaries for banking and public sector agencies.\n";
@@ -763,7 +764,7 @@ function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { 
   } else if (lowerQuery.includes("copilot") || lowerQuery.includes("pricing") || lowerQuery.includes("agent") || lowerQuery.includes("rate") || lowerQuery.includes("exchange") || lowerQuery.includes("6%")) {
     answer += "#### **4. Copilot Tiered Pricing & Licensing Playbook**\n";
     answer += "*   **Mid-Market Tiers:** Microsoft's premium agents are undergoing flexible restructuring. Committing to multi-year contracts can decrease baseline M365 Copilot licensing down to $22 per user/month, while advanced agent-building suites scale at $45 per user/month.\n";
-    answer += "*   **Mitigation Principle:** Prevent default seat assignment. Build structural teams of excellence to roll out licenses incrementally based on proven productivity metrics.";
+    answer += "*   **Mitigation Principle:** Prevent default seat assignment. Build structural teams of excellence to roll out licenses incrementally based on productivity metrics.";
   } else {
     answer += "#### **5. General ANZ Strategic Briefing**\n";
     answer += "Microsoft's current push focuses on agentic workspace workflows, decentralized NPU local execution systems, and sovereign region compliance. Local businesses should prioritize:\n\n";
@@ -785,27 +786,38 @@ function generateLocalExpertResponse(query: string, noteSuffix: string = ""): { 
   };
 }
 
+// Internal helper for safe string conversion
+function queryTextRaw(q: any): string {
+  if (q === null || q === undefined) return "";
+  if (typeof q === "string") return q;
+  try {
+    return JSON.stringify(q);
+  } catch (_) {
+    return String(q);
+  }
+}
+
 // 2. Custom Intelligence query endpoint
 app.post("/api/query", async (req, res) => {
   let queryText = "General Query";
   try {
-    const { query } = req.body;
+    const { query } = req.body || {};
     if (query) {
-      queryText = query;
+      queryText = typeof query === "string" ? query : queryTextRaw(query);
     }
-    if (!query || query.trim() === "") {
+    if (!query || String(query).trim() === "") {
       return res.status(400).json({ error: "Query is required" });
     }
 
     const ai = getGeminiClient();
     if (!ai) {
       // Elegant local fallback QA model with authoritative ANZ country leader tone
-      console.log(`Local static ANZ Expert QA executing for query: "${query}"`);
-      const fallbackData = generateLocalExpertResponse(query, "*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*");
+      console.log(`Local static ANZ Expert QA executing for query: "${queryText}"`);
+      const fallbackData = generateLocalExpertResponse(queryText, "*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*");
       return res.json(fallbackData);
     }
 
-    console.log(`Running grounded web search query for user: "${query}"`);
+    console.log(`Running grounded web search query for user: "${queryText}"`);
     const systemPrompt = `You are a Senior Expert Advisor in Microsoft Cloud Transformation, Licensing Strategy, and IT sales for the Australia & New Zealand (ANZ) market.
 You speak with the authoritative, strategic, and professional tone of a Country Manager with 12+ years of experience bridging the gap between IT, Finance, and Procurement.
 Your expertise spans Enterprise Agreements (EA), Server and Cloud Enrollment (SCE), EAS models, Microsoft Azure architectures, and specialized Microsoft funding programs like ECIF (End-customer Investment Fund).
@@ -820,7 +832,7 @@ Guidelines for your response:
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: query,
+      contents: queryText,
       config: {
         systemInstruction: systemPrompt,
         tools: [{ googleSearch: {} }]
@@ -829,7 +841,7 @@ Guidelines for your response:
 
     const text = response.text || "No response generated.";
     
-    // Extract search grounding sources
+    // Extract search grounding sources safely
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const sources = chunks
       .map(chunk => ({
@@ -853,10 +865,22 @@ Guidelines for your response:
   } catch (error: any) {
     console.error("Telemetry check: Copilot assistance query successfully transitioned to backup knowledge base matching. Error:", error);
     
-    // Deliver seamless seamless expert fallback with a gentle note about the Gemini quota limit, avoiding a broken interface
-    const fallbackNote = "*(Note: Our online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines because the live API key is currently experiencing API load/quota limit adjustments.)*";
-    const fallbackData = generateLocalExpertResponse(queryText, fallbackNote);
-    res.json(fallbackData);
+    try {
+      // Deliver seamless seamless expert fallback with a gentle note about the Gemini quota limit, avoiding a broken interface
+      const fallbackNote = "*(Note: Our online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines because the live API key is currently experiencing API load/quota limit adjustments.)*";
+      const safeQueryText = typeof queryText === "string" ? queryText : "General Query";
+      const fallbackData = generateLocalExpertResponse(safeQueryText, fallbackNote);
+      res.json(fallbackData);
+    } catch (innerError: any) {
+      console.error("Critical inner fallback generation failed:", innerError);
+      res.json({
+        answer: "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\nOur online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines.\n\n*Review your licensing agreements 18 days prior to renewal, apply for ECIF structural co-investments to offset workloads, and participate in metropolitan CIO roundtable forums.*",
+        sources: [
+          { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
+          { title: "Microsoft Australia Newsroom Briefings", url: "https://news.microsoft.com/en-au/" }
+        ]
+      });
+    }
   }
 });
 
