@@ -746,6 +746,7 @@ export default function App() {
   }, []);
 
   const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials">("briefings");
+  const [auditorSubView, setAuditorSubView] = useState<"auditor" | "tutorials">("auditor");
 
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [showAdminForm, setShowAdminForm] = useState<boolean>(false);
@@ -1236,6 +1237,7 @@ export default function App() {
           } else if (key === "c") {
             if (enableContractAuditor) {
               setActiveMainView("contract-auditor");
+              setAuditorSubView("auditor");
               setActiveReviewId(null);
               addToast("licensing_pricing", "Shortcut Triggered: Alt + C", "Navigated to Corporate Contract Auditor.");
             } else {
@@ -1246,9 +1248,14 @@ export default function App() {
             setActiveReviewId(null);
             addToast("licensing_pricing", "Shortcut Triggered: Alt + M", "Navigated to Admin Registry Console.");
           } else if (key === "t") {
-            setActiveMainView("tutorials");
-            setActiveReviewId(null);
-            addToast("cloud_transformations", "Shortcut Triggered: Alt + T", "Navigated to Sovereign Cloud Setup Tutorials.");
+            if (enableContractAuditor) {
+              setActiveMainView("contract-auditor");
+              setAuditorSubView("tutorials");
+              setActiveReviewId(null);
+              addToast("cloud_transformations", "Shortcut Triggered: Alt + T", "Navigated to Sovereign Cloud Setup Tutorials (under Contract Auditor).");
+            } else {
+              addToast("licensing_pricing", "Module Restricted", "The Corporate Contract Auditor / Setup Tutorials module is currently parked for a future release.");
+            }
           }
         }
       }
@@ -4767,6 +4774,7 @@ ${advice}
                 id="global-nav-contract-auditor"
                 onClick={() => {
                   setActiveMainView("contract-auditor");
+                  setAuditorSubView("auditor");
                   setActiveReviewId(null);
                 }}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
@@ -4782,25 +4790,6 @@ ${advice}
                 </span>
               </button>
             )}
-
-            <button
-              id="global-nav-tutorials"
-              onClick={() => {
-                setActiveMainView("tutorials");
-                setActiveReviewId(null);
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
-                activeMainView === "tutorials"
-                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
-                <span>Sovereign Setup Tutorials</span>
-                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+T</kbd>
-              </span>
-            </button>
 
             <button
               id="global-nav-admin-console"
@@ -10353,12 +10342,6 @@ ${advice}
           </div>
         )}
 
-        {activeMainView === "tutorials" && (
-          <div className="space-y-8 animate-in fade-in duration-300">
-            <DynamicSetupTutorials addToast={addToast} isDark={isDark} />
-          </div>
-        )}
-
         {activeMainView === "contract-auditor" && (
           <div className="space-y-8 animate-in fade-in duration-200">
             {/* Header Banner */}
@@ -10367,25 +10350,58 @@ ${advice}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5 animate-in slide-in-from-left duration-200">
-                    <span className="text-xs font-mono font-bold tracking-wider text-indigo-400 uppercase bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                      Advisory Guardrails
+                    <span className="text-xs font-mono font-bold tracking-wider text-[#00a4ef] uppercase bg-[#00a4ef]/10 px-2 py-0.5 rounded border border-[#00a4ef]/25">
+                      Advisory Guardrails & Landings
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">• Automated Risk Ledger & Compliance Guard</span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Automated Risk Ledger & Live Cloud Setup Playbooks</span>
                   </div>
                   <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight animate-in fade-in slide-in-from-bottom duration-250">
-                    AI-Powered Corporate Contract Advisory Assessment
+                    Corporate Contract & Sovereign Advisory Hub
                   </h2>
                   <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
-                    Instantly audit enterprise contract clauses (EA, SCE, CSP formats), review compliance safeguards under ASD IRAP policies, and identify cost recovery optimizations.
+                    Instantly audit enterprise contract clauses (EA, SCE, CSP formats) and configure high-compliance Microsoft Cloud workloads across Australia & New Zealand adhering to ASD IRAP, CPS 234, and NZISM standards.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Main Interactive Auditor Workspace */}
-            <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6">
-              <ContractAuditor addToast={addToast} isDark={isDark} />
+            {/* Sub-view Navigation Tabs */}
+            <div className="flex border-b border-slate-800 gap-1.5 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => setAuditorSubView("auditor")}
+                className={`px-5 py-3 text-xs font-bold border-b-2 transition duration-200 flex items-center gap-2 cursor-pointer ${
+                  auditorSubView === "auditor"
+                    ? "border-sky-500 text-sky-400 font-extrabold bg-slate-900/40 rounded-t-xl"
+                    : "border-transparent text-slate-300 hover:text-white hover:bg-slate-900/20"
+                }`}
+              >
+                <FileCheck className="w-4 h-4 text-inherit" />
+                <span>Interactive Clause Auditor</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuditorSubView("tutorials")}
+                className={`px-5 py-3 text-xs font-bold border-b-2 transition duration-200 flex items-center gap-2 cursor-pointer ${
+                  auditorSubView === "tutorials"
+                    ? "border-indigo-500 text-indigo-400 font-extrabold bg-slate-900/40 rounded-t-xl"
+                    : "border-transparent text-slate-300 hover:text-white hover:bg-slate-900/20"
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-inherit" />
+                <span>Sovereign Setup Tutorials</span>
+              </button>
             </div>
+
+            {auditorSubView === "auditor" ? (
+              <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6 animate-in fade-in duration-300">
+                <ContractAuditor addToast={addToast} isDark={isDark} />
+              </div>
+            ) : (
+              <div className="animate-in fade-in duration-300">
+                <DynamicSetupTutorials addToast={addToast} isDark={isDark} />
+              </div>
+            )}
           </div>
         )}
 
@@ -10901,7 +10917,7 @@ ${advice}
                   type="button"
                   onClick={() => setIsMobileMoreMenuOpen(!isMobileMoreMenuOpen)}
                   className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition cursor-pointer ${
-                    isMobileMoreMenuOpen || ["tutorials", "contract-auditor", "admin-console"].includes(activeMainView)
+                    isMobileMoreMenuOpen || ["contract-auditor", "admin-console"].includes(activeMainView)
                       ? "text-indigo-400 font-extrabold"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
@@ -10926,24 +10942,27 @@ ${advice}
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   {/* Tutorials */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveMainView("tutorials");
-                      setIsMobileMoreMenuOpen(false);
-                    }}
-                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
-                      activeMainView === "tutorials"
-                        ? "bg-slate-800 border-indigo-500/50 text-white"
-                        : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
-                    }`}
-                  >
-                    <ShieldCheck className="w-4 h-4 text-indigo-400" />
-                    <div className="text-left">
-                      <div className="text-[11px] font-bold">Sovereign Setup Tutorials</div>
-                      <div className="text-[9px] text-slate-500">Live ANZ Cloud guidebooks</div>
-                    </div>
-                  </button>
+                  {enableContractAuditor && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMainView("contract-auditor");
+                        setAuditorSubView("tutorials");
+                        setIsMobileMoreMenuOpen(false);
+                      }}
+                      className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                        activeMainView === "contract-auditor" && auditorSubView === "tutorials"
+                          ? "bg-slate-800 border-indigo-500/50 text-white"
+                          : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                      }`}
+                    >
+                      <ShieldCheck className="w-4 h-4 text-indigo-400" />
+                      <div className="text-left">
+                        <div className="text-[11px] font-bold">Sovereign Setup Tutorials</div>
+                        <div className="text-[9px] text-slate-500">Live ANZ Cloud guidebooks (Auditing Center)</div>
+                      </div>
+                    </button>
+                  )}
 
                   {/* Contract Auditor */}
                   {enableContractAuditor && (
@@ -10951,17 +10970,18 @@ ${advice}
                       type="button"
                       onClick={() => {
                         setActiveMainView("contract-auditor");
+                        setAuditorSubView("auditor");
                         setIsMobileMoreMenuOpen(false);
                       }}
                       className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
-                        activeMainView === "contract-auditor"
+                        activeMainView === "contract-auditor" && auditorSubView === "auditor"
                           ? "bg-slate-800 border-indigo-500/50 text-white"
                           : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
                       }`}
                     >
                       <FileCheck className="w-4 h-4 text-emerald-400" />
                       <div className="text-left">
-                        <div className="text-[11px] font-bold">Contract Auditor</div>
+                        <div className="text-[11px] font-bold">Contract Auditor Workspace</div>
                         <div className="text-[9px] text-slate-500">Secure automated audits</div>
                       </div>
                     </button>
