@@ -72,6 +72,7 @@ import { db, collection, getDocs, doc, setDoc, deleteDoc } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
 import { MicrosoftAIBusiness } from "./components/MicrosoftAIBusiness";
 import { ContractAuditor } from "./components/ContractAuditor";
+import DynamicSetupTutorials from "./components/DynamicSetupTutorials";
 
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -741,7 +742,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials">("briefings");
 
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [showAdminForm, setShowAdminForm] = useState<boolean>(false);
@@ -1214,7 +1215,7 @@ export default function App() {
 
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const key = e.key.toLowerCase();
-        if (key === "b" || key === "f" || key === "p" || key === "a" || key === "c" || key === "m") {
+        if (key === "b" || key === "f" || key === "p" || key === "a" || key === "c" || key === "m" || key === "t") {
           e.preventDefault();
           if (key === "b") {
             setActiveMainView("briefings");
@@ -1241,6 +1242,10 @@ export default function App() {
             setActiveMainView("admin-console");
             setActiveReviewId(null);
             addToast("licensing_pricing", "Shortcut Triggered: Alt + M", "Navigated to Admin Registry Console.");
+          } else if (key === "t") {
+            setActiveMainView("tutorials");
+            setActiveReviewId(null);
+            addToast("cloud_transformations", "Shortcut Triggered: Alt + T", "Navigated to Sovereign Cloud Setup Tutorials.");
           }
         }
       }
@@ -4629,6 +4634,25 @@ ${advice}
               </span>
             </button>
           )}
+
+          <button
+            id="global-nav-tutorials"
+            onClick={() => {
+              setActiveMainView("tutorials");
+              setActiveReviewId(null);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              activeMainView === "tutorials"
+                ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-inherit" />
+            <span className="flex items-center gap-1.5">
+              <span>Sovereign Setup Tutorials</span>
+              <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+T</kbd>
+            </span>
+          </button>
 
           <button
             id="global-nav-admin-console"
@@ -10177,6 +10201,12 @@ ${advice}
             <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6">
               <MicrosoftAIBusiness addToast={addToast} />
             </div>
+          </div>
+        )}
+
+        {activeMainView === "tutorials" && (
+          <div className="space-y-8 animate-in fade-in duration-300">
+            <DynamicSetupTutorials addToast={addToast} isDark={isDark} />
           </div>
         )}
 
