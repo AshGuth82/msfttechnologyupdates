@@ -6,7 +6,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { Article, CachedNews } from "./src/types";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, getDocs, collection, setDoc, deleteDoc } from "firebase/firestore";
@@ -740,6 +740,17 @@ CRITICAL: Return ONLY raw JSON starting with { and ending with }. No markdown co
   }
 });
 
+// Internal helper for safe string conversion
+function queryTextRaw(q: any): string {
+  if (q === null || q === undefined) return "";
+  if (typeof q === "string") return q;
+  try {
+    return JSON.stringify(q);
+  } catch (_) {
+    return String(q);
+  }
+}
+
 // Helper to generate a high-quality static expert briefing when offline or key is restricted
 function generateLocalExpertResponse(query: any, noteSuffix: string = ""): { answer: string; sources: { title: string; url: string }[] } {
   let answer = "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\n";
@@ -786,17 +797,6 @@ function generateLocalExpertResponse(query: any, noteSuffix: string = ""): { ans
   };
 }
 
-// Internal helper for safe string conversion
-function queryTextRaw(q: any): string {
-  if (q === null || q === undefined) return "";
-  if (typeof q === "string") return q;
-  try {
-    return JSON.stringify(q);
-  } catch (_) {
-    return String(q);
-  }
-}
-
 // 2. Custom Intelligence query endpoint
 app.post("/api/query", async (req, res) => {
   let queryText = "General Query";
@@ -831,11 +831,14 @@ Guidelines for your response:
 6. Format your response beautifully in clean Markdown with logical headings, bullet lists, and key items in bold.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-3.1-pro-preview",
       contents: queryText,
       config: {
         systemInstruction: systemPrompt,
-        tools: [{ googleSearch: {} }]
+        tools: [{ googleSearch: {} }],
+        thinkingConfig: {
+          thinkingLevel: ThinkingLevel.HIGH
+        }
       }
     });
 
