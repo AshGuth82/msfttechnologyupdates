@@ -10686,7 +10686,7 @@ ${advice}
                   </div>
 
                   <a
-                    href="https://ashguth.gumroad.com/l/Reducethecost"
+                    href="https://ashguth.gumroad.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-sky-600 hover:bg-sky-500 text-white font-extrabold font-sans rounded-xl text-xs transition cursor-pointer shadow-lg shadow-sky-500/5 hover:shadow-sky-500/10 text-center"
@@ -10755,12 +10755,12 @@ ${advice}
                     </div>
                     <div>
                       <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550 text-right">Publisher</div>
-                      <span className="text-xs font-bold text-indigo-400 font-mono">payhip.com/b/kzEqY</span>
+                      <span className="text-xs font-bold text-indigo-400 font-mono">payhip.com/MSFTTechUpdates</span>
                     </div>
                   </div>
 
                   <a
-                    href="https://payhip.com/b/kzEqY"
+                    href="https://payhip.com/MSFTTechUpdates"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-505 text-white font-extrabold font-sans rounded-xl text-xs transition cursor-pointer shadow-lg shadow-indigo-500/5 hover:shadow-indigo-500/10 text-center"
