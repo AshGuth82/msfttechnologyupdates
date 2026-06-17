@@ -10669,7 +10669,7 @@ ${advice}
                     series: "Vol. 01 / Advisory Series",
                     title: "Reduce the Cost: Microsoft Licensing Guide",
                     subtitle: "Strategic Enterprise Procurement & EA Restructuring",
-                    description: "The ultimate master guide meticulously designed to teach enterprise leaders, IT directors, and finance officers how to systematically analyze, optimize, and negotiate Microsoft Enterprise Agreements (EA) and Server and Cloud Enrollments (SCE).",
+                    description: "This is a practical guide in how to identify and remove any Zombie licenses form your Microsoft restate... And why it should save you money and why you should do this before ever negotiating with Microsoft... If you want to know more please do not hesitate ot DM me!!\n\nThe download includes a 1x 2 Page PDF as well as a 1x Notepad document with code that you can use to identify any licenses that can be reduced in your environment!",
                     insights: [
                       "Enterprise Agreement (EA) audit frameworks to spot hidden optimization gaps",
                       "Strategic negotiation mechanics to use during contractual true-up periods",
@@ -10689,7 +10689,7 @@ ${advice}
                     series: "Sovereign Series / Blueprints",
                     title: "Microsoft Licensing Strategy Guide",
                     subtitle: "Sovereign Optimization & Procurement Playbook",
-                    description: "A premium tactical workflow guide offering direct actionable tools, procurement calculators, and strategic contract outlines to streamline enterprise vendor governance and maximize Azure discounts.",
+                    description: "This is a practical guide in how to identify and remove any Zombie licenses form your Microsoft restate... And why it should save you money and why you should do this before ever negotiating with Microsoft... If you want to know more please do not hesitate ot DM me!!\n\nThe download includes a 1x 2 Page PDF as well as a 1x Notepad document with code that you can use to identify any licenses that can be reduced in your environment!",
                     insights: [
                       "Pre-negotiation checklist for enterprise procurement groups",
                       "Direct co-investment guidelines using Microsoft ECIF metrics",
@@ -10752,7 +10752,7 @@ ${advice}
 
                       {/* Info and Purchase details */}
                       <div className="p-6 space-y-5">
-                        <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                        <p className="text-xs text-slate-350 leading-relaxed font-sans whitespace-pre-line">
                           {pb.description}
                         </p>
 
