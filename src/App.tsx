@@ -74,6 +74,7 @@ import { AppLogo } from "./components/AppLogo";
 import { MicrosoftAIBusiness } from "./components/MicrosoftAIBusiness";
 import { ContractAuditor } from "./components/ContractAuditor";
 import DynamicSetupTutorials from "./components/DynamicSetupTutorials";
+import { ProjectRoadmap } from "./components/ProjectRoadmap";
 
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -9640,6 +9641,9 @@ ${advice}
 
               </div>
             </div>
+
+            {/* Interactive Project Roadmap */}
+            <ProjectRoadmap isDark={isDark} />
 
             {/* Split view Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
