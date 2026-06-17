@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
-import { Analytics } from '@vercel/analytics/react';
 import { 
   TrendingUp, 
   Coins, 
@@ -3863,11 +3862,11 @@ ${advice}
                   </div>
 
                   <h2 className={`text-xl md:text-2xl font-extrabold leading-snug ${isDark ? "text-white" : "text-slate-900"}`}>
-                    Unveiling the Premier Directory & Ingestion Gateway for Microsoft Cloud Partners across ANZ.
+                    Unveiling the Premier Intelligence Hub & Tracking Gateway for Microsoft News, Technology Updates & Enterprise Licensing.
                   </h2>
 
                   <p className={`text-xs leading-relaxed max-w-xl ${isDark ? "text-slate-300" : "text-slate-600"}`}>
-                    Whether you are modeling sovereign Azure compliance in Wellington, mapping geospatial Gold specialty licensing density in Brisbane, or auditing active ECIF investment balances in Sydney, the Corporate Intelligence Hub acts as the single source of regional strategy truth.
+                    Whether you are keeping up with rapid Microsoft AI innovations, tracking sovereign Azure services, or navigating the complexities of enterprise licensing models across the ANZ region, the Corporate Intelligence Hub acts as your single source of strategy truth.
                   </p>
 
                   <p className="text-xs text-slate-455 font-mono">
@@ -6954,17 +6953,23 @@ ${advice}
               ) : (
                 <div id="articles-list" className="flex flex-col gap-4">
                   {groupingMode === "flat" ? (
-                    filteredArticles.map((article) => {
-                      const expanded = expandedArticleId === article.id;
-                      const meta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-4 h-4" /> };
-                      
-                      return (
-                        <article 
-                          key={article.id}
-                          id={`article-${article.id}`}
-                          className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
-                            expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
-                          } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
+                    <AnimatePresence>
+                      {filteredArticles.map((article) => {
+                        const expanded = expandedArticleId === article.id;
+                        const meta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-4 h-4" /> };
+                        
+                        return (
+                          <motion.article 
+                            layout
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.96, y: -10 }}
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            key={article.id}
+                            id={`article-${article.id}`}
+                            className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
+                              expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
+                            } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
                           draggable
                           onDragStart={(e) => {
                             draggedIdRef.current = article.id;
@@ -7332,9 +7337,10 @@ ${advice}
                               </motion.div>
                             )}
                           </AnimatePresence>
-                        </article>
+                        </motion.article>
                       );
-                    })
+                    })}
+                  </AnimatePresence>
                   ) : (
                     (() => {
                       const categoriesList: NewsCategory[] = [
@@ -7378,17 +7384,23 @@ ${advice}
 
                             {/* Articles list block within this category */}
                             <div className="flex flex-col gap-4 pl-0 sm:pl-3 border-l-0 sm:border-l sm:border-slate-800/40">
-                              {categoryArticles.map((article) => {
-                                const expanded = expandedArticleId === article.id;
-                                const articleMeta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-4 h-4" /> };
-                                
-                                return (
-                                  <article 
-                                    key={article.id}
-                                    id={`article-grouped-${article.id}`}
-                                    className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
-                                      expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
-                                    } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
+                              <AnimatePresence>
+                                {categoryArticles.map((article) => {
+                                  const expanded = expandedArticleId === article.id;
+                                  const articleMeta = categoryMap[article.category] || { label: "General", bg: "bg-slate-500/10", text: "text-slate-300", icon: <FileText className="w-4 h-4" /> };
+                                  
+                                  return (
+                                    <motion.article 
+                                      layout
+                                      initial={{ opacity: 0, y: 15 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, scale: 0.96, y: -10 }}
+                                      transition={{ duration: 0.25, ease: "easeOut" }}
+                                      key={article.id}
+                                      id={`article-grouped-${article.id}`}
+                                      className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
+                                        expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
+                                      } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
                                     draggable
                                     onDragStart={(e) => {
                                       draggedIdRef.current = article.id;
@@ -7753,9 +7765,10 @@ ${advice}
                                         </motion.div>
                                       )}
                                     </AnimatePresence>
-                                  </article>
+                                  </motion.article>
                                 );
                               })}
+                              </AnimatePresence>
                             </div>
                           </div>
                         );
@@ -11354,7 +11367,6 @@ ${advice}
           </motion.div>
         )}
       </AnimatePresence>
-      <Analytics />
     </div>
   );
 }
