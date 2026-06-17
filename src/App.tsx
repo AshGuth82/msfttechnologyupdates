@@ -749,6 +749,10 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
+  const [playbookSearchQuery, setPlaybookSearchQuery] = useState("");
+  const [playbookTopicFilter, setPlaybookTopicFilter] = useState("all");
+  const [playbookFormatFilter, setPlaybookFormatFilter] = useState("all");
+
   const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks">("briefings");
   const [auditorSubView, setAuditorSubView] = useState<"auditor" | "tutorials">("auditor");
 
@@ -10620,157 +10624,177 @@ ${advice}
               </div>
             </div>
 
+            {/* Filters Section */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#0c1122]/90 border border-slate-800 p-4 rounded-xl">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search playbooks by title or keyword..."
+                  value={playbookSearchQuery}
+                  onChange={(e) => setPlaybookSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 transition-all font-mono"
+                />
+              </div>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <select
+                  value={playbookTopicFilter}
+                  onChange={(e) => setPlaybookTopicFilter(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-sky-500/50 outline-none font-mono"
+                >
+                  <option value="all">All Topics</option>
+                  <option value="Enterprise Agreements">Enterprise Agreements</option>
+                  <option value="Cloud Procurement">Cloud Procurement</option>
+                </select>
+                <select
+                  value={playbookFormatFilter}
+                  onChange={(e) => setPlaybookFormatFilter(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-sky-500/50 outline-none font-mono"
+                >
+                  <option value="all">All Formats</option>
+                  <option value="Interactive eBook (PDF)">Interactive eBook</option>
+                  <option value="Digital Resource Bundle">Resource Bundle</option>
+                </select>
+              </div>
+            </div>
+
             {/* Products Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-sans">
-              
-              {/* Product 1: Gumroad */}
-              <div className="border rounded-2xl overflow-hidden relative transition-all duration-200 bg-[#0c1122]/90 border-slate-800/80 hover:border-slate-700/80 shadow-2xl">
-                <div className="absolute top-0 right-0 p-3 z-10 font-sans">
-                  <span className="text-[9px] font-mono font-bold tracking-widest uppercase bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/25">
-                    GUMROAD RELEASE
-                  </span>
-                </div>
-                
-                {/* Visual Cover/Hero of the Book */}
-                <div className="h-44 bg-gradient-to-br from-slate-900 to-[#10172a] border-b border-slate-850 p-6 flex flex-col justify-between relative overflow-hidden">
-                  {/* Grid Lines for Book Cover */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30"></div>
-                  
-                  <div className="flex justify-between items-start relative z-10">
-                    <BookOpen className="w-10 h-10 text-sky-400" />
-                    <span className="text-xs font-mono font-bold text-sky-455">Vol. 01 / Advisory Series</span>
-                  </div>
-                  
-                  <div className="relative z-10">
-                    <h3 className="text-lg font-extrabold text-white tracking-tight leading-snug">
-                      Reduce the Cost: Microsoft Licensing Guide
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">Strategic Enterprise Procurement & EA Restructuring</p>
-                  </div>
-                </div>
+              {(() => {
+                const playbooksList = [
+                  {
+                    id: "pb-1",
+                    storeLabel: "GUMROAD RELEASE",
+                    storePlatform: "Gumroad",
+                    series: "Vol. 01 / Advisory Series",
+                    title: "Reduce the Cost: Microsoft Licensing Guide",
+                    subtitle: "Strategic Enterprise Procurement & EA Restructuring",
+                    description: "The ultimate master guide meticulously designed to teach enterprise leaders, IT directors, and finance officers how to systematically analyze, optimize, and negotiate Microsoft Enterprise Agreements (EA) and Server and Cloud Enrollments (SCE).",
+                    insights: [
+                      "Enterprise Agreement (EA) audit frameworks to spot hidden optimization gaps",
+                      "Strategic negotiation mechanics to use during contractual true-up periods",
+                      "How to transition from expensive legacy licensing to optimized cloud plans",
+                      "Techniques to prevent unnecessary vendor lock-in and audit-related penalties"
+                    ],
+                    format: "Interactive eBook (PDF)",
+                    topic: "Enterprise Agreements",
+                    publisherDomain: "ashguth.gumroad.com",
+                    url: "https://ashguth.gumroad.com/",
+                    themeColor: "sky"
+                  },
+                  {
+                    id: "pb-2",
+                    storeLabel: "PAYHIP EXCLUSIVE",
+                    storePlatform: "Payhip",
+                    series: "Sovereign Series / Blueprints",
+                    title: "Microsoft Licensing Strategy Guide",
+                    subtitle: "Sovereign Optimization & Procurement Playbook",
+                    description: "A premium tactical workflow guide offering direct actionable tools, procurement calculators, and strategic contract outlines to streamline enterprise vendor governance and maximize Azure discounts.",
+                    insights: [
+                      "Pre-negotiation checklist for enterprise procurement groups",
+                      "Direct co-investment guidelines using Microsoft ECIF metrics",
+                      "Checklists for profiling and comparing top tier ANZ licensing partners",
+                      "Comprehensive worksheets to audit and contain public cloud sprawl"
+                    ],
+                    format: "Digital Resource Bundle",
+                    topic: "Cloud Procurement",
+                    publisherDomain: "payhip.com/MSFTTechUpdates",
+                    url: "https://payhip.com/MSFTTechUpdates",
+                    themeColor: "indigo"
+                  }
+                ];
 
-                {/* Info and Purchase details */}
-                <div className="p-6 space-y-5">
-                  <p className="text-xs text-slate-350 leading-relaxed font-sans">
-                    The ultimate master guide meticulously designed to teach enterprise leaders, IT directors, and finance officers how to systematically analyze, optimize, and negotiate Microsoft Enterprise Agreements (EA) and Server and Cloud Enrollments (SCE).
-                  </p>
+                const filtered = playbooksList.filter(pb => {
+                  const queryMatch = playbookSearchQuery.toLowerCase() === "" ||
+                    pb.title.toLowerCase().includes(playbookSearchQuery.toLowerCase()) ||
+                    pb.subtitle.toLowerCase().includes(playbookSearchQuery.toLowerCase()) ||
+                    pb.description.toLowerCase().includes(playbookSearchQuery.toLowerCase());
+                  const topicMatch = playbookTopicFilter === "all" || pb.topic === playbookTopicFilter;
+                  const formatMatch = playbookFormatFilter === "all" || pb.format === playbookFormatFilter;
+                  return queryMatch && topicMatch && formatMatch;
+                });
 
-                  <div className="space-y-2.5">
-                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-slate-500 font-mono">Core Insights inside:</h4>
-                    <ul className="space-y-1.5">
-                      {[
-                        "Enterprise Agreement (EA) audit frameworks to spot hidden optimization gaps",
-                        "Strategic negotiation mechanics to use during contractual true-up periods",
-                        "How to transition from expensive legacy licensing to optimized cloud plans",
-                        "Techniques to prevent unnecessary vendor lock-in and audit-related penalties"
-                      ].map((bullet, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-slate-350">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <hr className="border-slate-850" />
-
-                  <div className="flex items-center justify-between gap-4 font-sans">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550">Advisory Format</div>
-                      <div className="text-xs font-bold text-slate-205">Interactive eBook (PDF)</div>
+                if (filtered.length === 0) {
+                  return (
+                    <div className="col-span-full py-12 text-center text-slate-400 font-mono text-sm border-2 border-dashed border-slate-800 rounded-xl">
+                      No playbooks matching your exact criteria were found.
                     </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550 text-right">Publisher</div>
-                      <span className="text-xs font-bold text-sky-400 font-mono">ashguth.gumroad.com</span>
-                    </div>
-                  </div>
+                  );
+                }
 
-                  <a
-                    href="https://ashguth.gumroad.com/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-sky-600 hover:bg-sky-500 text-white font-extrabold font-sans rounded-xl text-xs transition cursor-pointer shadow-lg shadow-sky-500/5 hover:shadow-sky-500/10 text-center"
-                  >
-                    <span>View Product on Gumroad</span>
-                    <ArrowUpRight className="w-4 h-4 ml-1.5" />
-                  </a>
-                </div>
-              </div>
-
-              {/* Product 2: Payhip */}
-              <div className="border rounded-2xl overflow-hidden relative transition-all duration-200 bg-[#0c1122]/90 border-slate-800/80 hover:border-slate-700/80 shadow-2xl">
-                <div className="absolute top-0 right-0 p-3 z-10 font-sans">
-                  <span className="text-[9px] font-mono font-bold tracking-widest uppercase bg-indigo-505/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/25">
-                    PAYHIP EXCLUSIVE
-                  </span>
-                </div>
-                
-                {/* Visual Cover/Hero of the Book */}
-                <div className="h-44 bg-gradient-to-br from-indigo-950 to-[#1e1b4b] border-b border-slate-850 p-6 flex flex-col justify-between relative overflow-hidden">
-                  {/* Grid Lines for Book Cover */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#312e81_1px,transparent_1px),linear-gradient(to_bottom,#312e81_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30"></div>
+                return filtered.map((pb) => {
+                  const isSky = pb.themeColor === 'sky';
                   
-                  <div className="flex justify-between items-start relative z-10">
-                    <BookOpen className="w-10 h-10 text-indigo-400" />
-                    <span className="text-xs font-mono font-bold text-indigo-305">Sovereign Series / Blueprints</span>
-                  </div>
-                  
-                  <div className="relative z-10">
-                    <h3 className="text-lg font-extrabold text-white tracking-tight leading-snug">
-                      Microsoft Licensing Strategy Guide
-                    </h3>
-                    <p className="text-xs text-indigo-300 mt-1">Sovereign Optimization & Procurement Playbook</p>
-                  </div>
-                </div>
+                  return (
+                    <div key={pb.id} className={`border rounded-2xl overflow-hidden relative transition-all duration-200 bg-[#0c1122]/90 border-slate-800/80 hover:border-slate-700/80 shadow-2xl`}>
+                      <div className="absolute top-0 right-0 p-3 z-10 font-sans">
+                        <span className={`text-[9px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded border ${isSky ? "bg-sky-500/10 text-sky-400 border-sky-500/25" : "bg-indigo-505/10 text-indigo-400 border-indigo-500/25"}`}>
+                          {pb.storeLabel}
+                        </span>
+                      </div>
+                      
+                      {/* Visual Cover/Hero of the Book */}
+                      <div className={`h-44 bg-gradient-to-br border-b border-slate-850 p-6 flex flex-col justify-between relative overflow-hidden ${isSky ? "from-slate-900 to-[#10172a]" : "from-indigo-950 to-[#1e1b4b]"}`}>
+                        <div className={`absolute inset-0 bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 ${isSky ? "bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)]" : "bg-[linear-gradient(to_right,#312e81_1px,transparent_1px),linear-gradient(to_bottom,#312e81_1px,transparent_1px)]"}`}></div>
+                        
+                        <div className="flex justify-between items-start relative z-10">
+                          <BookOpen className={`w-10 h-10 ${isSky ? "text-sky-400" : "text-indigo-400"}`} />
+                          <span className={`text-xs font-mono font-bold ${isSky ? "text-sky-455" : "text-indigo-305"}`}>{pb.series}</span>
+                        </div>
+                        
+                        <div className="relative z-10">
+                          <h3 className="text-lg font-extrabold text-white tracking-tight leading-snug">
+                            {pb.title}
+                          </h3>
+                          <p className={`text-xs mt-1 ${isSky ? "text-slate-400" : "text-indigo-300"}`}>{pb.subtitle}</p>
+                        </div>
+                      </div>
 
-                {/* Info and Purchase details */}
-                <div className="p-6 space-y-5">
-                  <p className="text-xs text-slate-350 leading-relaxed font-sans">
-                    A premium tactical workflow guide offering direct actionable tools, procurement calculators, and strategic contract outlines to streamline enterprise vendor governance and maximize Azure discounts.
-                  </p>
+                      {/* Info and Purchase details */}
+                      <div className="p-6 space-y-5">
+                        <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                          {pb.description}
+                        </p>
 
-                  <div className="space-y-2.5">
-                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-slate-550 font-mono">Core Insights inside:</h4>
-                    <ul className="space-y-1.5">
-                      {[
-                        "Pre-negotiation checklist for enterprise procurement groups",
-                        "Direct co-investment guidelines using Microsoft ECIF metrics",
-                        "Checklists for profiling and comparing top tier ANZ licensing partners",
-                        "Comprehensive worksheets to audit and contain public cloud sprawl"
-                      ].map((bullet, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-slate-350">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
-                          <span>{bullet}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                        <div className="space-y-2.5">
+                          <h4 className="text-[10px] uppercase font-bold tracking-wider text-slate-500 font-mono">Core Insights inside:</h4>
+                          <ul className="space-y-1.5">
+                            {pb.insights.map((bullet, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-xs text-slate-350">
+                                <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${isSky ? "text-emerald-500" : "text-indigo-400"}`} />
+                                <span>{bullet}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
 
-                  <hr className="border-slate-850" />
+                        <hr className="border-slate-850" />
 
-                  <div className="flex items-center justify-between gap-4 font-sans">
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550">Advisory Format</div>
-                      <div className="text-xs font-bold text-slate-205">Digital Resource Bundle</div>
+                        <div className="flex items-center justify-between gap-4 font-sans">
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550">Advisory Format</div>
+                            <div className="text-xs font-bold text-slate-205">{pb.format}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550 text-right">Publisher</div>
+                            <span className={`text-xs font-bold font-mono ${isSky ? "text-sky-400" : "text-indigo-400"}`}>{pb.publisherDomain}</span>
+                          </div>
+                        </div>
+
+                        <a
+                          href={pb.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-white font-extrabold font-sans rounded-xl text-xs transition cursor-pointer shadow-lg text-center ${isSky ? "bg-sky-600 hover:bg-sky-500 shadow-sky-500/5 hover:shadow-sky-500/10" : "bg-indigo-600 hover:bg-indigo-505 shadow-indigo-500/5 hover:shadow-indigo-500/10"}`}
+                        >
+                          <span>View Product on {pb.storePlatform}</span>
+                          <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550 text-right">Publisher</div>
-                      <span className="text-xs font-bold text-indigo-400 font-mono">payhip.com/MSFTTechUpdates</span>
-                    </div>
-                  </div>
-
-                  <a
-                    href="https://payhip.com/MSFTTechUpdates"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-505 text-white font-extrabold font-sans rounded-xl text-xs transition cursor-pointer shadow-lg shadow-indigo-500/5 hover:shadow-indigo-500/10 text-center"
-                  >
-                    <span>View Product on Payhip</span>
-                    <ArrowUpRight className="w-4 h-4 ml-1.5" />
-                  </a>
-                </div>
-              </div>
-
+                  );
+                });
+              })()}
             </div>
 
             {/* Trust Banner */}
