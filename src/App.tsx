@@ -65,7 +65,9 @@ import {
   Zap,
   Smartphone,
   QrCode,
-  Menu
+  Menu,
+  ShoppingBag,
+  BookOpen
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -746,7 +748,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks">("briefings");
   const [auditorSubView, setAuditorSubView] = useState<"auditor" | "tutorials">("auditor");
 
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
@@ -1244,6 +1246,10 @@ export default function App() {
             } else {
               addToast("licensing_pricing", "Module Restricted", "The Corporate Contract Auditor module is currently parked for a future release.");
             }
+          } else if (key === "s") {
+            setActiveMainView("playbooks");
+            setActiveReviewId(null);
+            addToast("licensing_pricing", "Shortcut Triggered: Alt + S", "Navigated to Playbooks Store.");
           } else if (key === "m") {
             setActiveMainView("admin-console");
             setActiveReviewId(null);
@@ -4791,6 +4797,25 @@ ${advice}
                 </span>
               </button>
             )}
+
+            <button
+              id="global-nav-playbooks"
+              onClick={() => {
+                setActiveMainView("playbooks");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "playbooks"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>Playbooks Store</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+S</kbd>
+              </span>
+            </button>
 
             <button
               id="global-nav-admin-console"
@@ -10459,6 +10484,203 @@ ${advice}
           </div>
         )}
 
+        {activeMainView === "playbooks" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Header Banner */}
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 relative overflow-hidden font-sans">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl"></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-mono font-bold tracking-wider text-sky-450 uppercase bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      Author's Premium Publications
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">• Direct Licences & Digital Copies</span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+                    Microsoft Licensing & EA Restructuring Playbooks
+                  </h2>
+                  <p className="text-xs text-slate-400 max-w-2xl mt-1 leading-relaxed">
+                    Access expert-authored publications by Ash Guth, designed specifically to help enterprise executive leaders, CIOs, and IT procurement teams optimize cloud spends, restructure complex Enterprise Agreements, and master negotiation mechanics.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Products Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-sans">
+              
+              {/* Product 1: Gumroad */}
+              <div className="border rounded-2xl overflow-hidden relative transition-all duration-200 bg-[#0c1122]/90 border-slate-800/80 hover:border-slate-700/80 shadow-2xl">
+                <div className="absolute top-0 right-0 p-3 z-10 font-sans">
+                  <span className="text-[9px] font-mono font-bold tracking-widest uppercase bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/25">
+                    GUMROAD RELEASE
+                  </span>
+                </div>
+                
+                {/* Visual Cover/Hero of the Book */}
+                <div className="h-44 bg-gradient-to-br from-slate-900 to-[#10172a] border-b border-slate-850 p-6 flex flex-col justify-between relative overflow-hidden">
+                  {/* Grid Lines for Book Cover */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30"></div>
+                  
+                  <div className="flex justify-between items-start relative z-10">
+                    <BookOpen className="w-10 h-10 text-sky-400" />
+                    <span className="text-xs font-mono font-bold text-sky-455">Vol. 01 / Advisory Series</span>
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <h3 className="text-lg font-extrabold text-white tracking-tight leading-snug">
+                      Reduce the Cost: Microsoft Licensing Guide
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">Strategic Enterprise Procurement & EA Restructuring</p>
+                  </div>
+                </div>
+
+                {/* Info and Purchase details */}
+                <div className="p-6 space-y-5">
+                  <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                    The ultimate master guide meticulously designed to teach enterprise leaders, IT directors, and finance officers how to systematically analyze, optimize, and negotiate Microsoft Enterprise Agreements (EA) and Server and Cloud Enrollments (SCE).
+                  </p>
+
+                  <div className="space-y-2.5">
+                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-slate-500 font-mono">Core Insights inside:</h4>
+                    <ul className="space-y-1.5">
+                      {[
+                        "Enterprise Agreement (EA) audit frameworks to spot hidden optimization gaps",
+                        "Strategic negotiation mechanics to use during contractual true-up periods",
+                        "How to transition from expensive legacy licensing to optimized cloud plans",
+                        "Techniques to prevent unnecessary vendor lock-in and audit-related penalties"
+                      ].map((bullet, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs text-slate-350">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <hr className="border-slate-850" />
+
+                  <div className="flex items-center justify-between gap-4 font-sans">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550">Advisory Format</div>
+                      <div className="text-xs font-bold text-slate-205">Interactive eBook (PDF)</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550 text-right">Publisher</div>
+                      <span className="text-xs font-bold text-sky-400 font-mono">ashguth.gumroad.com</span>
+                    </div>
+                  </div>
+
+                  <a
+                    href="https://ashguth.gumroad.com/l/Reducethecost"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-sky-600 hover:bg-sky-500 text-white font-extrabold font-sans rounded-xl text-xs transition cursor-pointer shadow-lg shadow-sky-500/5 hover:shadow-sky-500/10 text-center"
+                  >
+                    <span>View Product on Gumroad</span>
+                    <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Product 2: Payhip */}
+              <div className="border rounded-2xl overflow-hidden relative transition-all duration-200 bg-[#0c1122]/90 border-slate-800/80 hover:border-slate-700/80 shadow-2xl">
+                <div className="absolute top-0 right-0 p-3 z-10 font-sans">
+                  <span className="text-[9px] font-mono font-bold tracking-widest uppercase bg-indigo-505/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/25">
+                    PAYHIP EXCLUSIVE
+                  </span>
+                </div>
+                
+                {/* Visual Cover/Hero of the Book */}
+                <div className="h-44 bg-gradient-to-br from-indigo-950 to-[#1e1b4b] border-b border-slate-850 p-6 flex flex-col justify-between relative overflow-hidden">
+                  {/* Grid Lines for Book Cover */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,#312e81_1px,transparent_1px),linear-gradient(to_bottom,#312e81_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30"></div>
+                  
+                  <div className="flex justify-between items-start relative z-10">
+                    <BookOpen className="w-10 h-10 text-indigo-400" />
+                    <span className="text-xs font-mono font-bold text-indigo-305">Sovereign Series / Blueprints</span>
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <h3 className="text-lg font-extrabold text-white tracking-tight leading-snug">
+                      Microsoft Licensing Strategy Guide
+                    </h3>
+                    <p className="text-xs text-indigo-300 mt-1">Sovereign Optimization & Procurement Playbook</p>
+                  </div>
+                </div>
+
+                {/* Info and Purchase details */}
+                <div className="p-6 space-y-5">
+                  <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                    A premium tactical workflow guide offering direct actionable tools, procurement calculators, and strategic contract outlines to streamline enterprise vendor governance and maximize Azure discounts.
+                  </p>
+
+                  <div className="space-y-2.5">
+                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-slate-550 font-mono">Core Insights inside:</h4>
+                    <ul className="space-y-1.5">
+                      {[
+                        "Pre-negotiation checklist for enterprise procurement groups",
+                        "Direct co-investment guidelines using Microsoft ECIF metrics",
+                        "Checklists for profiling and comparing top tier ANZ licensing partners",
+                        "Comprehensive worksheets to audit and contain public cloud sprawl"
+                      ].map((bullet, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs text-slate-350">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <hr className="border-slate-850" />
+
+                  <div className="flex items-center justify-between gap-4 font-sans">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550">Advisory Format</div>
+                      <div className="text-xs font-bold text-slate-205">Digital Resource Bundle</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider font-mono font-bold text-slate-550 text-right">Publisher</div>
+                      <span className="text-xs font-bold text-indigo-400 font-mono">payhip.com/b/kzEqY</span>
+                    </div>
+                  </div>
+
+                  <a
+                    href="https://payhip.com/b/kzEqY"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-505 text-white font-extrabold font-sans rounded-xl text-xs transition cursor-pointer shadow-lg shadow-indigo-500/5 hover:shadow-indigo-500/10 text-center"
+                  >
+                    <span>View Product on Payhip</span>
+                    <ArrowUpRight className="w-4 h-4 ml-1.5" />
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Trust Banner */}
+            <div className="bg-[#0b0f19] border border-slate-800 p-6 rounded-2xl relative overflow-hidden font-sans">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-sky-500/10 text-sky-400 rounded-2xl">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Secure External Checkout Secured By Payhip & Gumroad</h4>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Our products are listed on globally trusted digital goods providers with secure encrypted payments. Immediate download delivery.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+
         {activeMainView === "admin-console" && (
           <div className="space-y-8 animate-in fade-in duration-200">
             {/* Admin Header Banner */}
@@ -11043,6 +11265,26 @@ ${advice}
                       </div>
                     </button>
                   )}
+
+                  {/* Playbooks Store */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMainView("playbooks");
+                      setIsMobileMoreMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                      activeMainView === "playbooks"
+                        ? "bg-slate-800 border-indigo-500/50 text-white"
+                        : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                    }`}
+                  >
+                    <ShoppingBag className="w-4 h-4 text-sky-400" />
+                    <div className="text-left">
+                      <div className="text-[11px] font-bold">Playbooks Store</div>
+                      <div className="text-[9px] text-slate-500">Premium advisory publications</div>
+                    </div>
+                  </button>
 
                   {/* Admin Console */}
                   <button
