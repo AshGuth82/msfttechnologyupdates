@@ -10671,10 +10671,9 @@ ${advice}
                     subtitle: "Strategic Enterprise Procurement & EA Restructuring",
                     description: "This is a practical guide in how to identify and remove any Zombie licenses form your Microsoft restate... And why it should save you money and why you should do this before ever negotiating with Microsoft... If you want to know more please do not hesitate ot DM me!!\n\nThe download includes a 1x 2 Page PDF as well as a 1x Notepad document with code that you can use to identify any licenses that can be reduced in your environment!",
                     insights: [
-                      "Enterprise Agreement (EA) audit frameworks to spot hidden optimization gaps",
-                      "Strategic negotiation mechanics to use during contractual true-up periods",
-                      "How to transition from expensive legacy licensing to optimized cloud plans",
-                      "Techniques to prevent unnecessary vendor lock-in and audit-related penalties"
+                      "Stop Funding \"Zombie\" Seats: Instantly identify unassigned, inactive, or over-provisioned Microsoft licenses that are quietly draining your IT budget every month.",
+                      "Immediate ROI: The cost of this playbook pays for itself the moment you identify and remove your very first unused license.",
+                      "Maximized IT Spend: Reallocate wasted licensing funds toward the projects and infrastructure that actually drive your business forward."
                     ],
                     format: "Interactive eBook (PDF)",
                     topic: "Enterprise Agreements",
@@ -10691,10 +10690,9 @@ ${advice}
                     subtitle: "Sovereign Optimization & Procurement Playbook",
                     description: "This is a practical guide in how to identify and remove any Zombie licenses form your Microsoft restate... And why it should save you money and why you should do this before ever negotiating with Microsoft... If you want to know more please do not hesitate ot DM me!!\n\nThe download includes a 1x 2 Page PDF as well as a 1x Notepad document with code that you can use to identify any licenses that can be reduced in your environment!",
                     insights: [
-                      "Pre-negotiation checklist for enterprise procurement groups",
-                      "Direct co-investment guidelines using Microsoft ECIF metrics",
-                      "Checklists for profiling and comparing top tier ANZ licensing partners",
-                      "Comprehensive worksheets to audit and contain public cloud sprawl"
+                      "Stop Funding \"Zombie\" Seats: Instantly identify unassigned, inactive, or over-provisioned Microsoft licenses that are quietly draining your IT budget every month.",
+                      "Immediate ROI: The cost of this playbook pays for itself the moment you identify and remove your very first unused license.",
+                      "Maximized IT Spend: Reallocate wasted licensing funds toward the projects and infrastructure that actually drive your business forward."
                     ],
                     format: "Digital Resource Bundle",
                     topic: "Cloud Procurement",
