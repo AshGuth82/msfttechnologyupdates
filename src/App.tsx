@@ -693,8 +693,8 @@ export default function App() {
     }
   });
 
-  // Coming Soon Gateway State (Starts as false so visitors landing here see the teaser first, entering email unlocks)
-  const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(false);
+  // Coming Soon Gateway State (Fully bypassed to show main website directly)
+  const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(true);
 
   // Mobile App Simulation Workspace (PWA Simulator)
   const [isMobileSimulated, setIsMobileSimulated] = useState<boolean>(false);
