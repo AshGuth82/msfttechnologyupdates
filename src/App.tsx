@@ -1945,8 +1945,19 @@ ${advice}
       try {
         const querySnapshot = await getDocs(collection(db, "subscribers"));
         const list: any[] = [];
+        const seenEmails = new Set<string>();
+        
         querySnapshot.forEach((docRef) => {
-          list.push({ ...docRef.data() });
+          const data = docRef.data();
+          if (data && data.email) {
+            const emailKey = data.email.toLowerCase();
+            if (!seenEmails.has(emailKey)) {
+              seenEmails.add(emailKey);
+              list.push({ ...data });
+            }
+          } else {
+            list.push({ ...data });
+          }
         });
         
         if (list.length > 0) {
@@ -1976,8 +1987,21 @@ ${advice}
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data)) {
-              setSubscriptionsList(data);
-              localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(data));
+              const uniqueData: any[] = [];
+              const fallbackSeen = new Set<string>();
+              data.forEach(item => {
+                if (item && item.email) {
+                  const eKey = item.email.toLowerCase();
+                  if (!fallbackSeen.has(eKey)) {
+                    fallbackSeen.add(eKey);
+                    uniqueData.push(item);
+                  }
+                } else {
+                  uniqueData.push(item);
+                }
+              });
+              setSubscriptionsList(uniqueData);
+              localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(uniqueData));
             }
           }
         } catch (fallbackErr) {
@@ -4210,22 +4234,23 @@ ${advice}
                                 capitalizedName = "Priority Viewer";
                               }
 
-                              const subId = "sub-" + Math.random().toString(36).substring(2, 9);
+                              const existingGatewaySub = subscriptionsList.find(s => s.email.toLowerCase() === trimmedEmail.toLowerCase());
+                              const subId = existingGatewaySub ? existingGatewaySub.id : "sub-" + Math.random().toString(36).substring(2, 9);
                               const newSub = {
                                 id: subId,
-                                username: finalUsername,
-                                name: capitalizedName,
+                                username: existingGatewaySub ? existingGatewaySub.username : finalUsername,
+                                name: existingGatewaySub ? existingGatewaySub.name : capitalizedName,
                                 email: trimmedEmail.toLowerCase(),
-                                org: "Priority Web Gateway",
-                                role: "Beta Preview Participant",
-                                categories: [
+                                org: existingGatewaySub ? existingGatewaySub.org : "Priority Web Gateway",
+                                role: existingGatewaySub ? existingGatewaySub.role : "Beta Preview Participant",
+                                categories: existingGatewaySub ? existingGatewaySub.categories : [
                                   "technology_updates",
                                   "licensing_pricing",
                                   "anz_strategy",
                                   "cloud_transformations"
                                 ] as NewsCategory[],
-                                frequency: "monthly",
-                                date: new Date().toLocaleDateString()
+                                frequency: existingGatewaySub ? existingGatewaySub.frequency : "monthly",
+                                date: existingGatewaySub ? existingGatewaySub.date : new Date().toLocaleDateString()
                               };
 
                               // 1. Direct persistent Firestore database registration
