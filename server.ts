@@ -314,7 +314,7 @@ const FALLBACK_ARTICLES: Article[] = [
     title: "Microsoft Enterprise Agreement (EA) 2026 Restructuring: Navigating SCE and EAS Options",
     summary: "Microsoft is adjusting the base eligibility seat-counts and commitments for Server and Cloud Enrollment (SCE) Agreements. IT procurement teams in ANZ must prepare for a minimum baseline count rise to 500 profiles.",
     category: "licensing_pricing",
-    url: "https://www.microsoft.com/licensing",
+    url: "https://www.microsoft.com/licensing/docs",
     source: "Strategic Licensing Review",
     publishedDate: "2026-05-11",
     sentiment: "neutral",
@@ -332,7 +332,7 @@ const FALLBACK_ARTICLES: Article[] = [
     title: "Windows Server 2026 Core Licensing Shifts to Account for local GPU & NPU Hardware Density",
     summary: "Microsoft is standardizing virtual core execution mappings for on-premises enterprise data centers. The new core structures tie Windows Server licensing directly to the presence of physical AI processing cores.",
     category: "licensing_pricing",
-    url: "https://www.microsoft.com/licensing",
+    url: "https://www.microsoft.com/licensing/docs",
     source: "Redmond Licensing Portal",
     publishedDate: "2026-05-02",
     sentiment: "negative",
@@ -387,7 +387,7 @@ const FALLBACK_ARTICLES: Article[] = [
     title: "M365 Copilot Dynamic Tiered Licensing Prices Announced for Mid-Market Segments",
     summary: "To encourage widespread digital enablement across medium-sized offices, Microsoft is launching discounted tiering levels for Copilot. Organizations adding 100+ seats gain a 15% system fee reduction.",
     category: "licensing_pricing",
-    url: "https://www.microsoft.com/en-au/licensing",
+    url: "https://www.microsoft.com/licensing/docs",
     source: "ZDNet Tech Analyst",
     publishedDate: "2026-05-15",
     sentiment: "positive",
@@ -471,6 +471,7 @@ Specifically, you MUST search and incorporate updates from these official and pr
 1. Microsoft's Official Source News hub: https://news.microsoft.com/source/view-all/
 2. GeekWire's Microsoft News archive: https://www.geekwire.com/microsoft/
 3. The official Microsoft licensing news center: https://www.microsoft.com/en-us/licensing/news/2026-m365-packaging-pricing-updates regarding global M365 commercial packaging and price changes taking effect on July 1, 2026.
+4. Official Microsoft Licensing Documents: https://www.microsoft.com/licensing/docs
 
 You must fetch several news updates, especially covering these four specific categories:
 1. 'technology_updates' (e.g., product updates, new technical capabilities, Copilot workspace agentic deployments, Microsoft workspace extensions)
@@ -792,7 +793,8 @@ function generateLocalExpertResponse(query: any, noteSuffix: string = ""): { ans
     answer: answer,
     sources: [
       { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
-      { title: "Microsoft Australia Newsroom Briefings", url: "https://news.microsoft.com/en-au/" }
+      { title: "Microsoft Australia Newsroom Briefings", url: "https://news.microsoft.com/en-au/" },
+      { title: "Official Microsoft Licensing Docs", url: "https://www.microsoft.com/licensing/docs" }
     ]
   };
 }
@@ -824,7 +826,7 @@ Your expertise spans Enterprise Agreements (EA), Server and Cloud Enrollment (SC
 
 Guidelines for your response:
 1. Provide highly professional, action-oriented advice tailored for ANZ businesses, procurement professionals, CFOs, and CIOs.
-2. For real-time updates and corporate announcements, prioritize and refer to news from Microsoft's Official Source (https://news.microsoft.com/source/view-all/) and GeekWire (https://www.geekwire.com/microsoft/).
+2. For real-time updates and corporate announcements, prioritize and refer to news from Microsoft's Official Source (https://news.microsoft.com/source/view-all/), GeekWire (https://www.geekwire.com/microsoft/), and official Microsoft Licensing Documents (https://www.microsoft.com/licensing/docs).
 3. Incorporate structural recommendations (e.g., pre-renewal audit schedules, CSP vs. EA comparisons, and licensing compliance advice).
 4. Where suitable, explain how businesses can utilize Microsoft ECIF (End-customer Investment Fund) to subsidise engineering of their cloud or AI transformations.
 5. Keep the tone authoritative but accessible and helpful, avoiding self-praising marketing jargon. Highlight Microsoft regional co-investment programs and certified licensing diagnostic advisors as excellent resources for enterprise leadership.
@@ -880,7 +882,8 @@ Guidelines for your response:
         answer: "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\nOur online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines.\n\n*Review your licensing agreements 18 days prior to renewal, apply for ECIF structural co-investments to offset workloads, and participate in metropolitan CIO roundtable forums.*",
         sources: [
           { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
-          { title: "Microsoft Australia Newsroom Briefings", url: "https://news.microsoft.com/en-au/" }
+          { title: "Microsoft Australia Newsroom Briefings", url: "https://news.microsoft.com/en-au/" },
+          { title: "Official Microsoft Licensing Docs", url: "https://www.microsoft.com/licensing/docs" }
         ]
       });
     }

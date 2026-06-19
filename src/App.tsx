@@ -79,6 +79,7 @@ import { db, collection, getDocs, doc, setDoc, deleteDoc } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
 import { MicrosoftAIBusiness } from "./components/MicrosoftAIBusiness";
 import { ContractAuditor } from "./components/ContractAuditor";
+import { LicensingDocs } from "./components/LicensingDocs";
 import DynamicSetupTutorials from "./components/DynamicSetupTutorials";
 import { ProjectRoadmap } from "./components/ProjectRoadmap";
 
@@ -758,7 +759,7 @@ export default function App() {
   const [playbookTopicFilter, setPlaybookTopicFilter] = useState("all");
   const [playbookFormatFilter, setPlaybookFormatFilter] = useState("all");
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks" | "licensing-docs">("briefings");
   const [auditorSubView, setAuditorSubView] = useState<"auditor" | "tutorials">("auditor");
 
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
@@ -4654,6 +4655,24 @@ ${advice}
               <span className="flex items-center gap-1.5">
                 <span>Playbooks Store</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+S</kbd>
+              </span>
+            </button>
+
+            <button
+              id="global-nav-licensing-docs"
+              onClick={() => {
+                setActiveMainView("licensing-docs");
+                setActiveReviewId(null);
+              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "licensing-docs"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5">
+                <span>Licensing Docs</span>
               </span>
             </button>
 
@@ -10467,6 +10486,10 @@ ${advice}
           </div>
         )}
 
+        {activeMainView === "licensing-docs" && (
+          <LicensingDocs />
+        )}
+
         {activeMainView === "playbooks" && (
           <div className="space-y-8 animate-in fade-in duration-200">
             {/* Header Banner */}
@@ -11284,6 +11307,25 @@ ${advice}
                     <div className="text-left">
                       <div className="text-[11px] font-bold">Playbooks Store</div>
                       <div className="text-[9px] text-slate-500">Premium advisory publications</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMainView("licensing-docs");
+                      setIsMobileMoreMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                      activeMainView === "licensing-docs"
+                        ? "bg-slate-800 border-indigo-500/50 text-white"
+                        : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 text-sky-400" />
+                    <div className="text-left">
+                      <div className="text-[11px] font-bold">Licensing Docs</div>
+                      <div className="text-[9px] text-slate-500">View official documentation</div>
                     </div>
                   </button>
 
