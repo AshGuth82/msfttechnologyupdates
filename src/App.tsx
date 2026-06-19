@@ -68,7 +68,9 @@ import {
   Menu,
   ShoppingBag,
   BookOpen,
-  Newspaper
+  Newspaper,
+  LayoutGrid,
+  List
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -79,7 +81,7 @@ import { ContractAuditor } from "./components/ContractAuditor";
 import DynamicSetupTutorials from "./components/DynamicSetupTutorials";
 import { ProjectRoadmap } from "./components/ProjectRoadmap";
 
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, Reorder } from "motion/react";
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -1496,7 +1498,9 @@ ${advice}
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory | "all">("all");
   const [selectedTopic, setSelectedTopic] = useState<"all" | "Security" | "Hardware" | "Leadership">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">("date");
+  const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">(
+    () => (localStorage.getItem("microsoft_intel_sort_by") as "date" | "impact" | "sentiment" | "manual") || "date"
+  );
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   const [expandedSavedId, setExpandedSavedId] = useState<string | null>(null);
   const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M" | "6M" | "1Y">("1M");
@@ -1889,7 +1893,18 @@ ${advice}
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("microsoft_intel_sort_by", sortBy);
+  }, [sortBy]);
+
   const [groupingMode, setGroupingMode] = useState<"flat" | "category">("flat");
+  const [viewLayout, setViewLayout] = useState<"list" | "grid">(
+    () => (localStorage.getItem("microsoft_intel_view_layout") as "list" | "grid") || "list"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("microsoft_intel_view_layout", viewLayout);
+  }, [viewLayout]);
 
   // Subscription Form State (Persisted in localStorage and backed by Server-Side Registry)
   const [subUsername, setSubUsername] = useState<string>("");
@@ -2250,6 +2265,7 @@ ${advice}
     updated[targetFullIdx] = temp;
 
     setArticles(updated);
+    localStorage.setItem("microsoft_intel_custom_sort_order", JSON.stringify(updated.map(a => a.id)));
 
     if (sortBy !== "manual") {
       setSortBy("manual");
@@ -2273,6 +2289,7 @@ ${advice}
     updated.splice(targetIdx, 0, removed);
 
     setArticles(updated);
+    localStorage.setItem("microsoft_intel_custom_sort_order", JSON.stringify(updated.map(a => a.id)));
 
     if (sortBy !== "manual") {
       setSortBy("manual");
@@ -2875,6 +2892,24 @@ ${advice}
       }
       
       const combined = [...localCustom, ...rawArticles.filter((ra: any) => !localCustom.some((lc: any) => lc.id === ra.id))];
+      
+      const customOrderStr = localStorage.getItem("microsoft_intel_custom_sort_order");
+      if (customOrderStr) {
+        try {
+          const customOrder: string[] = JSON.parse(customOrderStr);
+          if (customOrder.length > 0) {
+            combined.sort((a, b) => {
+              const aIdx = customOrder.indexOf(a.id);
+              const bIdx = customOrder.indexOf(b.id);
+              if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+              if (aIdx !== -1) return -1;
+              if (bIdx !== -1) return 1;
+              return 0;
+            });
+          }
+        } catch(e) {}
+      }
+      
       setArticles(combined);
       setLastUpdated(data.lastUpdated || new Date().toISOString());
       setIsLive(data.isLive || false);
@@ -2923,6 +2958,24 @@ ${advice}
       }
       
       const combined = [...localCustom, ...LOCAL_FALLBACK_ARTICLES.filter((ra: any) => !localCustom.some((lc: any) => lc.id === ra.id))];
+      
+      const customOrderStr = localStorage.getItem("microsoft_intel_custom_sort_order");
+      if (customOrderStr) {
+        try {
+          const customOrder: string[] = JSON.parse(customOrderStr);
+          if (customOrder.length > 0) {
+            combined.sort((a, b) => {
+              const aIdx = customOrder.indexOf(a.id);
+              const bIdx = customOrder.indexOf(b.id);
+              if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+              if (aIdx !== -1) return -1;
+              if (bIdx !== -1) return 1;
+              return 0;
+            });
+          }
+        } catch(e) {}
+      }
+      
       setArticles(combined);
       setLastUpdated(new Date().toISOString());
       setIsLive(false);
@@ -7010,6 +7063,33 @@ ${advice}
                   )}
                 </h3>
                 <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex items-center bg-slate-950/60 border border-slate-800 p-0.5 rounded-lg mr-1 shrink-0">
+                    <button
+                      onClick={() => setViewLayout("list")}
+                      type="button"
+                      className={`p-1.5 rounded transition cursor-pointer ${
+                        viewLayout === "list"
+                          ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20"
+                          : "text-slate-500 hover:text-slate-300 border border-transparent"
+                      }`}
+                      title="List View"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setViewLayout("grid")}
+                      type="button"
+                      className={`p-1.5 rounded transition cursor-pointer ${
+                        viewLayout === "grid"
+                          ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20"
+                          : "text-slate-500 hover:text-slate-300 border border-transparent"
+                      }`}
+                      title="Grid View (easier for reorganizing)"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  
                   {/* View Grouping Toggle */}
                   <div className="flex items-center bg-slate-950/60 border border-slate-800 p-0.5 rounded-lg mr-1 shrink-0">
                     <button
@@ -7119,7 +7199,7 @@ ${advice}
                   )}
                 </div>
               ) : (
-                <div id="articles-list" className="flex flex-col gap-4">
+                <div id="articles-list" className={viewLayout === "grid" && groupingMode === "flat" ? "grid grid-cols-1 md:grid-cols-2 gap-4 pb-2" : "flex flex-col gap-4 pb-2"}>
                   {groupingMode === "flat" ? (
                     <AnimatePresence>
                       {filteredArticles.map((article) => {
@@ -7136,12 +7216,14 @@ ${advice}
                             key={article.id}
                             id={`article-${article.id}`}
                             className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
-                              expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
-                            } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
+                              expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl md:col-span-2 lg:col-span-2" : "border-slate-800/80"
+                            } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""} ${viewLayout === 'grid' && !expanded ? 'h-full flex flex-col' : ''}`}
                           draggable
                           onDragStart={(e) => {
                             draggedIdRef.current = article.id;
                             e.currentTarget.style.opacity = "0.4";
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", article.id);
                           }}
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = "1";
@@ -7551,7 +7633,7 @@ ${advice}
                             </div>
 
                             {/* Articles list block within this category */}
-                            <div className="flex flex-col gap-4 pl-0 sm:pl-3 border-l-0 sm:border-l sm:border-slate-800/40">
+                            <div className={viewLayout === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4 pl-0 sm:pl-3 border-l-0 sm:border-l sm:border-slate-800/40" : "flex flex-col gap-4 pl-0 sm:pl-3 border-l-0 sm:border-l sm:border-slate-800/40"}>
                               <AnimatePresence>
                                 {categoryArticles.map((article) => {
                                   const expanded = expandedArticleId === article.id;
@@ -7567,12 +7649,14 @@ ${advice}
                                       key={article.id}
                                       id={`article-grouped-${article.id}`}
                                       className={`bg-[#111827] border hover:border-slate-700 rounded-xl transition duration-200 relative ${
-                                        expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl" : "border-slate-800/80"
-                                      } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""}`}
+                                        expanded ? "ring-1 ring-sky-500/30 border-slate-700 shadow-xl md:col-span-2 lg:col-span-2" : "border-slate-800/80"
+                                      } ${pinnedIds.includes(article.id) ? "border-l-2 border-l-sky-500 bg-sky-500/[0.02]" : ""} ${dragOverArticleId === article.id ? "border-sky-500 bg-sky-500/10 scale-[0.99] shadow-inner" : ""} ${viewLayout === 'grid' && !expanded ? 'h-full flex flex-col' : ''}`}
                                     draggable
                                     onDragStart={(e) => {
                                       draggedIdRef.current = article.id;
                                       e.currentTarget.style.opacity = "0.4";
+                                      e.dataTransfer.effectAllowed = "move";
+                                      e.dataTransfer.setData("text/plain", article.id);
                                     }}
                                     onDragEnd={(e) => {
                                       e.currentTarget.style.opacity = "1";
