@@ -6,7 +6,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { Article, CachedNews } from "./src/types";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, getDocs, collection, setDoc, deleteDoc } from "firebase/firestore";
@@ -45,14 +45,16 @@ if (fs.existsSync(configPath)) {
 
 let db: any = null; // Server-side operations utilize the JSON database backup on the filesystem to prevent serverless function hangs and timeouts (FUNCTION_INVOCATION_FAILED) caused by Web SDK socket handles. Frontend clients handle direct real-time Firestore synchronization.
 
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
+// Operation types for error handling
+type OperationType = 'create' | 'update' | 'delete' | 'list' | 'get' | 'write';
+const OperationType = {
+  CREATE: 'create' as OperationType,
+  UPDATE: 'update' as OperationType,
+  DELETE: 'delete' as OperationType,
+  LIST: 'list' as OperationType,
+  GET: 'get' as OperationType,
+  WRITE: 'write' as OperationType,
+};
 
 interface FirestoreErrorInfo {
   error: string;
@@ -833,14 +835,11 @@ Guidelines for your response:
 6. Format your response beautifully in clean Markdown with logical headings, bullet lists, and key items in bold.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3.5-flash",
       contents: queryText,
       config: {
         systemInstruction: systemPrompt,
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: {
-          thinkingLevel: ThinkingLevel.HIGH
-        }
+        tools: [{ googleSearch: {} }]
       }
     });
 
