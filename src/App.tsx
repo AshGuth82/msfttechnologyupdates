@@ -695,8 +695,10 @@ export default function App() {
     }
   });
 
-  // Coming Soon Gateway State (Fully bypassed to show main website directly)
-  const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(true);
+  // Gateway State (requires email login)
+  const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(() => {
+    return localStorage.getItem("coming_soon_bypassed") === "true";
+  });
 
   // Mobile App Simulation Workspace (PWA Simulator)
   const [isMobileSimulated, setIsMobileSimulated] = useState<boolean>(false);
@@ -3910,9 +3912,9 @@ ${advice}
 
             {/* State indicators */}
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 bg-sky-500/10 text-sky-400 text-xs font-mono px-3 py-1.5 rounded-full border border-sky-500/30">
-                <span className="h-2 w-2 rounded-full bg-sky-400 animate-pulse"></span>
-                ANZ Region Stage: In-Dev Gold Beta
+              <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 text-xs font-mono px-3 py-1.5 rounded-full border border-emerald-500/30">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                System Status: Online & Secure
               </span>
               <button
                 onClick={() => {
@@ -3920,17 +3922,12 @@ ${advice}
                   if (element) {
                     element.scrollIntoView({ behavior: "smooth", block: "center" });
                     element.focus();
-                    addToast(
-                      "cloud_transformations",
-                      "Email Registration Required",
-                      "Please register your corporate email below to instantly unlock the live preview."
-                    );
                   }
                 }}
                 className={`text-xs font-sans font-bold px-4 py-2 hover:opacity-90 transition duration-150 rounded-lg cursor-pointer shadow-md flex items-center gap-1.5 shrink-0 ${isDark ? "bg-white text-slate-950" : "bg-slate-900 text-white"}`}
               >
-                <Mail className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
-                <span>Unlock Preview with Email</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                <span>Go to Login</span>
               </button>
             </div>
           </div>
@@ -3939,59 +3936,28 @@ ${advice}
             {/* Left Main Teaser Column */}
             <div className="lg:col-span-7 space-y-8">
               
-              {/* Coming Soon Teaser Hero */}
+              {/* Login/Authentication Hero */}
               <div className={`border rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-2xl transition-colors ${isDark ? "bg-[#111827] border-slate-800" : "bg-white border-slate-200"}`}>
                 <div className="absolute top-0 right-0 h-40 w-40 bg-sky-500/5 rounded-full blur-3xl"></div>
                 <div className="absolute -bottom-10 -left-10 h-32 w-32 bg-indigo-500/5 rounded-full blur-2xl"></div>
 
                 <div className="space-y-4">
-                  <div className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-500 dark:text-amber-300 border border-amber-500/20 rounded-full px-3 py-1 text-xs font-mono font-medium">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Launch Teaser Stage Live</span>
+                  <div className="inline-flex items-center gap-1 bg-sky-500/10 text-sky-500 dark:text-sky-400 border border-sky-500/20 rounded-full px-3 py-1 text-xs font-mono font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Secure Access Gateway</span>
                   </div>
 
                   <h2 className={`text-xl md:text-2xl font-extrabold leading-snug ${isDark ? "text-white" : "text-slate-900"}`}>
-                    Unveiling the Premier Intelligence Hub & Tracking Gateway for Microsoft News, Technology Updates & Enterprise Licensing.
+                    Sign in to the Corporate Intelligence Hub
                   </h2>
 
                   <p className={`text-xs leading-relaxed max-w-xl ${isDark ? "text-slate-300" : "text-slate-600"}`}>
-                    Whether you are keeping up with rapid Microsoft AI innovations, tracking sovereign Azure services, or navigating the complexities of enterprise licensing models across the ANZ region, the Corporate Intelligence Hub acts as your single source of strategy truth.
+                    Welcome to the central intelligence gateway for Microsoft News, Technology Updates & Enterprise Licensing. Enter your registered corporate email to securely access the latest sovereign updates, cloud financial optimizers, and market intelligence reports.
                   </p>
 
                   <p className="text-xs text-slate-455 font-mono">
-                    *Platform undergoes final compliance audit under Microsoft Partner Security Agreement standards. Official regional release: Thursday, 18 June 2026 at 4:00 PM Sydney Time.
+                    *Access is restricted to verified ANZ regional enterprise partners and Microsoft personnel.
                   </p>
-                </div>
-
-                {/* Countdown Grid Label */}
-                <div className="flex items-center justify-between mt-6 px-1">
-                  <span className="text-[10px] font-mono font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Dynamic Countdown Engine
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-500">
-                    Syd (AEST UTC+10) Live Track
-                  </span>
-                </div>
-
-                {/* Countdown Grid */}
-                <div className={`grid grid-cols-4 gap-3 p-4 rounded-2xl border mt-2 font-mono text-center ${isDark ? "bg-slate-950/60 border-slate-900/80" : "bg-slate-50 border-slate-200"}`}>
-                  <div>
-                    <div className="text-2xl md:text-3xl font-extrabold text-sky-500 dark:text-sky-400 select-none">{countdownDays}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Days</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl md:text-3xl font-extrabold text-orange-500 dark:text-orange-400 select-none">{countdownHours}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Hours</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl md:text-3xl font-extrabold text-emerald-500 dark:text-emerald-400 select-none">{countdownMinutes}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Mins</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl md:text-3xl font-extrabold text-indigo-500 dark:text-indigo-400 animate-pulse select-none">{countdownSeconds}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Secs</div>
-                  </div>
                 </div>
               </div>
 
@@ -4038,228 +4004,62 @@ ${advice}
             </div>
 
             {/* Right Interactive Sidebar Column */}
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-5 flex items-center">
               
-              {/* Interactive Teaser 1: Azure Spend Optimization Calculator Slider */}
-              <div className={`border rounded-2xl p-5 relative overflow-hidden shadow-xl ${isDark ? "bg-[#111827] border-slate-800" : "bg-white border-slate-200"}`}>
-                <div className="absolute top-0 right-0 h-16 w-16 bg-sky-500/5 rounded-full blur-xl"></div>
-                <div className={`flex items-center gap-2 pb-3 border-b mb-4 ${isDark ? "border-slate-800" : "border-slate-100"}`}>
-                  <Coins className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+              {/* Main Authentication Gate */}
+              <div className={`w-full border rounded-2xl p-6 relative overflow-hidden shadow-2xl ${isDark ? "bg-[#111827] border-slate-800" : "bg-white border-slate-200"}`}>
+                <div className={`flex items-center gap-2 pb-4 border-b mb-6 ${isDark ? "border-slate-800" : "border-slate-100"}`}>
+                  <ShieldCheck className="w-5 h-5 text-sky-500 dark:text-sky-400" />
                   <div>
-                    <h4 className={`text-xs font-bold uppercase tracking-wider font-mono ${isDark ? "text-slate-200" : "text-slate-900"}`}>
-                      FinOps Optimization Calculator
+                    <h4 className={`text-sm font-bold tracking-tight font-mono ${isDark ? "text-slate-200" : "text-slate-900"}`}>
+                      Identity Verification
                     </h4>
-                    <p className="text-[9px] text-slate-500 font-mono mt-0.5">Explore potential cloud recovery rates prior to pilot</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between text-xs font-mono mb-1.5">
-                      <span className={`${isDark ? "text-slate-400" : "text-slate-600"}`}>Monthly ANZ Azure Spend:</span>
-                      <strong className="text-sky-500 dark:text-sky-400">A${(teaserCloudSpend).toLocaleString()}</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="15000"
-                      max="1500000"
-                      step="15000"
-                      value={teaserCloudSpend}
-                      onChange={(e) => setTeaserCloudSpend(Number(e.target.value))}
-                      className="w-full h-1.5 bg-slate-200 dark:bg-slate-950 rounded-lg appearance-none cursor-ew-resize accent-sky-500"
-                    />
-                    <div className="flex justify-between text-[8.5px] text-slate-500 font-mono mt-1">
-                      <span>A$15k/mo</span>
-                      <span>A$750k/mo</span>
-                      <span>A$1.5M/mo</span>
-                    </div>
-                  </div>
-
-                  <div className={`p-3 rounded-lg border grid grid-cols-2 gap-3 text-center ${isDark ? "bg-slate-950/60 border-slate-900" : "bg-slate-50 border-slate-200"}`}>
-                    <div>
-                      <span className="text-[9px] font-mono text-slate-500 block uppercase tracking-wide">Avg Partner Savings</span>
-                      <strong className={`text-xs font-bold ${isDark ? "text-slate-200" : "text-slate-800"}`}>28.5% Recovery Rate</strong>
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-mono text-slate-500 block uppercase tracking-wide">Annual Target Recovers</span>
-                      <strong className="text-xs font-extrabold text-emerald-500 dark:text-emerald-400 font-mono">
-                        A${(teaserCloudSpend * 0.285 * 12).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <p className={`text-[10px] font-mono text-center leading-normal ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-                    💡 <strong>Pro-Tip:</strong> Verified gold partners listed inside our hub are pre-certified to leverage direct Microsoft <strong>ECIF</strong> subsidies to offset up to A$100,000 of initial consultant discovery and scoping fees!
-                  </p>
-                </div>
-              </div>
-
-              {/* Interactive Teaser 2: MS Partnership Quiz */}
-              <div className={`border rounded-2xl p-5 relative overflow-hidden shadow-xl ${isDark ? "bg-[#111827] border-slate-800" : "bg-white border-slate-200"}`}>
-                <div className={`flex items-center gap-2 pb-3 border-b mb-4 ${isDark ? "border-slate-800" : "border-slate-100"}`}>
-                  <Award className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                  <div>
-                    <h4 className={`text-xs font-bold uppercase tracking-wider font-mono ${isDark ? "text-slate-200" : "text-slate-900"}`}>
-                      Partnership Intelligence Quiz
-                    </h4>
-                    <p className="text-[9px] text-slate-500 font-mono mt-0.5">Solve the challenge to generate an instant access test token</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  <p className={`text-[11px] leading-normal ${isDark ? "text-slate-300" : "text-slate-700"}`}>
-                    Q: Which Microsoft strategic co-investment framework helps ANZ partners heavily subsidize end-user migration scoping costs?
-                  </p>
-
-                  <div className="flex flex-col gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTeaserQuizAnswer("CSP");
-                        setTeaserQuizResult("incorrect");
-                      }}
-                      className={`p-2.5 rounded-lg border text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
-                        teaserQuizAnswer === "CSP" 
-                          ? "bg-rose-500/10 border-rose-500/30 text-rose-500 dark:text-rose-400" 
-                          : isDark
-                            ? "bg-slate-950/60 border-slate-850 hover:border-slate-800 text-slate-300"
-                            : "bg-dashed bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700 font-medium"
-                      }`}
-                    >
-                      <span>1. CSP (Cloud Solution Provider)</span>
-                      {teaserQuizAnswer === "CSP" && <X className="w-3.5 h-3.5 text-rose-500" />}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTeaserQuizAnswer("ECIF");
-                        setTeaserQuizResult("correct");
-                        addToast(
-                          "cloud_transformations",
-                          "Correct Answer Quiz Unlocked!",
-                          "Amazing! You guessed the pre-qualified funding vehicle! Bypass code unlocked: ANZVIP2026"
-                        );
-                      }}
-                      className={`p-2.5 rounded-lg border text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
-                        teaserQuizAnswer === "ECIF" 
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold" 
-                          : isDark
-                            ? "bg-slate-950/60 border-slate-850 hover:border-slate-800 text-slate-300"
-                            : "bg-dashed bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700 font-medium"
-                      }`}
-                    >
-                      <span>2. ECIF (End-partner Investment Funding)</span>
-                      {teaserQuizAnswer === "ECIF" && <Check className="w-3.5 h-3.5 text-emerald-500 animate-bounce" />}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTeaserQuizAnswer("MCPP");
-                        setTeaserQuizResult("incorrect");
-                      }}
-                      className={`p-2.5 rounded-lg border text-left text-xs font-mono transition flex items-center justify-between cursor-pointer ${
-                        teaserQuizAnswer === "MCPP" 
-                          ? "bg-rose-500/10 border-rose-500/30 text-rose-500 dark:text-rose-400" 
-                          : isDark
-                            ? "bg-slate-950/60 border-slate-850 hover:border-slate-800 text-slate-300"
-                            : "bg-dashed bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700 font-medium"
-                      }`}
-                    >
-                      <span>3. MCPP (Microsoft Cloud Partner Program)</span>
-                      {teaserQuizAnswer === "MCPP" && <X className="w-3.5 h-3.5 text-rose-500" />}
-                    </button>
-                  </div>
-
-                  {teaserQuizResult === "correct" && (
-                    <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg text-center">
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 leading-normal font-mono font-bold">
-                        🎉 Correct! ECIF directly funds up to A$150K for pilot implementations! Passcode `ANZVIP2026` unlocked! Type below or click the Bypass button!
-                      </p>
-                    </div>
-                  )}
-
-                  {teaserQuizResult === "incorrect" && (
-                    <div className="p-3 bg-rose-500/5 border border-rose-500/15 rounded-lg text-center">
-                      <p className="text-[10px] text-rose-500 dark:text-rose-300 leading-normal font-mono">
-                        ❌ Not quite! That's a general framework or agreement. Hint: The program we want subsidizes <strong>initial pilot investments</strong> directly. Try option 2!
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* VIP Priority Subscription & Passcode Gate */}
-              <div className={`border rounded-2xl p-5 relative overflow-hidden shadow-xl ${isDark ? "bg-[#111827] border-slate-800" : "bg-white border-slate-200"}`}>
-                <div className={`flex items-center gap-2 pb-3 border-b mb-4 ${isDark ? "border-slate-800" : "border-slate-100"}`}>
-                  <Mail className="w-4 h-4 text-orange-500 dark:text-orange-400" />
-                  <div>
-                    <h4 className={`text-xs font-bold uppercase tracking-wider font-mono ${isDark ? "text-slate-200" : "text-slate-900"}`}>
-                      ANZ Priority Executive Launch Registry
-                    </h4>
-                    <p className="text-[9px] text-slate-500 font-mono mt-0.5">Subscribe to bulletins or enter early-access VIP credentials</p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">Please provide registered credentials</p>
                   </div>
                 </div>
 
                 {teaserEmailSubmitted ? (
-                  <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/20 text-center space-y-3">
-                    <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-500/10 text-orange-505 border border-orange-500/25">
-                      <Check className="w-5 h-5" />
+                  <div className="p-5 rounded-xl bg-sky-500/5 border border-sky-500/20 text-center space-y-4">
+                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-500/10 text-sky-500 border border-sky-500/25">
+                      <Check className="w-6 h-6" />
                     </div>
-                    <h5 className={`text-xs font-bold ${isDark ? "text-slate-200" : "text-slate-800"}`}>Registered to Priority Bulletin Channel!</h5>
-                    <p className={`text-[11.5px] leading-normal ${isDark ? "text-slate-350" : "text-slate-600"}`}>
-                      Excellent tracking parameters. Your early-access testing sandbox passcode has been generated:
+                    <h5 className={`text-sm font-bold ${isDark ? "text-slate-200" : "text-slate-800"}`}>Identity Verified</h5>
+                    <p className={`text-xs leading-normal ${isDark ? "text-slate-350" : "text-slate-600"}`}>
+                      Session provisioned. Generating secure access token...
                     </p>
-                    <div className={`p-2 text-center rounded-lg border flex items-center justify-between max-w-xs mx-auto ${isDark ? "bg-slate-950 border-slate-900" : "bg-slate-50 border-slate-200"}`}>
-                      <code className="text-xs font-bold text-sky-505 dark:text-sky-400 font-mono pl-2">ANZVIP2026</code>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const code = "ANZVIP2026";
-                          navigator.clipboard.writeText(code);
-                          setCopiedPasscode(true);
-                          setTimeout(() => setCopiedPasscode(false), 2000);
-                          addToast("cloud_transformations", "Passcode Copied", "VIP early access token written to clipboard.");
-                        }}
-                        className={`text-[10px] font-mono px-2 py-1 rounded cursor-pointer transition ${isDark ? "text-slate-400 hover:text-white bg-slate-900 border-slate-800" : "text-slate-600 hover:text-slate-900 bg-white border-slate-200"}`}
-                      >
-                        {copiedPasscode ? "Copied" : "Copy"}
-                      </button>
-                    </div>
                     <button
                       type="button"
                       onClick={() => {
                         setIsComingSoonBypassed(true);
                         localStorage.setItem("coming_soon_bypassed", "true");
-                        addToast("cloud_transformations", "Welcome to Early Access", "Correctly input early access credential! Entered live workspace.");
+                        addToast("cloud_transformations", "Authentication Successful", "Secure session established. Welcome to the intelligence hub.");
                       }}
-                      className="w-full py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-sans font-bold text-[11px] rounded-lg cursor-pointer transition shadow"
+                      className="w-full py-2.5 mt-2 bg-sky-600 hover:bg-sky-500 text-white font-sans font-bold text-xs rounded-lg cursor-pointer transition shadow"
                     >
-                      Apply Token & Enter Platform Now
+                      Enter Platform Domain
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-500">
-                        Join Launch Notification & Receive early Token
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <label className="block text-xs uppercase tracking-wider font-mono font-bold text-slate-500">
+                        Corporate Email Address
                       </label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-3">
                         <input
                           id="teaser-email-input"
                           type="email"
-                          placeholder="e.g. strategic-partner@enterprise.au"
+                          placeholder="name@enterprise.com"
                           value={teaserEmail}
                           onChange={(e) => setTeaserEmail(e.target.value)}
-                          className={`flex-1 text-xs rounded-lg py-1.5 px-3 focus:outline-none focus:border-sky-500 font-sans border ${isDark ? "bg-slate-950 border-slate-850 text-slate-100 placeholder-slate-650" : "bg-white border-slate-200 text-slate-800 placeholder-slate-400"}`}
+                          className={`w-full text-sm rounded-lg py-2.5 px-3 focus:outline-none focus:border-sky-500 font-sans border ${isDark ? "bg-slate-950 border-slate-850 text-slate-100 placeholder-slate-650" : "bg-white border-slate-200 text-slate-800 placeholder-slate-400"}`}
                         />
                         <button
                           type="button"
                           onClick={async () => {
                             const trimmedEmail = teaserEmail.trim();
                             if (!trimmedEmail || !trimmedEmail.includes("@")) {
-                              addToast("licensing_pricing", "Registration Error", "Please provide a valid corporate email address.");
+                              addToast("licensing_pricing", "Authentication Error", "Please provide a valid corporate email address.");
                               return;
                             }
 
@@ -4284,7 +4084,7 @@ ${advice}
                                 .map(part => part.charAt(0).toUpperCase() + part.slice(1))
                                 .join(" ");
                               if (!capitalizedName) {
-                                capitalizedName = "Priority Viewer";
+                                capitalizedName = "Authorized User";
                               }
 
                               const existingGatewaySub = subscriptionsList.find(s => s.email.toLowerCase() === trimmedEmail.toLowerCase());
@@ -4294,8 +4094,8 @@ ${advice}
                                 username: existingGatewaySub ? existingGatewaySub.username : finalUsername,
                                 name: existingGatewaySub ? existingGatewaySub.name : capitalizedName,
                                 email: trimmedEmail.toLowerCase(),
-                                org: existingGatewaySub ? existingGatewaySub.org : "Priority Web Gateway",
-                                role: existingGatewaySub ? existingGatewaySub.role : "Beta Preview Participant",
+                                org: existingGatewaySub ? existingGatewaySub.org : "Enterprise Domain",
+                                role: existingGatewaySub ? existingGatewaySub.role : "Sovereign Administrator",
                                 categories: existingGatewaySub ? existingGatewaySub.categories : [
                                   "technology_updates",
                                   "licensing_pricing",
@@ -4331,8 +4131,8 @@ ${advice}
                               localStorage.setItem("teaser_registered_email", trimmedEmail);
                               addToast(
                                 "licensing_pricing",
-                                "Preview Access Unlocked",
-                                `Added ${trimmedEmail} to corporate subscriber list! Welcome to the full live platform.`
+                                "Identity Verified",
+                                `Welcome back ${trimmedEmail}. Authorized to access the workspace.`
                               );
                             } catch (err: any) {
                               console.error("Firestore registry bypass write failure:", err);
@@ -4343,61 +4143,16 @@ ${advice}
                               localStorage.setItem("teaser_registered_email", trimmedEmail);
                               addToast(
                                 "licensing_pricing",
-                                "Temporary Session Unlocked",
+                                "Temporary Session Validated",
                                 "Corporate database syncer is buffered. Granting temporary offline-access profile."
                               );
                             }
                           }}
-                          className="bg-orange-600 hover:bg-orange-500 text-white font-sans font-bold text-xs px-4 py-1.5 rounded-lg cursor-pointer transition shadow shrink-0"
+                          className="bg-sky-600 hover:bg-sky-500 text-white font-sans font-bold text-xs px-4 py-2.5 rounded-lg cursor-pointer transition shadow w-full"
                         >
-                          Unlock Preview
+                          Authenticate & Login
                         </button>
                       </div>
-                    </div>
-
-                    <div className={`border-t pt-3.5 space-y-2 ${isDark ? "border-slate-850" : "border-slate-100"}`}>
-                      <div className="flex items-center justify-between">
-                        <label className="block text-[9px] uppercase tracking-wider font-mono font-bold text-slate-500">
-                          Or Enter Early Access VIP Passcode
-                        </label>
-                        <span className="text-[8.5px] font-mono text-slate-550 dark:text-slate-600">Try passcode: <strong>ANZVIP2026</strong></span>
-                      </div>
-                      <div className="relative">
-                        <input
-                          type="password"
-                          placeholder="••••••••••••"
-                          value={teaserPasscode}
-                          onChange={(e) => {
-                            setTeaserPasscode(e.target.value);
-                            setTeaserPasscodeError(null);
-                          }}
-                          className={`w-full text-xs font-mono rounded-lg pl-3 pr-20 py-1.5 focus:outline-none focus:border-sky-500 border ${isDark ? "bg-slate-950 border-slate-850 text-slate-105" : "bg-white border-slate-200 text-slate-900"}`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const trimmed = teaserPasscode.trim().toUpperCase();
-                            if (trimmed === "ANZVIP2026" || trimmed === "ANZ2026") {
-                              setIsComingSoonBypassed(true);
-                              localStorage.setItem("coming_soon_bypassed", "true");
-                              addToast(
-                                "cloud_transformations",
-                                "VIP Passcode Accepted",
-                                "Administrative early access passcode accepted. Welcome to the workspace!"
-                              );
-                            } else {
-                              setTeaserPasscodeError("Invalid early access passcode.");
-                              addToast("licensing_pricing", "Passcode Authentication Fail", "The provided early access bypass passcode does not match registry logs.");
-                            }
-                          }}
-                          className={`absolute right-1 top-1 px-3 py-1 rounded text-[10px] font-bold cursor-pointer transition ${isDark ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                        >
-                          Submit
-                        </button>
-                      </div>
-                      {teaserPasscodeError && (
-                        <p className="text-[9.5px] font-mono text-rose-500 mt-1">{teaserPasscodeError}</p>
-                      )}
                     </div>
                   </div>
                 )}
