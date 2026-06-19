@@ -70,7 +70,8 @@ import {
   BookOpen,
   Newspaper,
   LayoutGrid,
-  List
+  List,
+  LogOut
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -697,7 +698,7 @@ export default function App() {
 
   // Gateway State (requires email login)
   const [isComingSoonBypassed, setIsComingSoonBypassed] = useState<boolean>(() => {
-    return localStorage.getItem("coming_soon_bypassed") === "true";
+    return localStorage.getItem("auth_gateway_session") === "true";
   });
 
   // Mobile App Simulation Workspace (PWA Simulator)
@@ -4031,7 +4032,7 @@ ${advice}
                       type="button"
                       onClick={() => {
                         setIsComingSoonBypassed(true);
-                        localStorage.setItem("coming_soon_bypassed", "true");
+                        localStorage.setItem("auth_gateway_session", "true");
                         addToast("cloud_transformations", "Authentication Successful", "Secure session established. Welcome to the intelligence hub.");
                       }}
                       className="w-full py-2.5 mt-2 bg-sky-600 hover:bg-sky-500 text-white font-sans font-bold text-xs rounded-lg cursor-pointer transition shadow"
@@ -4127,7 +4128,7 @@ ${advice}
 
                               setTeaserEmailSubmitted(true);
                               setIsComingSoonBypassed(true);
-                              localStorage.setItem("coming_soon_bypassed", "true");
+                              localStorage.setItem("auth_gateway_session", "true");
                               localStorage.setItem("teaser_registered_email", trimmedEmail);
                               addToast(
                                 "licensing_pricing",
@@ -4139,7 +4140,7 @@ ${advice}
                               // Fallback so users aren't locked out in offline or sandbox state issues
                               setTeaserEmailSubmitted(true);
                               setIsComingSoonBypassed(true);
-                              localStorage.setItem("coming_soon_bypassed", "true");
+                              localStorage.setItem("auth_gateway_session", "true");
                               localStorage.setItem("teaser_registered_email", trimmedEmail);
                               addToast(
                                 "licensing_pricing",
@@ -4356,22 +4357,23 @@ ${advice}
                 Updated: {new Date(lastUpdated).toLocaleTimeString()}
               </span>
 
-              {/* Lock Back to Coming Soon (Demo Control) */}
+              {/* Logout Button */}
               <button
                 onClick={() => {
                   setIsComingSoonBypassed(false);
                   setTeaserEmailSubmitted(false);
+                  localStorage.removeItem("auth_gateway_session");
                   addToast(
                     "cloud_transformations",
-                    "Returned to Gateway",
-                    "Demonstration mode reset: returned to the initial Coming Soon registry gateway."
+                    "Logged Out",
+                    "You have successfully logged out of the Corporate Intelligence Hub."
                   );
                 }}
                 className="flex items-center gap-1.5 bg-rose-505/10 hover:bg-[#ffebeb]/10 text-rose-400 px-3 py-1.5 rounded-lg border border-rose-500/25 hover:border-rose-400 transition duration-150 cursor-pointer text-xs"
-                title="Return to the first 'Coming Soon' registry screen for feedback testing"
+                title="Log out and return to the secure gateway"
               >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Show Launch Screen</span>
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Log Out</span>
               </button>
 
               {/* Manual Action Button */}
