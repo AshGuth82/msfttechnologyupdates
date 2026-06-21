@@ -803,22 +803,25 @@ function generateLocalExpertResponse(query: any, noteSuffix: string = ""): { ans
 
 // 2. Custom Intelligence query endpoint
 app.post("/api/query", async (req, res) => {
-  let queryText = "General Query";
   try {
-    const { query } = req.body || {};
-    if (query) {
-      queryText = typeof query === "string" ? query : queryTextRaw(query);
+    let queryText = "General Query";
+    try {
+      if (req.body && req.body.query) {
+        queryText = typeof req.body.query === "string" ? req.body.query : String(req.body.query);
+      }
+    } catch (e) {
+      console.log("Safe body parse failed");
     }
-    if (!query || String(query).trim() === "") {
+    
+    if (!queryText || queryText.trim() === "") {
       return res.status(400).json({ error: "Query is required" });
     }
 
     const ai = getGeminiClient();
     if (!ai) {
-      // Elegant local fallback QA model with authoritative ANZ country leader tone
       console.log(`Local static ANZ Expert QA executing for query: "${queryText}"`);
       const fallbackData = generateLocalExpertResponse(queryText, "*(Note: Configure a valid GEMINI_API_KEY in the Secrets panel to activate live web grounding searches regarding latest updates)*");
-      return res.json(fallbackData);
+      return res.status(200).json(fallbackData);
     }
 
     console.log(`Running grounded web search query for user: "${queryText}"`);
@@ -845,7 +848,6 @@ Guidelines for your response:
 
     const text = response.text || "No response generated.";
     
-    // Extract search grounding sources safely
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const sources = chunks
       .map(chunk => ({
@@ -854,7 +856,6 @@ Guidelines for your response:
       }))
       .filter(source => source.url !== "");
 
-    // De-duplicate sources
     const seenUrls = new Set<string>();
     const uniqueSources = sources.filter(source => {
       if (seenUrls.has(source.url)) return false;
@@ -862,29 +863,25 @@ Guidelines for your response:
       return true;
     });
 
-    res.json({
+    return res.status(200).json({
       answer: text,
       sources: uniqueSources
     });
   } catch (error: any) {
-    console.error("Telemetry check: Copilot assistance query successfully transitioned to backup knowledge base matching. Error:", error);
-    
+    console.error("Critical error in /api/query endpoint:", error);
     try {
-      // Deliver seamless seamless expert fallback with a gentle note about the Gemini quota limit, avoiding a broken interface
+      let queryText = "General Query";
+      if (req.body && req.body.query) {
+         queryText = String(req.body.query);
+      }
       const fallbackNote = "*(Note: Our online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines because the live API key is currently experiencing API load/quota limit adjustments.)*";
-      const safeQueryText = typeof queryText === "string" ? queryText : "General Query";
-      const fallbackData = generateLocalExpertResponse(safeQueryText, fallbackNote);
-      res.json(fallbackData);
-    } catch (innerError: any) {
-      console.error("Critical inner fallback generation failed:", innerError);
-      res.json({
-        answer: "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\nOur online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines.\n\n*Review your licensing agreements 18 days prior to renewal, apply for ECIF structural co-investments to offset workloads, and participate in metropolitan CIO roundtable forums.*",
-        sources: [
-          { title: "Azure End-Customer Investment Funds (ECIF) Guidelines", url: "https://news.microsoft.com/en-au/" },
-          { title: "Microsoft Australia Newsroom Briefings", url: "https://news.microsoft.com/en-au/" },
-          { title: "Official Microsoft Licensing Docs", url: "https://www.microsoft.com/licensing/docs" }
-        ]
-      });
+      const fallbackData = generateLocalExpertResponse(queryText, fallbackNote);
+      return res.status(200).json(fallbackData);
+    } catch (innerError) {
+       return res.status(200).json({
+         answer: "### **ANZ Microsoft Cloud & Licensing Advisory Briefing**\n\nOur online corporate intelligence search grounding has temporarily fallen back to local pre-seeded knowledge base guidelines.",
+         sources: []
+       });
     }
   }
 });
