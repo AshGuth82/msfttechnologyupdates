@@ -1233,7 +1233,7 @@ export default function App() {
 
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         const key = e.key.toLowerCase();
-        if (key === "b" || key === "f" || key === "p" || key === "a" || key === "c" || key === "m" || key === "t" || key === "s") {
+        if (key === "b" || key === "f" || key === "p" || key === "a" || key === "c" || key === "m" || key === "t" || key === "s" || key === "l") {
           e.preventDefault();
           if (key === "b") {
             setActiveMainView("briefings");
@@ -1261,6 +1261,10 @@ export default function App() {
             setActiveMainView("playbooks");
             setActiveReviewId(null);
             addToast("licensing_pricing", "Shortcut Triggered: Alt + S", "Navigated to Playbooks Store.");
+          } else if (key === "l") {
+            setActiveMainView("licensing-docs");
+            setActiveReviewId(null);
+            addToast("licensing_pricing", "Shortcut Triggered: Alt + L", "Navigated to Licensing Docs.");
           } else if (key === "m") {
             setActiveMainView("admin-console");
             setActiveReviewId(null);
@@ -4557,7 +4561,7 @@ ${advice}
               }`}
             >
               <FileText className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>Executive Advisor Dashboard</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+B</kbd>
               </span>
@@ -4573,7 +4577,7 @@ ${advice}
               }`}
             >
               <TrendingUp className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>Microsoft Business Financials</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+F</kbd>
               </span>
@@ -4592,7 +4596,7 @@ ${advice}
               }`}
             >
               <Users className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>ANZ Microsoft Partner Hub</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+P</kbd>
               </span>
@@ -4607,11 +4611,11 @@ ${advice}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "ai-business"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                  : "text-slate-400 hover:text-slate-205 hover:bg-slate-900/50"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
               }`}
             >
               <Sparkles className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>Microsoft's AI Business</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+A</kbd>
               </span>
@@ -4628,11 +4632,11 @@ ${advice}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                   activeMainView === "contract-auditor"
                     ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                    : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
                 }`}
               >
                 <FileCheck className="w-4 h-4 text-inherit" />
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 whitespace-nowrap">
                   <span>Corporate Contract Auditor</span>
                   <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+C</kbd>
                 </span>
@@ -4648,11 +4652,11 @@ ${advice}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "playbooks"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
               }`}
             >
               <ShoppingBag className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>Playbooks Store</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+S</kbd>
               </span>
@@ -4667,12 +4671,13 @@ ${advice}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "licensing-docs"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
               }`}
             >
               <BookOpen className="w-4 h-4 text-inherit" />
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>Licensing Docs</span>
+                <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+L</kbd>
               </span>
             </button>
 
@@ -4685,7 +4690,7 @@ ${advice}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "admin-console"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
-                  : "text-slate-400 hover:text-slate-202 hover:bg-slate-900/50"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
               }`}
             >
               {isAdminAuthenticated ? (
@@ -4693,7 +4698,7 @@ ${advice}
               ) : (
                 <Lock className="w-3.5 h-3.5 text-slate-450" />
               )}
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>Admin Center</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+M</kbd>
               </span>
