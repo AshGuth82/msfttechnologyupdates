@@ -4550,11 +4550,11 @@ ${advice}
 
         {/* Global Navigation Hub */}
         {!isMobileSimulated && (
-          <div className="flex flex-row overflow-x-auto scrollbar-none md:flex-wrap bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans w-full max-w-full lg:max-w-7xl mb-8 shadow-lg gap-1.5 sm:gap-1.5 mx-auto">
+          <div className="flex flex-row overflow-x-auto overscroll-x-contain scrollbar-none md:flex-wrap items-center justify-start xl:justify-center bg-[#111827] border border-slate-800 p-1.5 rounded-2xl font-sans w-full max-w-full lg:max-w-7xl mb-8 shadow-lg gap-2 mx-auto">
             <button
               id="global-nav-briefings"
               onClick={() => setActiveMainView("briefings")}
-              className={`flex-1 min-w-fit flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "briefings"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -4570,7 +4570,7 @@ ${advice}
             <button
               id="global-nav-business"
               onClick={() => setActiveMainView("business")}
-              className={`flex-1 min-w-fit shrink-0 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "business"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -4589,7 +4589,7 @@ ${advice}
                 setActiveMainView("partners");
                 setActiveReviewId(null);
               }}
-              className={`flex-1 min-w-fit shrink-0 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "partners"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -4608,7 +4608,7 @@ ${advice}
                 setActiveMainView("ai-business");
                 setActiveReviewId(null);
               }}
-              className={`flex-1 min-w-fit shrink-0 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "ai-business"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -4629,7 +4629,7 @@ ${advice}
                   setAuditorSubView("auditor");
                   setActiveReviewId(null);
                 }}
-                className={`flex-1 min-w-fit shrink-0 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                   activeMainView === "contract-auditor"
                     ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -4649,7 +4649,7 @@ ${advice}
                 setActiveMainView("playbooks");
                 setActiveReviewId(null);
               }}
-              className={`flex-1 min-w-fit shrink-0 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "playbooks"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -4668,7 +4668,7 @@ ${advice}
                 setActiveMainView("licensing-docs");
                 setActiveReviewId(null);
               }}
-              className={`flex-1 min-w-fit shrink-0 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "licensing-docs"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
@@ -4687,7 +4687,7 @@ ${advice}
                 setActiveMainView("admin-console");
                 setActiveReviewId(null);
               }}
-              className={`flex-1 min-w-fit shrink-0 flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                 activeMainView === "admin-console"
                   ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
