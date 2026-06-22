@@ -552,7 +552,10 @@ export default function App() {
           displayName: user.displayName || "",
           photoURL: user.photoURL || "",
           lastLogin: new Date().toISOString()
-        }, { merge: true }).catch(err => console.error("Error saving user:", err));
+        }, { merge: true }).catch(err => {
+          console.error("Error saving user:", err);
+          alert("Database Error: Failed to save user session automatically. Check your Firestore rules or permissions. " + err.message);
+        });
       }
     });
     return () => unsubscribe();
@@ -1534,21 +1537,28 @@ ${advice}
 
   useEffect(() => {
     if (activeMainView === "admin-console" && isAdminAuthenticated) {
+      if (!currentUser) {
+        setFirebaseUsers([]);
+        return;
+      }
       const fetchFirebaseUsers = async () => {
         setLoadingUsers(true);
         try {
           const snapshot = await getDocs(collection(db, "users"));
           const usersData = snapshot.docs.map(doc => doc.data());
           setFirebaseUsers(usersData);
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error fetching Firebase users:", err);
+          if (err.message?.includes("Missing or insufficient permissions")) {
+            // Already handled by returning above if no currentUser, but just in case
+          }
         } finally {
           setLoadingUsers(false);
         }
       };
       fetchFirebaseUsers();
     }
-  }, [activeMainView, isAdminAuthenticated]);
+  }, [activeMainView, isAdminAuthenticated, currentUser]);
   const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">(
     () => (localStorage.getItem("microsoft_intel_sort_by") as "date" | "impact" | "sentiment" | "manual") || "date"
   );
@@ -4408,7 +4418,10 @@ ${advice}
               {/* Auth Panel */}
               {!currentUser ? (
                 <button
-                  onClick={() => signInWithPopup(auth, googleProvider).catch(e => console.error(e))}
+                  onClick={() => signInWithPopup(auth, googleProvider).catch(e => {
+                    console.error("Sign in error: ", e);
+                    alert("Google Sign-In Failed: " + e.message + "\n\nTry ensuring third-party cookies are enabled or try using the application outside the studio iframe.");
+                  })}
                   className="flex items-center gap-1.5 bg-sky-505/10 hover:bg-sky-500/20 text-sky-400 px-3 py-1.5 rounded-lg border border-sky-500/25 hover:border-sky-400 transition duration-150 cursor-pointer text-xs"
                 >
                   <Users className="w-3.5 h-3.5" />
