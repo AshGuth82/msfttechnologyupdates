@@ -30,12 +30,28 @@ service cloud.firestore {
         && (data.categories.size() == 0 || data.categories[0] is string);
     }
 
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email'])
+        && data.uid is string && data.uid.size() <= 128
+        && data.email is string && data.email.size() <= 120
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (!('lastLogin' in data) || (data.lastLogin is string && data.lastLogin.size() <= 50));
+    }
+
     // 2. Main Match rules with strict validation enforcements
     match /subscribers/{subscriberId} {
       allow get, list: if true;
       allow create: if isValidId(subscriberId) && isValidSubscriber(incoming());
       allow update: if isValidId(subscriberId) && isValidSubscriber(incoming());
       allow delete: if isValidId(subscriberId);
+    }
+
+    match /users/{userId} {
+      allow get, list: if request.auth != null;
+      allow create: if isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
+      allow update: if isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
+      allow delete: if isValidId(userId) && userId == request.auth.uid;
     }
   }
 }

@@ -534,7 +534,30 @@ const CITIES_HQ: CityHQ[] = [
   { id: "wellington", name: "Wellington", state: "Wellington", country: "New Zealand", left: "90%", top: "78%" }
 ];
 
+import { auth, googleProvider, signInWithPopup, signOut } from "./firebase";
+import { User as FirebaseUser } from "firebase/auth";
+
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+      if (user) {
+        // Persist user in Firestore
+        const userRef = doc(db, "users", user.uid);
+        setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          lastLogin: new Date().toISOString()
+        }, { merge: true }).catch(err => console.error("Error saving user:", err));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem("microsoft_intel_admin_auth");
@@ -1506,6 +1529,26 @@ ${advice}
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory | "all">("all");
   const [selectedTopic, setSelectedTopic] = useState<"all" | "Security" | "Hardware" | "Leadership">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [firebaseUsers, setFirebaseUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  useEffect(() => {
+    if (activeMainView === "admin-console" && isAdminAuthenticated) {
+      const fetchFirebaseUsers = async () => {
+        setLoadingUsers(true);
+        try {
+          const snapshot = await getDocs(collection(db, "users"));
+          const usersData = snapshot.docs.map(doc => doc.data());
+          setFirebaseUsers(usersData);
+        } catch (err) {
+          console.error("Error fetching Firebase users:", err);
+        } finally {
+          setLoadingUsers(false);
+        }
+      };
+      fetchFirebaseUsers();
+    }
+  }, [activeMainView, isAdminAuthenticated]);
   const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">(
     () => (localStorage.getItem("microsoft_intel_sort_by") as "date" | "impact" | "sentiment" | "manual") || "date"
   );
@@ -4362,7 +4405,33 @@ ${advice}
                 Updated: {new Date(lastUpdated).toLocaleTimeString()}
               </span>
 
-              {/* Logout Button */}
+              {/* Auth Panel */}
+              {!currentUser ? (
+                <button
+                  onClick={() => signInWithPopup(auth, googleProvider).catch(e => console.error(e))}
+                  className="flex items-center gap-1.5 bg-sky-505/10 hover:bg-sky-500/20 text-sky-400 px-3 py-1.5 rounded-lg border border-sky-500/25 hover:border-sky-400 transition duration-150 cursor-pointer text-xs"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Sign in with Google</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 text-xs">
+                    {currentUser.photoURL && <img src={currentUser.photoURL} alt="Avatar" className="w-4 h-4 rounded-full" />}
+                    <span className="font-medium">{currentUser.email}</span>
+                  </div>
+                  <button
+                    onClick={() => signOut(auth)}
+                    className="flex items-center gap-1.5 bg-rose-505/10 hover:bg-rose-500/20 text-rose-400 px-3 py-1.5 rounded-lg border border-rose-500/25 hover:border-rose-400 transition duration-150 cursor-pointer text-xs"
+                    title="Sign out from Google"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Gateway Exit */}
               <button
                 onClick={() => {
                   setIsComingSoonBypassed(false);
@@ -4374,11 +4443,11 @@ ${advice}
                     "You have successfully logged out of the Corporate Intelligence Hub."
                   );
                 }}
-                className="flex items-center gap-1.5 bg-rose-505/10 hover:bg-[#ffebeb]/10 text-rose-400 px-3 py-1.5 rounded-lg border border-rose-500/25 hover:border-rose-400 transition duration-150 cursor-pointer text-xs"
-                title="Log out and return to the secure gateway"
+                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition duration-150 cursor-pointer text-xs"
+                title="Exit the Intelligence Hub"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Log Out</span>
+                <span>Exit Hub</span>
               </button>
 
               {/* Manual Action Button */}
@@ -10898,8 +10967,75 @@ ${advice}
                     </div>
                   </div>
 
+                  {/* Authenticated Users from Firebase */}
+                  <div className="bg-[#111827] border border-sky-900/30 rounded-xl p-5 relative overflow-hidden mt-6">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1.5">
+                      <Lock className="w-4 h-4 text-emerald-400" />
+                      <span>Authenticated Access Identity Registry</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                      Below are the certified identities that have successfully cleared the Google OAuth security boundary and been written to the persistent Firestore database.
+                    </p>
+
+                    {loadingUsers ? (
+                      <div className="flex items-center justify-center p-6 text-slate-500 text-xs">
+                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                        Synchronizing identities with active database...
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-lg border border-slate-850 bg-slate-950/30">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-850 bg-slate-900/30 font-mono text-slate-400 text-[10px] uppercase tracking-wider">
+                              <th className="p-3 w-10">Avatar</th>
+                              <th className="p-3">Verified Email Identity</th>
+                              <th className="p-3">Last Gateway Active</th>
+                              <th className="p-3 text-right">System UID</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-850">
+                            {firebaseUsers.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="p-4 text-center text-slate-500 font-mono text-[10px]">
+                                  No externally authenticated accounts registered
+                                </td>
+                              </tr>
+                            ) : (
+                              firebaseUsers.map((u) => (
+                                <tr key={u.uid} className="hover:bg-slate-900/40 text-slate-300 transition duration-150">
+                                  <td className="p-3">
+                                    {u.photoURL ? (
+                                      <img src={u.photoURL} alt="" className="w-6 h-6 rounded-full border border-slate-700" />
+                                    ) : (
+                                      <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                                        <Users className="w-3 h-3 text-slate-500" />
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="p-3">
+                                    <div className="font-bold text-white flex items-center gap-2">
+                                      {u.email}
+                                      <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">{u.displayName || "Unknown User"}</div>
+                                  </td>
+                                  <td className="p-3 font-mono text-[10px] text-slate-400">
+                                    {u.lastLogin ? new Date(u.lastLogin).toLocaleString() : "Unknown"}
+                                  </td>
+                                  <td className="p-3 text-right text-[9px] font-mono select-all text-sky-450/70">
+                                    {u.uid}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Add New Subscription form */}
-                  <div className="bg-[#111827] border border-slate-850 rounded-xl p-5 relative overflow-hidden">
+                  <div className="bg-[#111827] border border-slate-850 rounded-xl p-5 relative overflow-hidden mt-6">
                     <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1.5">
                       <Briefcase className="w-4 h-4 text-indigo-400" />
                       <span>Provision New Briefing Access License</span>

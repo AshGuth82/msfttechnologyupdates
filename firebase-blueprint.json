@@ -16,12 +16,29 @@
         "date": { "type": "string", "description": "ISO timestamp of initial sign up" }
       },
       "required": ["id", "username", "email", "name", "role", "categories", "frequency", "date"]
+    },
+    "User": {
+      "title": "User",
+      "description": "An authenticated user of the application.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth User ID" },
+        "email": { "type": "string", "description": "User's email address" },
+        "displayName": { "type": "string", "description": "User's display name, if available" },
+        "photoURL": { "type": "string", "description": "URL to the user's avatar image" },
+        "lastLogin": { "type": "string", "description": "ISO timestamp of last login" }
+      },
+      "required": ["uid", "email"]
     }
   },
   "firestore": {
     "subscribers/{subscriberId}": {
       "schema": "Subscriber",
       "description": "Collection of all system subscribers"
+    },
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Collection of authenticated users, keyed by their UID"
     }
   }
 }
