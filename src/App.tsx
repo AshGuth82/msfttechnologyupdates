@@ -8675,7 +8675,17 @@ ${advice}
                                 )}
 
                                 <div className="flex items-center justify-between pt-1 font-mono text-[9px]">
-                                  <span className="text-slate-650">Published: {article.publishedDate}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-slate-650">Published: {article.publishedDate}</span>
+                                    <button
+                                      onClick={(e) => handleShareToLinkedIn(e, article)}
+                                      className="inline-flex items-center gap-1 bg-slate-900 border border-slate-700 hover:border-slate-500 hover:text-[#0a66c2] text-slate-400 px-1.5 py-0.5 rounded text-[9px] transition cursor-pointer"
+                                      title="Format a LinkedIn post with key takeaways & CTA"
+                                    >
+                                      <Linkedin className="w-2.5 h-2.5 fill-current text-[#0a66c2]" />
+                                      <span>Share</span>
+                                    </button>
+                                  </div>
                                   <a 
                                     href={article.url} 
                                     target="_blank" 
