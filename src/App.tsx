@@ -71,8 +71,7 @@ import {
   Newspaper,
   LayoutGrid,
   List,
-  LogOut,
-  Mail
+  LogOut
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -535,32 +534,7 @@ const CITIES_HQ: CityHQ[] = [
   { id: "wellington", name: "Wellington", state: "Wellington", country: "New Zealand", left: "90%", top: "78%" }
 ];
 
-import { auth, googleProvider, signInWithPopup, signOut } from "./firebase";
-import { User as FirebaseUser } from "firebase/auth";
-
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setCurrentUser(user);
-      if (user) {
-        // Persist user in Firestore
-        const userRef = doc(db, "users", user.uid);
-        setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || "",
-          photoURL: user.photoURL || "",
-          lastLogin: new Date().toISOString()
-        }, { merge: true }).catch(err => {
-          console.error("Error saving user:", err);
-          alert("Database Error: Failed to save user session automatically. Check your Firestore rules or permissions. " + err.message);
-        });
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
@@ -1533,54 +1507,9 @@ ${advice}
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory | "all">("all");
   const [selectedTopic, setSelectedTopic] = useState<"all" | "Security" | "Hardware" | "Leadership">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [firebaseUsers, setFirebaseUsers] = useState<any[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-
-  useEffect(() => {
-    if (activeMainView === "admin-console" && isAdminAuthenticated) {
-      if (!currentUser) {
-        setFirebaseUsers([]);
-        return;
-      }
-      const fetchFirebaseUsers = async () => {
-        setLoadingUsers(true);
-        try {
-          const snapshot = await getDocs(collection(db, "users"));
-          const usersData = snapshot.docs.map(doc => doc.data());
-          setFirebaseUsers(usersData);
-        } catch (err: any) {
-          console.error("Error fetching Firebase users:", err);
-          if (err.message?.includes("Missing or insufficient permissions")) {
-            // Already handled by returning above if no currentUser, but just in case
-          }
-        } finally {
-          setLoadingUsers(false);
-        }
-      };
-      fetchFirebaseUsers();
-    }
-  }, [activeMainView, isAdminAuthenticated, currentUser]);
   const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">(
     () => (localStorage.getItem("microsoft_intel_sort_by") as "date" | "impact" | "sentiment" | "manual") || "date"
   );
-  
-  const handleSendWelcomeEmail = async (email: string) => {
-    try {
-      const res = await fetch("/api/send-welcome-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-      if (res.ok) {
-        alert(`Welcome email template successfully dispatched to ${email}`);
-      } else {
-        alert("Failed to send welcome email.");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Error executing welcome email dispatch.");
-    }
-  };
 
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   const [expandedSavedId, setExpandedSavedId] = useState<string | null>(null);
@@ -4434,35 +4363,6 @@ ${advice}
               <span className="text-slate-500 font-mono">
                 Updated: {new Date(lastUpdated).toLocaleTimeString()}
               </span>
-
-              {/* Auth Panel */}
-              {!currentUser ? (
-                <button
-                  onClick={() => signInWithPopup(auth, googleProvider).catch(e => {
-                    console.error("Sign in error: ", e);
-                    alert("Google Sign-In Failed: " + e.message + "\n\nTry ensuring third-party cookies are enabled or try using the application outside the studio iframe.");
-                  })}
-                  className="flex items-center gap-1.5 bg-sky-505/10 hover:bg-sky-500/20 text-sky-400 px-3 py-1.5 rounded-lg border border-sky-500/25 hover:border-sky-400 transition duration-150 cursor-pointer text-xs"
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Sign in with Google</span>
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 text-xs">
-                    {currentUser.photoURL && <img src={currentUser.photoURL} alt="Avatar" className="w-4 h-4 rounded-full" />}
-                    <span className="font-medium">{currentUser.email}</span>
-                  </div>
-                  <button
-                    onClick={() => signOut(auth)}
-                    className="flex items-center gap-1.5 bg-rose-505/10 hover:bg-rose-500/20 text-rose-400 px-3 py-1.5 rounded-lg border border-rose-500/25 hover:border-rose-400 transition duration-150 cursor-pointer text-xs"
-                    title="Sign out from Google"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              )}
 
               {/* Gateway Exit */}
               <button
@@ -11008,83 +10908,6 @@ ${advice}
                         </tbody>
                       </table>
                     </div>
-                  </div>
-
-                  {/* Authenticated Users from Firebase */}
-                  <div className="bg-[#111827] border border-sky-900/30 rounded-xl p-5 relative overflow-hidden mt-6">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1.5">
-                      <Lock className="w-4 h-4 text-emerald-400" />
-                      <span>Authenticated Access Identity Registry</span>
-                    </h3>
-                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                      Below are the certified identities that have successfully cleared the Google OAuth security boundary and been written to the persistent Firestore database.
-                    </p>
-
-                    {loadingUsers ? (
-                      <div className="flex items-center justify-center p-6 text-slate-500 text-xs">
-                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                        Synchronizing identities with active database...
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto rounded-lg border border-slate-850 bg-slate-950/30">
-                        <table className="w-full text-left border-collapse text-xs">
-                          <thead>
-                            <tr className="border-b border-slate-850 bg-slate-900/30 font-mono text-slate-400 text-[10px] uppercase tracking-wider">
-                              <th className="p-3 w-10">Avatar</th>
-                              <th className="p-3">Verified Email Identity</th>
-                              <th className="p-3">Last Gateway Active</th>
-                              <th className="p-3 text-right">System UID</th>
-                              <th className="p-3 text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-850">
-                            {firebaseUsers.length === 0 ? (
-                              <tr>
-                                <td colSpan={5} className="p-4 text-center text-slate-500 font-mono text-[10px]">
-                                  No externally authenticated accounts registered
-                                </td>
-                              </tr>
-                            ) : (
-                              firebaseUsers.map((u) => (
-                                <tr key={u.uid} className="hover:bg-slate-900/40 text-slate-300 transition duration-150">
-                                  <td className="p-3">
-                                    {u.photoURL ? (
-                                      <img src={u.photoURL} alt="" className="w-6 h-6 rounded-full border border-slate-700" />
-                                    ) : (
-                                      <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-                                        <Users className="w-3 h-3 text-slate-500" />
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="p-3">
-                                    <div className="font-bold text-white flex items-center gap-2">
-                                      {u.email}
-                                      <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                                    </div>
-                                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">{u.displayName || "Unknown User"}</div>
-                                  </td>
-                                  <td className="p-3 font-mono text-[10px] text-slate-400">
-                                    {u.lastLogin ? new Date(u.lastLogin).toLocaleString() : "Unknown"}
-                                  </td>
-                                  <td className="p-3 text-right text-[9px] font-mono select-all text-sky-450/70">
-                                    {u.uid}
-                                  </td>
-                                  <td className="p-3 text-right">
-                                    <button
-                                      onClick={() => handleSendWelcomeEmail(u.email)}
-                                      title="Send Playbook Welcome Email"
-                                      className="inline-flex items-center justify-center p-1.5 rounded bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 hover:text-sky-300 transition border border-sky-500/20"
-                                    >
-                                      <Mail className="w-3.5 h-3.5" />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
                   </div>
 
                   {/* Add New Subscription form */}
