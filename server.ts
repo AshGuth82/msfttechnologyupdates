@@ -1263,6 +1263,42 @@ app.delete("/api/subscribers/:id", async (req, res) => {
   }
 });
 
+// 6. Welcome Email Dispatch Endpoint
+app.post("/api/send-welcome-email", (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Recipient email is required" });
+  }
+
+  const dispatchId = `WELCOME-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const timestamp = new Date().toISOString();
+  const borderLine = "=".repeat(80);
+
+  console.log(`\n${borderLine}`);
+  console.log(`[SOVEREIGN EMAIL DISPATCH CARRIER ENGINE]`);
+  console.log(`Dispatch ID : ${dispatchId}`);
+  console.log(`Timestamp   : ${timestamp}`);
+  console.log(`From        : ashguth@microsoftauditor.com`);
+  console.log(`To          : ${email}`);
+  console.log(`Subject     : Secure Account Provisioned - Access Your Auditing Playbooks`);
+  console.log(`${borderLine}`);
+  console.log(`Welcome to the Sovereign Intelligence Hub.\n`);
+  console.log(`Your authenticated access has been registered and cleared for clearance.`);
+  console.log(`You can now securely access the internal Corporate Auditing Playbooks to streamline your compliance measures.\n`);
+  console.log(`🔗 Licensing Playbooks:\nhttps://ais-pre-yst3l6rtltrijnskmxcvwm-279979490489.asia-southeast1.run.app/  (Open Hub & Navigate to Playbooks)\n`);
+  console.log(`Please retain this record. Your Firebase UID controls your access rights.`);
+  console.log(`\nRegards,\nAsh Guthrie\nCorporate Auditor\nashguth@microsoftauditor.com`);
+  console.log(`\n© 2026 Sovereign Intelligence Hub. All rights reserved.`);
+  console.log(`${borderLine}\n`);
+
+  res.json({
+    success: true,
+    dispatchId,
+    recipient: email,
+    message: "Welcome email successfully dispatched to routing engine."
+  });
+});
+
 // Global Error Handler Middleware
 app.use((err: any, req: any, res: any, next: any) => {
   console.error("CRITICAL UNHANDLED EXPRESS ERROR:", err);

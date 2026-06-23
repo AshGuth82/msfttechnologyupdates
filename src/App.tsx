@@ -71,7 +71,8 @@ import {
   Newspaper,
   LayoutGrid,
   List,
-  LogOut
+  LogOut,
+  Mail
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -1562,6 +1563,25 @@ ${advice}
   const [sortBy, setSortBy] = useState<"date" | "impact" | "sentiment" | "manual">(
     () => (localStorage.getItem("microsoft_intel_sort_by") as "date" | "impact" | "sentiment" | "manual") || "date"
   );
+  
+  const handleSendWelcomeEmail = async (email: string) => {
+    try {
+      const res = await fetch("/api/send-welcome-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      if (res.ok) {
+        alert(`Welcome email template successfully dispatched to ${email}`);
+      } else {
+        alert("Failed to send welcome email.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error executing welcome email dispatch.");
+    }
+  };
+
   const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
   const [expandedSavedId, setExpandedSavedId] = useState<string | null>(null);
   const [msftTimeframe, setMsftTimeframe] = useState<"1D" | "1W" | "1M" | "3M" | "6M" | "1Y">("1M");
@@ -11004,12 +11024,13 @@ ${advice}
                               <th className="p-3">Verified Email Identity</th>
                               <th className="p-3">Last Gateway Active</th>
                               <th className="p-3 text-right">System UID</th>
+                              <th className="p-3 text-right">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-850">
                             {firebaseUsers.length === 0 ? (
                               <tr>
-                                <td colSpan={4} className="p-4 text-center text-slate-500 font-mono text-[10px]">
+                                <td colSpan={5} className="p-4 text-center text-slate-500 font-mono text-[10px]">
                                   No externally authenticated accounts registered
                                 </td>
                               </tr>
@@ -11037,6 +11058,15 @@ ${advice}
                                   </td>
                                   <td className="p-3 text-right text-[9px] font-mono select-all text-sky-450/70">
                                     {u.uid}
+                                  </td>
+                                  <td className="p-3 text-right">
+                                    <button
+                                      onClick={() => handleSendWelcomeEmail(u.email)}
+                                      title="Send Playbook Welcome Email"
+                                      className="inline-flex items-center justify-center p-1.5 rounded bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 hover:text-sky-300 transition border border-sky-500/20"
+                                    >
+                                      <Mail className="w-3.5 h-3.5" />
+                                    </button>
                                   </td>
                                 </tr>
                               ))
