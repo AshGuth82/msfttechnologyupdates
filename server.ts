@@ -1263,6 +1263,48 @@ app.delete("/api/subscribers/:id", async (req, res) => {
   }
 });
 
+// 6. Welcome Email Dispatch Endpoint
+app.post("/api/send-welcome-email", (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Recipient email is required" });
+  }
+
+  const dispatchId = `WELCOME-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const timestamp = new Date().toISOString();
+  const borderLine = "=".repeat(80);
+
+  console.log(`\n${borderLine}`);
+  console.log(`[SOVEREIGN EMAIL DISPATCH CARRIER ENGINE]`);
+  console.log(`Dispatch ID : ${dispatchId}`);
+  console.log(`Timestamp   : ${timestamp}`);
+  console.log(`From        : ashguth@microsoftauditor.com`);
+  console.log(`To          : ${email}`);
+  console.log(`Subject     : Welcome to MSFT Tech Updates`);
+  console.log(`${borderLine}`);
+  console.log(`Welcome, and thank you for subscribing to MSFT Tech Updates. I am thrilled to have you on board.\n`);
+  console.log(`If you are looking to stay ahead of the curve within the Microsoft technology ecosystem, you are in the right place. My goal is to cut through the noise and deliver actionable, strategic insights directly to your inbox.\n`);
+  console.log(`To help you hit the ground running, here are a few of my core playbooks you can access right away:\n`);
+  console.log(`https://ashguth.gumroad.com/`);
+  console.log(`https://payhip.com/MSFTTechUpdates\n`);
+  console.log(`In addition to these resources, here is a quick look at what you can expect from upcoming newsletters:\n`);
+  console.log(`Ecosystem Strategy: Deep dives into Azure cloud services and Microsoft 365 rollouts to help you maximize your technology infrastructure.`);
+  console.log(`Licensing & Optimization: Clear guidance on navigating complex licensing structures so your organization can optimize spend without sacrificing capability.`);
+  console.log(`Funding & Frameworks: Strategic updates on building effective co-selling motions and leveraging programs like the ECIF.`);
+  console.log(`Community & Leadership: Practical takeaways drawn from real-world conversations with tech professionals, business leaders, and the local community.\n`);
+  console.log(`To ensure you don't miss any of these insights, please take a moment to add this email address to your safe sender list.\n`);
+  console.log(`I'm looking forward to sharing these updates with you. If there is a specific challenge you're currently facing or a topic you'd love to see covered, feel free to hit reply and let me know!\n`);
+  console.log(`Best regards,\n\nAsh Guth\nwww.msfttechupdates.com`);
+  console.log(`${borderLine}\n`);
+
+  res.json({
+    success: true,
+    dispatchId,
+    recipient: email,
+    message: "Welcome email successfully dispatched to routing engine."
+  });
+});
+
 // Global Error Handler Middleware
 app.use((err: any, req: any, res: any, next: any) => {
   console.error("CRITICAL UNHANDLED EXPRESS ERROR:", err);

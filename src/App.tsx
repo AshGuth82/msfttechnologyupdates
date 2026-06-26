@@ -2119,6 +2119,17 @@ ${advice}
           console.warn("Could not sync subscriber database registry with server backups:", serverSyncErr);
         }
 
+        // 4. Automatically send the Welcome Email
+        try {
+          await fetch("/api/send-welcome-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: newSub.email })
+          });
+        } catch (emailErr) {
+          console.warn("Could not dispatch welcome email sequence:", emailErr);
+        }
+
         setIsSubmittingSub(false);
         setSubSuccess(true);
 
