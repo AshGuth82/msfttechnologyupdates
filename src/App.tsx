@@ -75,7 +75,7 @@ import {
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
-import { db, collection, getDocs, doc, setDoc, deleteDoc } from "./firebase";
+import { db, collection, getDocs, doc, setDoc, deleteDoc, auth, googleProvider, signInWithPopup, signOut, GoogleAuthProvider } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
 import { MicrosoftAIBusiness } from "./components/MicrosoftAIBusiness";
 import { ContractAuditor } from "./components/ContractAuditor";
@@ -1919,6 +1919,7 @@ ${advice}
   // Subscription Form State (Persisted in localStorage and backed by Server-Side Registry)
   const [subUsername, setSubUsername] = useState<string>("");
   const [subName, setSubName] = useState<string>("");
+  const [adminToken, setAdminToken] = useState<string | null>(null);
   const [subEmail, setSubEmail] = useState<string>("");
   const [subOrg, setSubOrg] = useState<string>("");
   const [subRole, setSubRole] = useState<string>("IT Leader");
@@ -2124,7 +2125,7 @@ ${advice}
           await fetch("/api/send-welcome-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: newSub.email })
+            body: JSON.stringify({ email: newSub.email, accessToken: adminToken })
           });
         } catch (emailErr) {
           console.warn("Could not dispatch welcome email sequence:", emailErr);
@@ -11389,9 +11390,48 @@ ${advice}
 
       {/* Footer */}
       <footer className="mt-16 border-t border-slate-800 bg-[#090d15] py-8 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 font-mono">
+        <div className="max-w-7xl mx-auto px-4 font-mono flex flex-col items-center justify-center gap-4">
           <p>© 2026 Microsoft Corporate Intelligence Systems Division. Powered by Google Gemini 3.5-flash.</p>
-          <p className="mt-1.5 text-slate-600">All news and pricing guidelines represent index estimations. Grounding engine limits apply.</p>
+          <p className="text-slate-600">All news and pricing guidelines represent index estimations. Grounding engine limits apply.</p>
+          
+          <div className="mt-4 pt-4 border-t border-slate-800/50 w-full max-w-sm mx-auto">
+            {!adminToken ? (
+              <button
+                onClick={async () => {
+                  try {
+                    const result = await signInWithPopup(auth, googleProvider);
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+                    if (credential && credential.accessToken) {
+                      setAdminToken(credential.accessToken);
+                    }
+                  } catch (err) {
+                    console.error("Sign in error:", err);
+                    alert("Admin login failed. See console.");
+                  }
+                }}
+                className="flex mx-auto items-center gap-2 bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg transition"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Admin Login (Enable Automated Gmail)</span>
+              </button>
+            ) : (
+              <div className="flex mx-auto items-center justify-center gap-3">
+                <span className="text-emerald-500 flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Admin Logged In (Gmail API Active)
+                </span>
+                <button
+                  onClick={() => {
+                    signOut(auth);
+                    setAdminToken(null);
+                  }}
+                  className="text-rose-400 hover:text-rose-300 underline"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </footer>
 

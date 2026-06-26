@@ -10,8 +10,9 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope("https://www.googleapis.com/auth/gmail.send");
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-export { collection, getDocs, doc, setDoc, deleteDoc, signInWithPopup, signOut };
+export { collection, getDocs, doc, setDoc, deleteDoc, signInWithPopup, signOut, GoogleAuthProvider };

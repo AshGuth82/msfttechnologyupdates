@@ -1266,7 +1266,7 @@ app.delete("/api/subscribers/:id", async (req, res) => {
 
 // 6. Welcome Email Dispatch Endpoint
 app.post("/api/send-welcome-email", async (req, res) => {
-  const { email } = req.body;
+  const { email, accessToken } = req.body;
   if (!email) {
     return res.status(400).json({ error: "Recipient email is required" });
   }
@@ -1311,23 +1311,38 @@ www.msfttechupdates.com`;
   console.log(textContent);
   console.log(`${borderLine}\n`);
 
-  const resendApiKey = process.env.RESEND_API_KEY || 're_Gc5HPrCi_2TmQjt1P5vkx7o9Nk8b7Eddn';
-  
-  if (resendApiKey) {
+  if (accessToken) {
     try {
-      const resend = new Resend(resendApiKey);
-      await resend.emails.send({
-        from: 'Ash Guth <ashguth@microsoftauditor.com>',
-        to: [email],
-        subject: 'Welcome to MSFT Tech Updates',
-        text: textContent,
+      const emailLines = [
+        `To: ${email}`,
+        'Content-type: text/plain; charset=utf-8',
+        'MIME-Version: 1.0',
+        `Subject: Welcome to MSFT Tech Updates`,
+        '',
+        textContent
+      ];
+      const emailStr = emailLines.join('\r\n');
+      const encodedEmail = Buffer.from(emailStr).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      
+      const gmailResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ raw: encodedEmail })
       });
-      console.log(`[RESEND] Successfully sent welcome email to ${email}`);
+      
+      if (!gmailResponse.ok) {
+        const err = await gmailResponse.text();
+        throw new Error(`Gmail API error: ${gmailResponse.status} ${err}`);
+      }
+      console.log(`[GMAIL] Successfully sent welcome email to ${email}`);
     } catch (err) {
-      console.error(`[RESEND ERROR] Failed to send email to ${email}:`, err);
+      console.error(`[GMAIL ERROR] Failed to send email to ${email}:`, err);
     }
   } else {
-    console.log(`[DEV MODE] RESEND_API_KEY not found, email mock logged only.`);
+    console.log(`[DEV MODE] No Google Access Token provided, email mock logged only.`);
   }
 
   res.json({
