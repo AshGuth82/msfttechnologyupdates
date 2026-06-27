@@ -1311,7 +1311,27 @@ www.msfttechupdates.com`;
   console.log(textContent);
   console.log(`${borderLine}\n`);
 
-  if (accessToken) {
+  if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
+    try {
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD
+        }
+      });
+      await transporter.sendMail({
+        from: `"Ash Guth" <${process.env.GMAIL_USER}>`,
+        to: email,
+        subject: 'Welcome to MSFT Tech Updates',
+        text: textContent
+      });
+      console.log(`[GMAIL SMTP] Successfully sent welcome email to ${email}`);
+    } catch (err) {
+      console.error(`[GMAIL SMTP ERROR] Failed to send email to ${email}:`, err);
+    }
+  } else if (accessToken) {
     try {
       const emailLines = [
         `To: ${email}`,
@@ -1337,12 +1357,26 @@ www.msfttechupdates.com`;
         const err = await gmailResponse.text();
         throw new Error(`Gmail API error: ${gmailResponse.status} ${err}`);
       }
-      console.log(`[GMAIL] Successfully sent welcome email to ${email}`);
+      console.log(`[GMAIL API] Successfully sent welcome email to ${email}`);
     } catch (err) {
-      console.error(`[GMAIL ERROR] Failed to send email to ${email}:`, err);
+      console.error(`[GMAIL API ERROR] Failed to send email to ${email}:`, err);
     }
   } else {
-    console.log(`[DEV MODE] No Google Access Token provided, email mock logged only.`);
+    // Fall back to Resend API
+    const resendApiKey = process.env.RESEND_API_KEY || 're_Gc5HPrCi_2TmQjt1P5vkx7o9Nk8b7Eddn';
+    try {
+      const { Resend } = require('resend');
+      const resend = new Resend(resendApiKey);
+      await resend.emails.send({
+        from: 'Ash Guth <ashguth@microsoftauditor.com>',
+        to: [email],
+        subject: 'Welcome to MSFT Tech Updates',
+        text: textContent,
+      });
+      console.log(`[RESEND] Successfully sent welcome email to ${email}`);
+    } catch (err) {
+      console.error(`[RESEND ERROR] Failed to send email to ${email}:`, err);
+    }
   }
 
   res.json({
