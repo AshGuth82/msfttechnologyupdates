@@ -523,16 +523,16 @@ interface CityHQ {
 }
 
 const CITIES_HQ: CityHQ[] = [
-  { id: "sydney", name: "Sydney", state: "NSW", country: "Australia", left: "63%", top: "73%" },
-  { id: "melbourne", name: "Melbourne", state: "VIC", country: "Australia", left: "53%", top: "84%" },
-  { id: "brisbane", name: "Brisbane", state: "QLD", country: "Australia", left: "67%", top: "53%" },
-  { id: "perth", name: "Perth", state: "WA", country: "Australia", left: "14%", top: "64%" },
-  { id: "adelaide", name: "Adelaide", state: "SA", country: "Australia", left: "42%", top: "75%" },
-  { id: "canberra", name: "Canberra", state: "ACT", country: "Australia", left: "60%", top: "78%" },
-  { id: "darwin", name: "Darwin", state: "NT", country: "Australia", left: "34%", top: "21%" },
-  { id: "hobart", name: "Hobart", state: "TAS", country: "Australia", left: "55%", top: "94%" },
-  { id: "auckland", name: "Auckland", state: "Auckland", country: "New Zealand", left: "91%", top: "68%" },
-  { id: "wellington", name: "Wellington", state: "Wellington", country: "New Zealand", left: "90%", top: "78%" }
+  { id: "sydney", name: "Sydney", state: "NSW", country: "Australia", left: "62.5%", top: "64%" },
+  { id: "melbourne", name: "Melbourne", state: "VIC", country: "Australia", left: "56%", top: "77%" },
+  { id: "brisbane", name: "Brisbane", state: "QLD", country: "Australia", left: "63.5%", top: "48%" },
+  { id: "perth", name: "Perth", state: "WA", country: "Australia", left: "14%", top: "66%" },
+  { id: "adelaide", name: "Adelaide", state: "SA", country: "Australia", left: "40%", top: "74%" },
+  { id: "canberra", name: "Canberra", state: "ACT", country: "Australia", left: "60.5%", top: "68%" },
+  { id: "darwin", name: "Darwin", state: "NT", country: "Australia", left: "37%", top: "19%" },
+  { id: "hobart", name: "Hobart", state: "TAS", country: "Australia", left: "54.5%", top: "89%" },
+  { id: "auckland", name: "Auckland", state: "Auckland", country: "New Zealand", left: "87.5%", top: "55%" },
+  { id: "wellington", name: "Wellington", state: "Wellington", country: "New Zealand", left: "87%", top: "66%" }
 ];
 
 export default function App() {
@@ -9499,10 +9499,11 @@ ${advice}
               </div>
 
               {/* Interactive map visualization canvas */}
-              <div className={`relative w-full overflow-hidden rounded-xl border ${isDark ? "bg-[#0b0f19] border-slate-800" : "bg-slate-50 border-slate-200"} flex items-center justify-center`} style={{ minHeight: "380px" }}>
-                
-                {/* SVG Coordinate Grids & State Shapes */}
-                <svg className={`absolute inset-0 w-full h-full ${isDark ? "text-slate-800/35" : "text-slate-300/35"}`} viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+              <div className={`relative w-full overflow-x-auto overflow-y-hidden custom-scrollbar rounded-xl border ${isDark ? "bg-[#0b0f19] border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                <div className="relative min-w-[800px] w-full aspect-[2/1] mx-auto">
+                  
+                  {/* SVG Coordinate Grids & State Shapes */}
+                  <svg className={`absolute inset-0 w-full h-full ${isDark ? "text-slate-800/35" : "text-slate-300/35"}`} viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <pattern id="map-grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
                       <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" />
@@ -9721,6 +9722,7 @@ ${advice}
                   )}
                 </div>
 
+              </div>
               </div>
             </div>
 
