@@ -4108,7 +4108,7 @@ ${advice}
                                 capitalizedName = "Authorized User";
                               }
 
-                              const existingGatewaySub = subscriptionsList.find(s => s.email.toLowerCase() === trimmedEmail.toLowerCase());
+                              const existingGatewaySub = subscriptionsList.find(s => (s.email || "").toLowerCase() === trimmedEmail.toLowerCase());
                               const subId = existingGatewaySub ? existingGatewaySub.id : "sub-" + Math.random().toString(36).substring(2, 9);
                               const newSub = {
                                 id: subId,
@@ -4127,11 +4127,15 @@ ${advice}
                                 date: existingGatewaySub ? existingGatewaySub.date : new Date().toLocaleDateString()
                               };
 
-                              // 1. Direct persistent Firestore database registration
-                              await setDoc(doc(db, "subscribers", subId), newSub);
+                              try {
+                                // 1. Direct persistent Firestore database registration
+                                await setDoc(doc(db, "subscribers", subId), newSub);
+                              } catch (dbErr) {
+                                console.warn("Could not save to firestore", dbErr);
+                              }
 
                               // 2. Local State & Cache Refresh
-                              const updated = [newSub, ...subscriptionsList.filter(s => s.email.toLowerCase() !== trimmedEmail.toLowerCase())];
+                              const updated = [newSub, ...subscriptionsList.filter(s => (s.email || "").toLowerCase() !== trimmedEmail.toLowerCase())];
                               localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
                               setSubscriptionsList(updated);
 
