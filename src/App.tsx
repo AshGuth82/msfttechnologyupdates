@@ -4120,7 +4120,9 @@ ${advice}
                           try {
                             // 1. Direct persistent Firestore database registration
                             if (db) {
-                              await setDoc(doc(db, "subscribers", subId), newSub);
+                              setDoc(doc(db, "subscribers", subId), newSub).catch(dbErr => {
+                                console.warn("Could not save to firestore", dbErr);
+                              });
                             }
                           } catch (dbErr) {
                             console.warn("Could not save to firestore", dbErr);
@@ -4133,10 +4135,12 @@ ${advice}
 
                           // 3. Mirror/Sync payload with the Express container server backup
                           try {
-                            await fetch("/api/subscribers", {
+                            fetch("/api/subscribers", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
                               body: JSON.stringify(newSub)
+                            }).catch(serverSyncErr => {
+                              console.warn("Could not sync preview registration with server backups:", serverSyncErr);
                             });
                           } catch (serverSyncErr) {
                             console.warn("Could not sync preview registration with server backups:", serverSyncErr);
