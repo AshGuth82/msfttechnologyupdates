@@ -10828,7 +10828,7 @@ ${advice}
                     return;
                   }
 
-                  const validEmails = ["ashguth@gmail.com", "admin@microsoft.corp"];
+                  const validEmails = ["ashguth@gmail.com", "ashguth@microsoftauditor.com", "admin@microsoft.corp"];
                   const validPasscodes = ["anz2026", "admin123"];
 
                   if (validEmails.includes(cleanEmail) && validPasscodes.includes(cleanPasscode)) {
