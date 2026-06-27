@@ -71,7 +71,8 @@ import {
   Newspaper,
   LayoutGrid,
   List,
-  LogOut
+  LogOut,
+  ShieldAlert
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
 import { jsPDF } from "jspdf";
@@ -8280,6 +8281,31 @@ ${advice}
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono block truncate">
                       geekwire.com/microsoft/
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Active</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
+
+                {/* Source 3 */}
+                <a 
+                  href="https://www.microsoft.com/en-au/microsoft-365/roadmap" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Microsoft 365 Roadmap"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Microsoft 365 Roadmap
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      microsoft.com/en-au/microsoft-365/roadmap
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
