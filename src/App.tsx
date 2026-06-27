@@ -4066,7 +4066,105 @@ ${advice}
                       <label className="block text-xs uppercase tracking-wider font-mono font-bold text-slate-500">
                         Corporate Email Address
                       </label>
-                      <div className="flex flex-col gap-3">
+                      <form className="flex flex-col gap-3" onSubmit={async (e) => {
+                        e.preventDefault();
+                        const trimmedEmail = teaserEmail.trim();
+                        if (!trimmedEmail || !trimmedEmail.includes("@")) {
+                          addToast("licensing_pricing", "Authentication Error", "Please provide a valid corporate email address.");
+                          return;
+                        }
+
+                        try {
+                          // Derive registration parameters matching isValidSubscriber rule schema
+                          const emailParts = trimmedEmail.split("@");
+                          const prefix = emailParts[0] || "visitor";
+                          let derivedUsername = prefix.toLowerCase().replace(/[^a-zA-Z0-9_\-]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+                          if (!derivedUsername || !/^[a-zA-Z0-9_\-]+$/.test(derivedUsername)) {
+                            derivedUsername = "user_" + Math.random().toString(36).substring(2, 7);
+                          }
+
+                          let finalUsername = derivedUsername;
+                          let suffix = 1;
+                          while (subscriptionsList.some(s => s?.username?.toLowerCase() === finalUsername)) {
+                            finalUsername = `${derivedUsername}${suffix}`;
+                            suffix++;
+                          }
+
+                          let capitalizedName = prefix
+                            .split(/[\._\-]+/)
+                            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                            .join(" ");
+                          if (!capitalizedName) {
+                            capitalizedName = "Authorized User";
+                          }
+
+                          const existingGatewaySub = subscriptionsList.find(s => (s.email || "").toLowerCase() === trimmedEmail.toLowerCase());
+                          const subId = existingGatewaySub ? existingGatewaySub.id : "sub-" + Math.random().toString(36).substring(2, 9);
+                          const newSub = {
+                            id: subId,
+                            username: existingGatewaySub ? existingGatewaySub.username : finalUsername,
+                            name: existingGatewaySub ? existingGatewaySub.name : capitalizedName,
+                            email: trimmedEmail.toLowerCase(),
+                            org: existingGatewaySub ? existingGatewaySub.org : "Enterprise Domain",
+                            role: existingGatewaySub ? existingGatewaySub.role : "Sovereign Administrator",
+                            categories: existingGatewaySub ? existingGatewaySub.categories : [
+                              "technology_updates",
+                              "licensing_pricing",
+                              "anz_strategy",
+                              "cloud_transformations"
+                            ] as NewsCategory[],
+                            frequency: existingGatewaySub ? existingGatewaySub.frequency : "monthly",
+                            date: existingGatewaySub ? existingGatewaySub.date : new Date().toLocaleDateString()
+                          };
+
+                          try {
+                            // 1. Direct persistent Firestore database registration
+                            if (db) {
+                              await setDoc(doc(db, "subscribers", subId), newSub);
+                            }
+                          } catch (dbErr) {
+                            console.warn("Could not save to firestore", dbErr);
+                          }
+
+                          // 2. Local State & Cache Refresh
+                          const updated = [newSub, ...subscriptionsList.filter(s => (s.email || "").toLowerCase() !== trimmedEmail.toLowerCase())];
+                          localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
+                          setSubscriptionsList(updated);
+
+                          // 3. Mirror/Sync payload with the Express container server backup
+                          try {
+                            await fetch("/api/subscribers", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify(newSub)
+                            });
+                          } catch (serverSyncErr) {
+                            console.warn("Could not sync preview registration with server backups:", serverSyncErr);
+                          }
+
+                          setTeaserEmailSubmitted(true);
+                          setIsComingSoonBypassed(true);
+                          localStorage.setItem("auth_gateway_session", "true");
+                          localStorage.setItem("teaser_registered_email", trimmedEmail);
+                          addToast(
+                            "licensing_pricing",
+                            "Identity Verified",
+                            `Welcome back ${trimmedEmail}. Authorized to access the workspace.`
+                          );
+                        } catch (err: any) {
+                          console.error("Firestore registry bypass write failure:", err);
+                          // Fallback so users aren't locked out in offline or sandbox state issues
+                          setTeaserEmailSubmitted(true);
+                          setIsComingSoonBypassed(true);
+                          localStorage.setItem("auth_gateway_session", "true");
+                          localStorage.setItem("teaser_registered_email", trimmedEmail);
+                          addToast(
+                            "licensing_pricing",
+                            "Temporary Session Validated",
+                            "Corporate database syncer is buffered. Granting temporary offline-access profile."
+                          );
+                        }
+                      }}>
                         <input
                           id="teaser-email-input"
                           type="email"
@@ -4076,108 +4174,12 @@ ${advice}
                           className={`w-full text-sm rounded-lg py-2.5 px-3 focus:outline-none focus:border-sky-500 font-sans border ${isDark ? "bg-slate-950 border-slate-850 text-slate-100 placeholder-slate-650" : "bg-white border-slate-200 text-slate-800 placeholder-slate-400"}`}
                         />
                         <button
-                          type="button"
-                          onClick={async () => {
-                            const trimmedEmail = teaserEmail.trim();
-                            if (!trimmedEmail || !trimmedEmail.includes("@")) {
-                              addToast("licensing_pricing", "Authentication Error", "Please provide a valid corporate email address.");
-                              return;
-                            }
-
-                            try {
-                              // Derive registration parameters matching isValidSubscriber rule schema
-                              const emailParts = trimmedEmail.split("@");
-                              const prefix = emailParts[0] || "visitor";
-                              let derivedUsername = prefix.toLowerCase().replace(/[^a-zA-Z0-9_\-]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, "");
-                              if (!derivedUsername || !/^[a-zA-Z0-9_\-]+$/.test(derivedUsername)) {
-                                derivedUsername = "user_" + Math.random().toString(36).substring(2, 7);
-                              }
-
-                              let finalUsername = derivedUsername;
-                              let suffix = 1;
-                              while (subscriptionsList.some(s => s?.username?.toLowerCase() === finalUsername)) {
-                                finalUsername = `${derivedUsername}${suffix}`;
-                                suffix++;
-                              }
-
-                              let capitalizedName = prefix
-                                .split(/[\._\-]+/)
-                                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-                                .join(" ");
-                              if (!capitalizedName) {
-                                capitalizedName = "Authorized User";
-                              }
-
-                              const existingGatewaySub = subscriptionsList.find(s => (s.email || "").toLowerCase() === trimmedEmail.toLowerCase());
-                              const subId = existingGatewaySub ? existingGatewaySub.id : "sub-" + Math.random().toString(36).substring(2, 9);
-                              const newSub = {
-                                id: subId,
-                                username: existingGatewaySub ? existingGatewaySub.username : finalUsername,
-                                name: existingGatewaySub ? existingGatewaySub.name : capitalizedName,
-                                email: trimmedEmail.toLowerCase(),
-                                org: existingGatewaySub ? existingGatewaySub.org : "Enterprise Domain",
-                                role: existingGatewaySub ? existingGatewaySub.role : "Sovereign Administrator",
-                                categories: existingGatewaySub ? existingGatewaySub.categories : [
-                                  "technology_updates",
-                                  "licensing_pricing",
-                                  "anz_strategy",
-                                  "cloud_transformations"
-                                ] as NewsCategory[],
-                                frequency: existingGatewaySub ? existingGatewaySub.frequency : "monthly",
-                                date: existingGatewaySub ? existingGatewaySub.date : new Date().toLocaleDateString()
-                              };
-
-                              try {
-                                // 1. Direct persistent Firestore database registration
-                                await setDoc(doc(db, "subscribers", subId), newSub);
-                              } catch (dbErr) {
-                                console.warn("Could not save to firestore", dbErr);
-                              }
-
-                              // 2. Local State & Cache Refresh
-                              const updated = [newSub, ...subscriptionsList.filter(s => (s.email || "").toLowerCase() !== trimmedEmail.toLowerCase())];
-                              localStorage.setItem("microsoft_intel_subscriptions", JSON.stringify(updated));
-                              setSubscriptionsList(updated);
-
-                              // 3. Mirror/Sync payload with the Express container server backup
-                              try {
-                                await fetch("/api/subscribers", {
-                                  method: "POST",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify(newSub)
-                                });
-                              } catch (serverSyncErr) {
-                                console.warn("Could not sync preview registration with server backups:", serverSyncErr);
-                              }
-
-                              setTeaserEmailSubmitted(true);
-                              setIsComingSoonBypassed(true);
-                              localStorage.setItem("auth_gateway_session", "true");
-                              localStorage.setItem("teaser_registered_email", trimmedEmail);
-                              addToast(
-                                "licensing_pricing",
-                                "Identity Verified",
-                                `Welcome back ${trimmedEmail}. Authorized to access the workspace.`
-                              );
-                            } catch (err: any) {
-                              console.error("Firestore registry bypass write failure:", err);
-                              // Fallback so users aren't locked out in offline or sandbox state issues
-                              setTeaserEmailSubmitted(true);
-                              setIsComingSoonBypassed(true);
-                              localStorage.setItem("auth_gateway_session", "true");
-                              localStorage.setItem("teaser_registered_email", trimmedEmail);
-                              addToast(
-                                "licensing_pricing",
-                                "Temporary Session Validated",
-                                "Corporate database syncer is buffered. Granting temporary offline-access profile."
-                              );
-                            }
-                          }}
+                          type="submit"
                           className="bg-sky-600 hover:bg-sky-500 text-white font-sans font-bold text-xs px-4 py-2.5 rounded-lg cursor-pointer transition shadow w-full"
                         >
                           Authenticate & Login
                         </button>
-                      </div>
+                      </form>
                     </div>
                   </div>
                 )}
