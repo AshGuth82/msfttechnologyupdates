@@ -74,7 +74,7 @@ import {
   LogOut,
   ShieldAlert
 } from "lucide-react";
-import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert } from "./types";
+import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert, BlogPost } from "./types";
 import { jsPDF } from "jspdf";
 import { db, collection, getDocs, doc, setDoc, deleteDoc, auth, googleProvider, signInWithPopup, signOut, GoogleAuthProvider } from "./firebase";
 import { AppLogo } from "./components/AppLogo";
@@ -269,7 +269,7 @@ const LOCAL_FALLBACK_ARTICLES: Article[] = [
   }
 ];
 
-const calculateReadTime = (article: Article): string => {
+const calculateReadTime = (article: Partial<Article>): string => {
   const titleText = article.title || "";
   const summaryText = article.summary || "";
   const takeawaysText = (article.keyTakeaways || []).join(" ");
@@ -761,7 +761,7 @@ export default function App() {
   const [playbookTopicFilter, setPlaybookTopicFilter] = useState("all");
   const [playbookFormatFilter, setPlaybookFormatFilter] = useState("all");
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks" | "licensing-docs">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks" | "licensing-docs" | "blogs">("briefings");
   const [auditorSubView, setAuditorSubView] = useState<"auditor" | "tutorials">("auditor");
 
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
@@ -1449,6 +1449,19 @@ ${advice}
 
   // Articles and Cache State
   const [articles, setArticles] = useState<Article[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
+    try {
+      const saved = localStorage.getItem("microsoft_intel_blogs");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn("Failed to parse blogs from local storage", e);
+    }
+    return [];
+  });
+  const [newBlogTitle, setNewBlogTitle] = useState("");
+  const [newBlogContent, setNewBlogContent] = useState("");
+  const [newBlogAuthor, setNewBlogAuthor] = useState("");
+  const [isUploadingBlog, setIsUploadingBlog] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [isLive, setIsLive] = useState<boolean>(false);
   const [hasApiKey, setHasApiKey] = useState<boolean>(false);
@@ -3007,6 +3020,44 @@ ${advice}
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const handleUploadBlog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBlogTitle.trim() || !newBlogContent.trim() || !newBlogAuthor.trim()) {
+      addToast("technology_updates", "Missing Fields", "Please provide a title, author, and content for the blog post.");
+      return;
+    }
+
+    setIsUploadingBlog(true);
+    try {
+      const newBlog: BlogPost = {
+        id: "blog-" + Math.random().toString(36).substring(2, 9),
+        title: newBlogTitle.trim(),
+        content: newBlogContent.trim(),
+        author: newBlogAuthor.trim(),
+        date: new Date().toLocaleDateString()
+      };
+      
+      const updatedBlogs = [newBlog, ...blogPosts];
+      setBlogPosts(updatedBlogs);
+      localStorage.setItem("microsoft_intel_blogs", JSON.stringify(updatedBlogs));
+      
+      setNewBlogTitle("");
+      setNewBlogContent("");
+      setNewBlogAuthor("");
+      
+      addToast(
+        "technology_updates",
+        "Blog Uploaded",
+        `Successfully published blog post: "${newBlog.title}"`
+      );
+    } catch (err) {
+      console.error("Failed to upload blog:", err);
+      addToast("technology_updates", "Upload Failed", "There was an error uploading your blog post.");
+    } finally {
+      setIsUploadingBlog(false);
     }
   };
 
@@ -4643,6 +4694,24 @@ ${advice}
               <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <span>Microsoft's AI Business</span>
                 <kbd className="hidden md:inline-flex items-center justify-center px-1 py-0.5 text-[8px] font-mono tracking-tighter bg-slate-950 text-slate-400 rounded border border-slate-700/60 leading-none select-none">Alt+A</kbd>
+              </span>
+            </button>
+
+            <button
+              id="global-nav-blogs"
+              onClick={() => {
+                setActiveMainView("blogs");
+                setActiveReviewId(null);
+              }}
+              className={`flex whitespace-nowrap shrink-0 grow min-w-max items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                activeMainView === "blogs"
+                  ? "bg-slate-800 text-white shadow-sm border border-slate-700 font-bold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-inherit" />
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <span>Community Blogs</span>
               </span>
             </button>
 
@@ -6416,9 +6485,16 @@ ${advice}
                     <span className="text-[10px] font-mono font-bold tracking-wider text-sky-500 uppercase bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
                       {article.source}
                     </span>
-                    <span className="text-[9px] text-slate-500 font-mono flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      {article.date}
+                    <span className="text-[9px] text-slate-500 font-mono flex items-center gap-1.5 flex-wrap">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5" />
+                        {article.date}
+                      </span>
+                      <span className="text-slate-600">•</span>
+                      <span className="flex items-center gap-1">
+                        <BookOpen className="w-2.5 h-2.5" />
+                        {calculateReadTime(article as Partial<Article>)}
+                      </span>
                     </span>
                   </div>
                   <h4 className={`text-sm font-extrabold tracking-tight mb-2 group-hover:text-sky-500 transition-colors ${
@@ -11217,6 +11293,80 @@ ${advice}
           </div>
         )}
 
+        {activeMainView === "blogs" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* Header Banner */}
+            <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-sky-500/5 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h2 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                    <BookOpen className="w-6 h-6 text-sky-400" />
+                    Microsoft Blog Hub
+                  </h2>
+                  <p className="text-sm text-slate-400 mt-2 max-w-2xl leading-relaxed">
+                    Read and publish community blogs regarding Microsoft updates and partner ecosystems.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Blog Upload Form */}
+              <div className="lg:col-span-1">
+                <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-6">
+                  <h3 className="text-sm font-bold text-white mb-4 border-b border-slate-800 pb-3">Publish a New Blog</h3>
+                  <form onSubmit={handleUploadBlog} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Title</label>
+                      <input type="text" value={newBlogTitle} onChange={(e) => setNewBlogTitle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-sky-500 outline-none" placeholder="Blog Title..." />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Author</label>
+                      <input type="text" value={newBlogAuthor} onChange={(e) => setNewBlogAuthor(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-sky-500 outline-none" placeholder="Author Name..." />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Content</label>
+                      <textarea value={newBlogContent} onChange={(e) => setNewBlogContent(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-white min-h-[150px] focus:ring-1 focus:ring-sky-500 outline-none" placeholder="Write your blog post here..."></textarea>
+                    </div>
+                    <button type="submit" disabled={isUploadingBlog} className="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs py-3 rounded-lg flex items-center justify-center gap-2 transition">
+                      <ExternalLink className="w-4 h-4" />
+                      Publish Blog Post
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Blog List */}
+              <div className="lg:col-span-2 space-y-4">
+                {blogPosts.length === 0 ? (
+                  <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl p-10 flex flex-col items-center justify-center text-center text-slate-500">
+                    <BookOpen className="w-12 h-12 mb-4 text-slate-700" />
+                    <p className="font-bold text-slate-300">No Blogs Published Yet</p>
+                    <p className="text-sm mt-2">Be the first to share insights with the community.</p>
+                  </div>
+                ) : (
+                  blogPosts.map((post) => (
+                    <article key={post.id} className="bg-[#0b0f19] border border-slate-800 hover:border-sky-500/30 rounded-2xl p-6 transition group">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="text-lg font-bold text-white group-hover:text-sky-400 transition">{post.title}</h4>
+                        <span className="text-xs text-slate-500 font-mono">{post.date}</span>
+                      </div>
+                      <div className="text-xs font-mono text-sky-500 mb-4 inline-flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" />
+                        By {post.author}
+                      </div>
+                      <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {post.content}
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
             {isMobileSimulated && (
               <div className="sticky bottom-0 left-0 right-0 z-[110] bg-[#0c1122]/98 backdrop-blur-md border-t border-slate-800 px-2 py-1.5 flex items-center justify-around text-slate-400 select-none">
                 {/* 1. briefings */}
@@ -11356,6 +11506,26 @@ ${advice}
                       </div>
                     </button>
                   )}
+
+                  {/* Blogs */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMainView("blogs");
+                      setIsMobileMoreMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border transition ${
+                      activeMainView === "blogs"
+                        ? "bg-slate-800 border-indigo-500/50 text-white"
+                        : "bg-slate-900/50 border-slate-800 text-slate-300 hover:bg-slate-900"
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 text-sky-400" />
+                    <div className="text-left">
+                      <div className="text-[11px] font-bold">Community Blogs</div>
+                      <div className="text-[9px] text-slate-500">Read and publish blogs</div>
+                    </div>
+                  </button>
 
                   {/* Playbooks Store */}
                   <button

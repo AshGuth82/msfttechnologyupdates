@@ -29,6 +29,14 @@ export interface MicrosoftPartner {
   websiteUrl?: string;
 }
 
+export interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  date: string;
+}
+
 export interface Article {
   id: string;
   title: string;
