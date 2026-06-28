@@ -1460,7 +1460,7 @@ ${advice}
   });
   const [newBlogTitle, setNewBlogTitle] = useState("");
   const [newBlogContent, setNewBlogContent] = useState("");
-  const [newBlogAuthor, setNewBlogAuthor] = useState("");
+  const [newBlogAuthor, setNewBlogAuthor] = useState(() => localStorage.getItem("teaser_registered_email") || "");
   const [isUploadingBlog, setIsUploadingBlog] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const [isLive, setIsLive] = useState<boolean>(false);
@@ -3046,7 +3046,6 @@ ${advice}
       
       setNewBlogTitle("");
       setNewBlogContent("");
-      setNewBlogAuthor("");
       
       addToast(
         "technology_updates",
@@ -11323,7 +11322,7 @@ ${advice}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 mb-1">Author</label>
-                      <input type="text" value={newBlogAuthor} onChange={(e) => setNewBlogAuthor(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-sky-500 outline-none" placeholder="Author Name..." />
+                      <input type="text" value={newBlogAuthor} readOnly disabled className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-slate-400 opacity-70 cursor-not-allowed focus:outline-none" title="Author is set to your registered email address" />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-400 mb-1">Content</label>
