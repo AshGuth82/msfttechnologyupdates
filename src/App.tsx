@@ -3306,12 +3306,26 @@ ${advice}
       if (deletedArticleIds.includes(art.id)) return false;
       
       const categoryMatch = selectedCategory === "all" || art.category === selectedCategory;
-      const searchMatch = searchQuery.trim() === "" || 
-        art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        art.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        art.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (art.anzActionableAdvice && art.anzActionableAdvice.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        art.keyTakeaways.some(take => take.toLowerCase().includes(searchQuery.toLowerCase()));
+      let searchMatch = false;
+      if (searchQuery.trim() === "") {
+        searchMatch = true;
+      } else {
+        try {
+          const regex = new RegExp(searchQuery, "i");
+          searchMatch = regex.test(art.title) ||
+            regex.test(art.summary) ||
+            regex.test(art.source) ||
+            (art.anzActionableAdvice ? regex.test(art.anzActionableAdvice) : false) ||
+            (art.keyTakeaways && art.keyTakeaways.some(take => regex.test(take)));
+        } catch (e) {
+          const lowerQuery = searchQuery.toLowerCase();
+          searchMatch = art.title.toLowerCase().includes(lowerQuery) ||
+            art.summary.toLowerCase().includes(lowerQuery) ||
+            art.source.toLowerCase().includes(lowerQuery) ||
+            (art.anzActionableAdvice && art.anzActionableAdvice.toLowerCase().includes(lowerQuery)) ||
+            (art.keyTakeaways && art.keyTakeaways.some(take => take.toLowerCase().includes(lowerQuery)));
+        }
+      }
 
       let topicMatch = true;
       if (selectedTopic !== "all") {
