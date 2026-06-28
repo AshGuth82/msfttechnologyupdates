@@ -30,6 +30,12 @@ export const LicensingDocs: React.FC = () => {
       title: "Azure Hybrid Benefit Guidelines",
       url: "https://www.microsoft.com/licensing/docs",
       summary: "Rules and restrictions for converting on-premise Windows Server core licenses into Azure compute credits."
+    },
+    {
+      id: "dr-5",
+      title: "M365 Maps",
+      url: "https://m365maps.com/",
+      summary: "Comprehensive and highly detailed feature matrices and licensing maps for Microsoft 365, Office 365, Enterprise Mobility + Security, and Windows."
     }
   ];
 
