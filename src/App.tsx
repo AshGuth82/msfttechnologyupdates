@@ -547,88 +547,16 @@ export default function App() {
   });
 
   // Theme Select Configuration (High Contrast, Accessible Microsoft Corporate Aesthetic with Solar & System Auto Sync)
-  const [themeMode, setThemeMode] = useState<"dark" | "light" | "system" | "solar">(() => {
-    try {
-      const isAuthStatus = localStorage.getItem("microsoft_intel_admin_auth") === "true";
-      if (!isAuthStatus) {
-        return "dark"; // Locked on dark for first-time/unauthenticated users
-      }
-      const stored = localStorage.getItem("microsoft_intel_theme_mode");
-      if (stored === "light" || stored === "dark" || stored === "system" || stored === "solar") {
-        return stored;
-      }
-      const prevTheme = localStorage.getItem("microsoft_intel_theme");
-      if (prevTheme === "light" || prevTheme === "dark") {
-        return prevTheme;
-      }
-      return "solar"; // Default to Solar (sunrise/sunset) auto-toggle
-    } catch {
-      return "dark";
-    }
-  });
-
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-  const isTimeDaylight = () => {
-    const hours = new Date().getHours();
-    return hours >= 6 && hours < 18; // Sunrise at 6:00 AM, Sunset at 6:00 PM
-  };
+  const themeMode = "dark";
+  const theme = "dark";
 
   useEffect(() => {
-    try {
-      localStorage.setItem("microsoft_intel_theme_mode", themeMode);
-    } catch (e) {
-      console.warn("localStorage write blocked:", e);
-    }
-  }, [themeMode]);
+    document.body.classList.remove("light");
+    document.body.style.backgroundColor = "#0b0f19";
+    document.body.style.color = "#f1f5f9";
+  }, []);
 
-  useEffect(() => {
-    if (!isAdminAuthenticated) {
-      setTheme("dark");
-      setThemeMode("dark");
-      return;
-    }
-
-    if (themeMode === "solar") {
-      const updateThemeSolar = () => {
-        const isDay = isTimeDaylight();
-        setTheme(isDay ? "light" : "dark");
-      };
-      updateThemeSolar();
-      const interval = setInterval(updateThemeSolar, 15000); 
-      return () => clearInterval(interval);
-    } else if (themeMode === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleSystemThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
-        setTheme(e.matches ? "dark" : "light");
-      };
-      handleSystemThemeChange(mediaQuery);
-      
-      if (mediaQuery.addEventListener) {
-        mediaQuery.addEventListener("change", handleSystemThemeChange);
-        return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
-      } else {
-        mediaQuery.addListener(handleSystemThemeChange);
-        return () => mediaQuery.removeListener(handleSystemThemeChange);
-      }
-    } else {
-      setTheme(themeMode);
-    }
-  }, [themeMode, isAdminAuthenticated]);
-
-  useEffect(() => {
-    if (theme === "light") {
-      document.body.classList.add("light");
-      document.body.style.backgroundColor = "#f3f6fc";
-      document.body.style.color = "#0f172a";
-    } else {
-      document.body.classList.remove("light");
-      document.body.style.backgroundColor = "#0b0f19";
-      document.body.style.color = "#f1f5f9";
-    }
-  }, [theme]);
-
-  const isDark = theme === "dark";
+  const isDark = true;
 
   const categoryMap: Record<NewsCategory, { label: string; bg: string; text: string; icon: any }> = {
     technology_updates: { 
@@ -4368,26 +4296,10 @@ ${advice}
                     <select
                       id="theme-select-mobile-sim"
                       value={themeMode}
-                      onChange={(e) => {
-                        if (!isAdminAuthenticated) {
-                          addToast("licensing_pricing", "Access Restricted", "Please authorize/log in via the SOW gate to switch layout themes.");
-                          return;
-                        }
-                        setThemeMode(e.target.value as any);
-                      }}
-                      disabled={!isAdminAuthenticated}
-                      className="bg-[#0f172a] text-[10px] font-bold text-slate-300 cursor-pointer focus:outline-none border border-slate-800 rounded px-1.5 py-0.5"
+                      disabled
+                      className="bg-[#0f172a] text-[10px] font-bold text-slate-300 cursor-pointer focus:outline-none border border-slate-800 rounded px-1.5 py-0.5 opacity-60 cursor-not-allowed"
                     >
-                      {!isAdminAuthenticated ? (
-                        <option value="dark">Always Dark File</option>
-                      ) : (
-                        <>
-                          <option value="solar">Solar Auto</option>
-                          <option value="system">System</option>
-                          <option value="light">Light</option>
-                          <option value="dark">Dark</option>
-                        </>
-                      )}
+                        <option value="dark">Always Dark Mode (Locked)</option>
                     </select>
                   </div>
                 </div>
@@ -4514,28 +4426,12 @@ ${advice}
                 <select
                   id="theme-select"
                   value={themeMode}
-                  onChange={(e) => {
-                    if (!isAdminAuthenticated) {
-                      addToast("licensing_pricing", "Access Restricted", "Please authorize/log in via the SOW gate to switch layout themes.");
-                      return;
-                    }
-                    setThemeMode(e.target.value as any);
-                  }}
-                  disabled={!isAdminAuthenticated}
-                  className={`bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none border-none py-0 pl-1 pr-6 ring-0 focus:ring-0 ${!isAdminAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
+                  disabled
+                  className="bg-transparent text-xs font-bold font-sans cursor-pointer focus:outline-none border-none py-0 pl-1 pr-6 ring-0 focus:ring-0 opacity-60 cursor-not-allowed"
                   style={{ outline: "none", boxShadow: "none" }}
-                  title={!isAdminAuthenticated ? "Administrator session authorization required to change themes." : "Select Theme Mode: Solar Synced Sunrise/Sunset, System OS preference, or Manual"}
+                  title="Theme is locked to Always Dark"
                 >
-                  {!isAdminAuthenticated ? (
-                    <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark Mode (Locked)</option>
-                  ) : (
-                    <>
-                      <option value="solar" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Solar Auto (Sunrise/Sunset)</option>
-                      <option value="system" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">System (OS Prefs)</option>
-                      <option value="light" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Light</option>
-                      <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark</option>
-                    </>
-                  )}
+                  <option value="dark" className="dark:bg-[#0b0f19] text-slate-800 dark:text-slate-200">Always Dark Mode (Locked)</option>
                 </select>
               </div>
             </div>
