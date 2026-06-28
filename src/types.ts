@@ -35,6 +35,7 @@ export interface BlogPost {
   content: string;
   author: string;
   date: string;
+  category: string;
 }
 
 export interface Article {

@@ -1460,6 +1460,7 @@ ${advice}
   });
   const [newBlogTitle, setNewBlogTitle] = useState("");
   const [newBlogContent, setNewBlogContent] = useState("");
+  const [newBlogCategory, setNewBlogCategory] = useState("Cloud");
   const [newBlogAuthor, setNewBlogAuthor] = useState(() => localStorage.getItem("teaser_registered_email") || "");
   const [isUploadingBlog, setIsUploadingBlog] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>("");
@@ -3025,8 +3026,8 @@ ${advice}
 
   const handleUploadBlog = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBlogTitle.trim() || !newBlogContent.trim() || !newBlogAuthor.trim()) {
-      addToast("technology_updates", "Missing Fields", "Please provide a title, author, and content for the blog post.");
+    if (!newBlogTitle.trim() || !newBlogContent.trim() || !newBlogAuthor.trim() || !newBlogCategory.trim()) {
+      addToast("technology_updates", "Missing Fields", "Please provide a title, category, author, and content for the blog post.");
       return;
     }
 
@@ -3037,7 +3038,8 @@ ${advice}
         title: newBlogTitle.trim(),
         content: newBlogContent.trim(),
         author: newBlogAuthor.trim(),
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        category: newBlogCategory
       };
       
       const updatedBlogs = [newBlog, ...blogPosts];
@@ -3046,6 +3048,7 @@ ${advice}
       
       setNewBlogTitle("");
       setNewBlogContent("");
+      setNewBlogCategory("Cloud");
       
       addToast(
         "technology_updates",
@@ -11321,6 +11324,17 @@ ${advice}
                       <input type="text" value={newBlogTitle} onChange={(e) => setNewBlogTitle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-sky-500 outline-none" placeholder="Blog Title..." />
                     </div>
                     <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">Category</label>
+                      <select value={newBlogCategory} onChange={(e) => setNewBlogCategory(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-white focus:ring-1 focus:ring-sky-500 outline-none">
+                        <option value="Cloud">Cloud</option>
+                        <option value="AI">AI</option>
+                        <option value="Licensing">Licensing</option>
+                        <option value="Security">Security</option>
+                        <option value="Strategy">Strategy</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
                       <label className="block text-xs font-bold text-slate-400 mb-1">Author</label>
                       <input type="text" value={newBlogAuthor} readOnly disabled className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-sm text-slate-400 opacity-70 cursor-not-allowed focus:outline-none" title="Author is set to your registered email address" />
                     </div>
@@ -11348,12 +11362,17 @@ ${advice}
                   blogPosts.map((post) => (
                     <article key={post.id} className="bg-[#0b0f19] border border-slate-800 hover:border-sky-500/30 rounded-2xl p-6 transition group">
                       <div className="flex justify-between items-start mb-3">
-                        <h4 className="text-lg font-bold text-white group-hover:text-sky-400 transition">{post.title}</h4>
-                        <span className="text-xs text-slate-500 font-mono">{post.date}</span>
+                        <div>
+                          <span className="inline-block px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-[10px] font-mono font-bold text-sky-400 uppercase tracking-wider mb-2">
+                            {post.category || "General"}
+                          </span>
+                          <h4 className="text-lg font-bold text-white group-hover:text-sky-400 transition">{post.title}</h4>
+                        </div>
+                        <span className="text-xs text-slate-500 font-mono shrink-0">{post.date}</span>
                       </div>
-                      <div className="text-xs font-mono text-sky-500 mb-4 inline-flex items-center gap-1.5">
+                      <div className="text-xs font-mono text-slate-400 mb-4 inline-flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5" />
-                        By {post.author}
+                        By <span className="text-sky-400">{post.author}</span>
                       </div>
                       <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
                         {post.content}
