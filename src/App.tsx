@@ -11297,7 +11297,7 @@ ${advice}
                       <span>Custom Email Direct Mailer</span>
                     </h3>
                     <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-                      Send targeted outbound emails securely through the ashguth@msfttechupdates.com alias.
+                      Send targeted outbound emails securely through the ashguth@microsoftauditor.com alias.
                     </p>
 
                     <form onSubmit={handleSendCustomEmail} className="space-y-4">

@@ -1305,7 +1305,7 @@ www.msfttechupdates.com`;
   console.log(`[SOVEREIGN EMAIL DISPATCH CARRIER ENGINE]`);
   console.log(`Dispatch ID : ${dispatchId}`);
   console.log(`Timestamp   : ${timestamp}`);
-  console.log(`From        : ashguth@msfttechupdates.com`);
+  console.log(`From        : ashguth@microsoftauditor.com`);
   console.log(`To          : ${email}`);
   console.log(`Subject     : Welcome to MSFT Tech Updates`);
   console.log(`${borderLine}`);
@@ -1369,7 +1369,7 @@ www.msfttechupdates.com`;
       const { Resend } = require('resend');
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
-        from: 'Ash Guth <ashguth@msfttechupdates.com>',
+        from: 'Ash Guth <ashguth@microsoftauditor.com>',
         to: [email],
         subject: 'Welcome to MSFT Tech Updates',
         text: textContent,
@@ -1400,7 +1400,7 @@ app.post("/api/send-email", async (req, res) => {
     const { Resend } = require('resend');
     const resend = new Resend(resendApiKey);
     const result = await resend.emails.send({
-      from: 'Ash Guth <ashguth@msfttechupdates.com>',
+      from: 'Ash Guth <ashguth@microsoftauditor.com>',
       to: Array.isArray(to) ? to : [to],
       subject: subject,
       text: content,
