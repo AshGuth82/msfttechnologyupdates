@@ -72,7 +72,8 @@ import {
   LayoutGrid,
   List,
   LogOut,
-  ShieldAlert
+  ShieldAlert,
+  Mail
 } from "lucide-react";
 import { Article, NewsCategory, CachedNews, CustomQueryResponse, MicrosoftPartner, PartnerReview, PriceAlert, BlogPost } from "./types";
 import { jsPDF } from "jspdf";
@@ -841,6 +842,57 @@ export default function App() {
     }
   };
 
+  const handleSendCustomEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailCampaignTo.trim() || !emailCampaignSubject.trim() || !emailCampaignContent.trim()) {
+      addToast(
+        "technology_updates",
+        "Missing Fields",
+        "Please provide a recipient, subject, and content for the email."
+      );
+      return;
+    }
+
+    setIsSendingCampaign(true);
+    try {
+      // Split emails by comma and trim whitespace
+      const recipients = emailCampaignTo.split(',').map(email => email.trim()).filter(Boolean);
+      
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: recipients,
+          subject: emailCampaignSubject,
+          content: emailCampaignContent
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to send email");
+      }
+
+      addToast(
+        "cloud_transformations",
+        "Email Dispatched",
+        `Custom email successfully sent to ${recipients.length} recipient(s).`
+      );
+
+      setEmailCampaignTo("");
+      setEmailCampaignSubject("");
+      setEmailCampaignContent("");
+    } catch (err) {
+      console.error("Failed to send custom email:", err);
+      addToast(
+        "licensing_pricing",
+        "Dispatch Failed",
+        "There was an error sending the custom email. Please try again."
+      );
+    } finally {
+      setIsSendingCampaign(false);
+    }
+  };
+
   const [sydneyTime, setSydneyTime] = useState<string>(() => {
     return new Date().toLocaleTimeString("en-AU", {
       timeZone: "Australia/Sydney",
@@ -1460,6 +1512,12 @@ ${advice}
   const [liveMsftPrice, setLiveMsftPrice] = useState<number>(422.86);
   const [zoomRefAreaLeft, setZoomRefAreaLeft] = useState<string | null>(null);
   const [zoomRefAreaRight, setZoomRefAreaRight] = useState<string | null>(null);
+
+  // Custom Email Campaign State
+  const [emailCampaignTo, setEmailCampaignTo] = useState<string>("");
+  const [emailCampaignSubject, setEmailCampaignSubject] = useState<string>("");
+  const [emailCampaignContent, setEmailCampaignContent] = useState<string>("");
+  const [isSendingCampaign, setIsSendingCampaign] = useState<boolean>(false);
   const [zoomRange, setZoomRange] = useState<{ start: string; end: string } | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<{ price: number; comparePrice?: number; time: string; chartX: number; chartY: number } | null>(null);
   const [compareIndex, setCompareIndex] = useState<"none" | "nasdaq" | "sp500">("none");
@@ -8544,6 +8602,31 @@ ${advice}
                     <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
                   </div>
                 </a>
+
+                {/* New Source 10 - Microsoft Find a Partner */}
+                <a 
+                  href="https://partner.microsoft.com/en-jm/partnership/find-a-partner" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-slate-900 hover:border-slate-805 transition duration-150 group"
+                  title="Visit Microsoft Find a Partner"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="text-xs font-bold text-slate-250 group-hover:text-white block truncate">
+                      Microsoft Find a Partner
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      partner.microsoft.com/en-jm/partnership/find-a-partner
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Target</span>
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition" />
+                  </div>
+                </a>
               </div>
             </div>
 
@@ -11201,6 +11284,78 @@ ${advice}
                           <>
                             <Send className="w-3.5 h-3.5" />
                             <span>Send Global Alert Directive</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Custom Email Campaign section */}
+                  <div className="bg-[#111827] border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-1.5">
+                      <Mail className="w-4 h-4 text-sky-400" />
+                      <span>Custom Email Direct Mailer</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                      Send targeted outbound emails securely through the ashguth@msfttechupdates.com alias.
+                    </p>
+
+                    <form onSubmit={handleSendCustomEmail} className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                          Recipient Addresses (Comma Separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={emailCampaignTo}
+                          onChange={(e) => setEmailCampaignTo(e.target.value)}
+                          placeholder="e.g. contact@example.com, ceo@corp.com"
+                          className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-sky-500 focus:ring-0 rounded-lg px-3 py-2 text-xs"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                          Subject Headline
+                        </label>
+                        <input
+                          type="text"
+                          value={emailCampaignSubject}
+                          onChange={(e) => setEmailCampaignSubject(e.target.value)}
+                          placeholder="Email subject..."
+                          className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-sky-500 focus:ring-0 rounded-lg px-3 py-2 text-xs"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] text-slate-450 font-medium font-sans mb-1 uppercase tracking-wider">
+                          Email Payload Contents
+                        </label>
+                        <textarea
+                          value={emailCampaignContent}
+                          onChange={(e) => setEmailCampaignContent(e.target.value)}
+                          placeholder="Type email body content here..."
+                          className="w-full bg-[#080d15] text-slate-200 border border-slate-800 focus:border-sky-500 focus:ring-0 rounded-lg px-3 py-2.5 text-xs h-28 resize-none text-sans"
+                          required
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSendingCampaign}
+                        className="w-full py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-450 hover:to-indigo-500 font-sans font-bold text-white rounded-lg transition duration-150 cursor-pointer flex items-center justify-center gap-2 border border-sky-400/20 active:scale-95 text-xs disabled:bg-slate-850 disabled:text-slate-500"
+                      >
+                        {isSendingCampaign ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Dispatching Email...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Send Custom Direct Mail</span>
                           </>
                         )}
                       </button>

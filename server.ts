@@ -1305,7 +1305,7 @@ www.msfttechupdates.com`;
   console.log(`[SOVEREIGN EMAIL DISPATCH CARRIER ENGINE]`);
   console.log(`Dispatch ID : ${dispatchId}`);
   console.log(`Timestamp   : ${timestamp}`);
-  console.log(`From        : ashguth@microsoftauditor.com`);
+  console.log(`From        : ashguth@msfttechupdates.com`);
   console.log(`To          : ${email}`);
   console.log(`Subject     : Welcome to MSFT Tech Updates`);
   console.log(`${borderLine}`);
@@ -1369,7 +1369,7 @@ www.msfttechupdates.com`;
       const { Resend } = require('resend');
       const resend = new Resend(resendApiKey);
       await resend.emails.send({
-        from: 'Ash Guth <ashguth@microsoftauditor.com>',
+        from: 'Ash Guth <ashguth@msfttechupdates.com>',
         to: [email],
         subject: 'Welcome to MSFT Tech Updates',
         text: textContent,
@@ -1386,6 +1386,31 @@ www.msfttechupdates.com`;
     recipient: email,
     message: "Welcome email successfully dispatched to routing engine."
   });
+});
+
+// 7. Custom Email Dispatch Endpoint
+app.post("/api/send-email", async (req, res) => {
+  const { to, subject, content } = req.body;
+  if (!to || !subject || !content) {
+    return res.status(400).json({ error: "Recipient, subject, and content are required" });
+  }
+
+  const resendApiKey = process.env.RESEND_API_KEY || 're_Gc5HPrCi_2TmQjt1P5vkx7o9Nk8b7Eddn';
+  try {
+    const { Resend } = require('resend');
+    const resend = new Resend(resendApiKey);
+    const result = await resend.emails.send({
+      from: 'Ash Guth <ashguth@msfttechupdates.com>',
+      to: Array.isArray(to) ? to : [to],
+      subject: subject,
+      text: content,
+    });
+    console.log(`[RESEND] Successfully sent custom email to ${to}`);
+    res.json({ success: true, result });
+  } catch (err: any) {
+    console.error(`[RESEND ERROR] Failed to send custom email to ${to}:`, err);
+    res.status(500).json({ error: err.message || 'Failed to send email' });
+  }
 });
 
 // Global Error Handler Middleware
