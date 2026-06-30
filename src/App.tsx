@@ -11032,19 +11032,6 @@ ${advice}
                     <span>Clear Security Gate & Log In</span>
                   </button>
                 </form>
-
-                {/* HELPFUL ADMINISTRATIVE ADVISOR FOR CONSOLE TESTING */}
-                <div className="mt-5 p-3.5 rounded-lg bg-indigo-500/5 border border-indigo-500/10 text-[11px] text-indigo-300 leading-relaxed font-sans">
-                  <div className="font-bold flex items-center gap-1.5 mb-1 text-indigo-200">
-                    <Info className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Integration Token Reference:</span>
-                  </div>
-                  Please use these credentials to authenticate:
-                  <div className="mt-1.5 font-mono text-[10px] bg-slate-950 p-2 rounded border border-indigo-500/10 text-slate-400 space-y-0.5">
-                    <div>Authorized Email: <span className="text-white">ashguth@gmail.com</span></div>
-                    <div>Sovereign Passcode: <span className="text-white">anz2026</span></div>
-                  </div>
-                </div>
               </div>
             ) : (
               /* SECURE AUTHENTICATED WORKSPACE */
