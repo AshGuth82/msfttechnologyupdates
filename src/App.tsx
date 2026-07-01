@@ -398,6 +398,52 @@ const DEFAULT_PARTNERS: MicrosoftPartner[] = [
     ]
   },
   {
+    id: "partner-arinco",
+    name: "Arinco",
+    location: "Melbourne, VIC",
+    rating: 4.8,
+    ratingCount: 56,
+    promoted: false,
+    specialization: ["Cloud Native Solutions", "AI & Data", "Application Modernization"],
+    description: "Arinco empowers organizations to embrace cloud-native technologies. Focused on Microsoft Azure, they build cutting-edge AI, Data, and App solutions.",
+    caseStudyTitle: "Enterprise Cloud Native Transformation",
+    caseStudyContext: "Accelerated cloud adoption using Arinco's modular frameworks, reducing time-to-market for digital services.",
+    contactEmail: "hello@arinco.com.au",
+    websiteUrl: "https://arinco.com.au/",
+    reviews: [
+      {
+        id: "rev-arinco-1",
+        reviewer: "Elena Rostova",
+        rating: 5,
+        comment: "Exceptional capabilities in Azure native architecture and automation.",
+        date: "2026-06-15"
+      }
+    ]
+  },
+  {
+    id: "partner-ct",
+    name: "Centorrino Technologies",
+    location: "Coburg, VIC",
+    rating: 4.9,
+    ratingCount: 78,
+    promoted: false,
+    specialization: ["Managed IT Services", "Education Sector IT", "Cybersecurity"],
+    description: "Centorrino Technologies provides award-winning managed IT services, with a strong focus on the education sector and medium-to-large enterprises, leveraging Microsoft ecosystem.",
+    caseStudyTitle: "State-Wide School District M365 Rollout",
+    caseStudyContext: "Successfully deployed Microsoft 365 and secure device management for over 50 schools, improving collaboration and remote learning capabilities.",
+    contactEmail: "sales@ct.com.au",
+    websiteUrl: "https://www.ct.com.au/",
+    reviews: [
+      {
+        id: "rev-ct-1",
+        reviewer: "Mark Stevenson",
+        rating: 5,
+        comment: "Their support and deep understanding of the education sector is unparalleled.",
+        date: "2026-06-20"
+      }
+    ]
+  },
+  {
     id: "partner-datacom",
     name: "Datacom",
     location: "Auckland, New Zealand & Regional",
