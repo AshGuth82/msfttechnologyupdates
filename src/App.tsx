@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   TrendingUp, 
   Coins, 
@@ -583,6 +584,8 @@ const CITIES_HQ: CityHQ[] = [
 ];
 
 export default function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
@@ -736,7 +739,26 @@ export default function App() {
   const [playbookTopicFilter, setPlaybookTopicFilter] = useState("all");
   const [playbookFormatFilter, setPlaybookFormatFilter] = useState("all");
 
-  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks" | "licensing-docs" | "blogs">("briefings");
+  const [activeMainView, setActiveMainView] = useState<"briefings" | "business" | "partners" | "ai-business" | "contract-auditor" | "admin-console" | "tutorials" | "playbooks" | "licensing-docs" | "blogs">(() => {
+    return location.pathname === "/blogs" || location.pathname === "/blogs/" ? "blogs" : "briefings";
+  });
+
+  useEffect(() => {
+    if (location.pathname === "/blogs" || location.pathname === "/blogs/") {
+      setActiveMainView("blogs");
+    } else if (activeMainView === "blogs") {
+      setActiveMainView("briefings");
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (activeMainView === "blogs" && location.pathname !== "/blogs" && location.pathname !== "/blogs/") {
+      navigate("/blogs");
+    } else if (activeMainView !== "blogs" && (location.pathname === "/blogs" || location.pathname === "/blogs/")) {
+      navigate("/");
+    }
+  }, [activeMainView, navigate, location.pathname]);
+
   const [auditorSubView, setAuditorSubView] = useState<"auditor" | "tutorials">("auditor");
 
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
